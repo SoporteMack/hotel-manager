@@ -18,6 +18,7 @@ coverage/
 # Ignora base de datos local
 *.sqlite
 *.db
+*.sql
 # Node.js
 node_modules/
 test/
