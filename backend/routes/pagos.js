@@ -1,0 +1,11 @@
+const express = require('express');
+const router = express.Router();
+const {verificarToken} = require('../middlewares/auth');
+const pagoscontroller = require('../controllers/pagos.controller');
+router.get('/listar',verificarToken,pagoscontroller.listar);
+router.post('/crear',verificarToken,pagoscontroller.crear);
+router.post('/editar',verificarToken,pagoscontroller.editar);
+router.get('/montosdeldia',verificarToken,pagoscontroller.ingresosdeldia);
+router.get('/pagosxfecha/',verificarToken,pagoscontroller.listarpagosporfecha);
+router.get('/pagosxnombre',verificarToken,pagoscontroller.listarpagoporpersona);
+module.exports = router;

@@ -1,0 +1,11 @@
+version: 2
+authtoken: 2zeINHvXWqbcaecH32bDxvVcSoY_5H69ZALh3K57CyMVMW195
+
+tunnels:
+  frontend:
+    proto: http
+    addr: 5173
+
+  backend:
+    proto: http
+    addr: 3000
