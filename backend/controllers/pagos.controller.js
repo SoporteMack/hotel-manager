@@ -105,9 +105,6 @@ exports.editar = async (req, res) => {
     return res.status(501).json({ estatus: false, msj: "Error al editar" });
   }
 }
-exports.listarporcontrato = async (req, res) => {
-  const { idPersona, idContrato } = req.body;
-};
 
 exports.ingresosdeldia = async (req, res) => {
   try {

@@ -9,4 +9,5 @@ routes.use('/contratos',verificarToken,require('./contratos'));
 routes.use('/departamentos',verificarToken,require('./departamentos'));
 routes.use('/pagos',verificarToken,require('./pagos'));
 routes.use('/documentos',require('./documentos'));
+routes.use('/config',require('./configuracion'));
 module.exports = routes;

@@ -1,10 +1,11 @@
 import axios from 'axios';
+const apiUrl = import.meta.env.VITE_API_URL;
 axios.defaults.withCredentials = true;
 const API = axios.create({
-  //baseURL: 'http://192.168.3.239:3000/api',
+ baseURL: apiUrl,
   withCredentials: true
 });
-
+console.log(apiUrl)
 export const login = (credenciales) => API.post('api/auth/login', credenciales);
 export const logout = () => API.post('api/logout');
-export const validarToken = () => API.get('api/auth/validar');
+export const validarToken = () => API.get('api/auth/validar')

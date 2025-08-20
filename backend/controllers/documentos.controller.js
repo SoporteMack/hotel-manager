@@ -10,6 +10,7 @@ const PizZip = require('pizzip');
 const Docxtemplater = require('docxtemplater');
 const mammoth = require('mammoth'); // para convertir docx a HTML
 const puppeteer = require('puppeteer');
+const { buscarRentasVencidas } = require('./contrato.controller');
 exports.tarjeta = async (req, res) => {
   try {
     const img = req.params.img;
@@ -180,15 +181,12 @@ exports.nota = async (req, res) => {
 
 exports.reportediario = async () => {
   try {
-    const vencidas = [
-      { nombre: 'Carlos Ruiz', departamento: 'Depto 303', fecha: '2025-07-25' },
-      { nombre: 'Lucía Torres', departamento: 'Depto 404', fecha: '2025-07-27' },
-    ]
+    const rentasvencidas = await buscarRentasVencidas();
     const fecha = new Date().toLocaleDateString();
     const pagos = await pagosbd(fecha);
     const filePath = path.join(__dirname, '../uploads/reporte diario.pdf');
     const pagosAgrupados = {};
-    rentasvencidas();
+    const depocupados = 
     pagos.forEach(p => {
       if (!pagosAgrupados[p.nombre]) {
         pagosAgrupados[p.nombre] = [];
@@ -196,9 +194,9 @@ exports.reportediario = async () => {
       pagosAgrupados[p.nombre].push(p);
     });
     const totalPagos = pagos.reduce((total, item) => total + item.monto, 0);
-    const ocupados = 8;
-
-    const disponibles = 2;
+    const ocupados = await contarDepartamentos(1);
+    const disponibles = await contarDepartamentos(0);
+    console.log(ocupados)
     const doc = new PDFDocument({ margin: 40 });
 
     doc.pipe(fs.createWriteStream(filePath));
@@ -206,14 +204,14 @@ exports.reportediario = async () => {
     // Encabezado principal
     doc
       .fontSize(20)
-      .fillColor('#1A237E') // Azul oscuro
+      .fillColor('#FFFFFF') // Azul oscuro
       .font('Helvetica-Bold')
       .text('Reporte Diario General', { align: 'center' });
 
     doc
       .moveDown(0.5)
       .fontSize(10)
-      .fillColor('#444')
+      .fillColor('#1A237E')
       .text(`Fecha: ${fecha}`, { align: 'right' })
       .moveDown(1);
 
@@ -306,20 +304,156 @@ exports.reportediario = async () => {
     doc.moveDown(0.5);
     doc.font('Helvetica').fontSize(10).fillColor('#000');
 
-    if (vencidas.length === 0) {
-      doc.text('No hay rentas vencidas.');
-    } else {
-      vencidas.forEach(r => {
-        doc
-          .fillColor('#000')
-          .text(`• ${r.nombre}`, { continued: true })
-          .fillColor('#666')
-          .text(` - ${r.departamento} - Venció el ${r.fecha}`);
-        doc.moveDown(0.3);
-      });
+    try {
+      if (!rentasvencidas || !Array.isArray(rentasvencidas)) {
+        throw new Error('Datos de rentas vencidas no válidos');
+      }
+    
+      if (rentasvencidas.length === 0) {
+        doc.text('No hay rentas vencidas.', { align: 'center' });
+      } else {
+        rentasvencidas.forEach((r, index) => {
+          // Validación de objeto principal
+          if (!r || typeof r !== 'object') {
+            doc.text(`Registro ${index + 1} inválido`, { align: 'left' });
+            return;
+          }
+    
+          // Encabezado con nombre del inquilino (con validación)
+          const nombreCompleto = [
+            r["persona.nombrePersona"] || 'Nombre no disponible',
+            r["persona.apellidoPaterno"] || '',
+            r["persona.apellidoMaterno"] || ''
+          ].join(' ').trim();
+    
+          doc
+            .fillColor('#000')
+            .font('Helvetica-Bold')
+            .text(`• ${nombreCompleto}`, { underline: true });
+          
+          doc.moveDown(0.5);
+        
+          // Detalles del departamento (con validación)
+          const departamento = r["departamento.descripcion"] || 'No especificado';
+          const contratoId = r.idContrato || 'N/A';
+          
+          doc
+            .font('Helvetica-Bold')
+            .fillColor('#333')
+            .text('Departamento: ', { continued: true })
+            .font('Helvetica')
+            .fillColor('#666')
+            .text(`${departamento} (Contrato #${contratoId})`);
+        
+          // Detalles de deuda (con validación y formato seguro)
+          let deudaTexto = '$0.00 MXN';
+          try {
+            const deudaValor = parseFloat(r.deuda) || 0;
+            deudaTexto = `$${deudaValor.toLocaleString('es-MX', { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 2 
+            })} MXN`;
+          } catch (e) {
+            console.error('Error formateando deuda:', e);
+          }
+    
+          doc
+            .font('Helvetica-Bold')
+            .fillColor('#333')
+            .text('Deuda pendiente: ', { continued: true })
+            .font('Helvetica')
+            .fillColor('#E74C3C')
+            .text(deudaTexto);
+    
+          // Detalles del último pago (con validación completa)
+          if (r.ultimoPago && typeof r.ultimoPago === 'object') {
+            // Formatear fecha
+            let fechaPagoTexto = 'sin fecha';
+            try {
+              if (r.ultimoPago.fechaPago) {
+                const fechaPago = new Date(r.ultimoPago.fechaPago);
+                if (!isNaN(fechaPago)) {
+                  fechaPagoTexto = fechaPago.toLocaleDateString('es-MX', { 
+                    day: '2-digit', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  });
+                }
+              }
+            } catch (e) {
+              console.error('Error formateando fecha:', e);
+            }
+    
+            // Formatear monto
+            let montoTexto = 'ninguno';
+            try {
+              if (r.ultimoPago.monto !== undefined && r.ultimoPago.monto !== null) {
+                montoTexto = `$${parseFloat(r.ultimoPago.monto).toLocaleString('es-MX')}`;
+              }
+            } catch (e) {
+              console.error('Error formateando monto:', e);
+            }
+    
+            // Obtener folio y número de pago
+            const folioTexto = (r.ultimoPago.folio !== undefined && r.ultimoPago.folio !== null) 
+              ? r.ultimoPago.folio.toString() 
+              : 'ninguno';
+    
+            const numPagoTexto = (r.ultimoPago.numPago !== undefined && r.ultimoPago.numPago !== null)
+              ? r.ultimoPago.numPago.toString()
+              : '0';
+    
+            doc
+              .font('Helvetica-Bold')
+              .fillColor('#333')
+              .text('Último pago: ', { continued: true })
+              .font('Helvetica')
+              .fillColor('#666')
+              .text(`${fechaPagoTexto} - ${montoTexto} (Último Folio #${folioTexto})`);
+            
+            doc.moveDown(0.3);
+    
+            doc
+              .font('Helvetica-Bold')
+              .fillColor('#333')
+              .text('Cantidad de pagos realizados: ', { continued: true })
+              .font('Helvetica')
+              .fillColor('#666')
+              .text(numPagoTexto);
+          } else {
+            doc
+              .font('Helvetica-Bold')
+              .fillColor('#333')
+              .text('Último pago: ', { continued: true })
+              .font('Helvetica')
+              .fillColor('#666')
+              .text('ninguno');
+            
+            doc.moveDown(0.3);
+    
+            doc
+              .font('Helvetica-Bold')
+              .fillColor('#333')
+              .text('Cantidad de pagos realizados: ', { continued: true })
+              .font('Helvetica')
+              .fillColor('#666')
+              .text('0');
+          }
+    
+          // Espacio entre registros (excepto después del último)
+          if (index < rentasvencidas.length - 1) {
+            doc.moveDown(1);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error al generar el PDF:', error);
+      doc.text('Ocurrió un error al generar el reporte', { align: 'center' });
+    } finally {
+      doc.end();
+      
     }
-    doc.end();
- 
+
     return { estatus: true };
 
 
@@ -330,7 +464,9 @@ exports.reportediario = async () => {
 }
 
 exports.generarContrato = async (req, res) => {
-
+  const idcontrato = req.body;
+  const contrato = await contratos.findOne({
+  })
   try {
     const datos = {
       nombre: "JAIRO JESUS REYES JIMENEZ",
@@ -363,8 +499,20 @@ exports.generarContrato = async (req, res) => {
     const tempDocxPath = path.resolve(__dirname, 'temp.docx');
     fs.writeFileSync(tempDocxPath, bufferDocx);
     // Convertir docx a HTML con mammoth
-    const { value: html } = await mammoth.convertToHtml({ path: tempDocxPath });
+    let { value: html } = await mammoth.convertToHtml({ path: tempDocxPath });
+    const imageBuffer = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/encabezado.png'));
+    const base64Image = imageBuffer.toString('base64');
+    const mimeType = 'image/png'; // Cambia si usas .jpg, .webp, etc.
 
+    // Incrustar imagen en el HTML
+    html = `
+  <div style="">
+    <img src="data:image/png;base64,${base64Image}" style="width: 800px;" />
+  </div>
+  <div style="text-align: justify;">
+    ${html}
+  </div>
+`;
     // Lanzar Puppeteer para generar PDF desde HTML
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
@@ -499,15 +647,22 @@ const fromatearfecha = (fecha) => {
 }
 
 // 1. Crear un PDF temporal con pdfkit (contenido nuevo)
-function createPDFBuffer(contentCallback) {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ size: 'A4', margin: 40 });
-    const buffers = [];
 
-    doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', () => resolve(Buffer.concat(buffers)));
 
-    contentCallback(doc); // Aquí metes el contenido nuevo
-    doc.end();
-  });
-}
+const contarDepartamentos = async (estatus) => {
+  try {
+    const resultado = await departamentos.count({
+      where: {
+        estatus: estatus
+      },
+      col: 'numDepartamento' // Especifica la columna a contar
+    });
+    
+    console.log(`Número de departamentos activos: ${resultado}`);
+    return resultado;
+  } catch (error) {
+    console.error('Error al contar departamentos:', error);
+    throw error;
+  }
+};
+

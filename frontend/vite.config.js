@@ -1,23 +1,22 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import fs from 'fs';
+import fs from 'fs'
 
 export default defineConfig({
   server: {
-    port: 5173, // o 5174, 5137, etc.
-    https: {
-      key: fs.readFileSync('./localhost+2-key.pem'),
-      cert: fs.readFileSync('./localhost+2.pem'),
-    },
-    proxy: {
-      '/api': {
-        target: 'http://192.168.3.239:3000',
-        changeOrigin: true,
-        secure: false,
-      }
-    },
+    port: 5173,
+    // Permitir todos los hosts ngrok
+    allowedHosts: [
+      'localhost',
+      '.ngrok-free.app'  // Permite cualquier subdominio de ngrok
+    ],
     host: '0.0.0.0', 
+    https: {
+      key: fs.readFileSync('localhost+2-key.pem'),
+      cert: fs.readFileSync('localhost+2.pem')
+    },
+    
   },
   plugins: [
     react(),

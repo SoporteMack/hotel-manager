@@ -3,8 +3,7 @@ const contratos = require('../models/contratos');
 const departamentos = require('../models/departamentos');
 const { where, Op } = require('sequelize');
 
-// Programar la tarea a las 8:00 AM todos los días
-const tarea = schedule.scheduleJob(' */5 * * * *', async () => {
+const tarea = schedule.scheduleJob(' 59 59 23 * *', async () => {
     const fecha = new Date();
     const diaanterior = new Date();
     diaanterior.setDate(diaanterior.getDate() - 1);

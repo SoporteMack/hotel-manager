@@ -5,18 +5,22 @@ const cookieParser = require('cookie-parser');
 const path = require("path");
 const { startBot } = require('./utils/baileys'); 
 require('dotenv').config();
+const fs = require('fs');
+const https = require("https");
 
 const app = express();
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ⚠️ Agrega la IP o dominio específico de tu frontend aquí
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+const allowedOrigins = process.env.FRONTEND_ORIGINS
+  ? process.env.FRONTEND_ORIGINS.split(',').map(origin => origin.trim())
+  : [];
 
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-
+  app.use(cors({
+    origin: (origin, callback) => {
+      callback(null, origin || true); // devuelve el mismo origin que llegó
+    },
+    credentials: true
+  }));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -32,8 +36,13 @@ app.use(cookieParser());
 
   sequelize.sync().then(() => {
     console.log('✅ Base de datos conectada');
-    app.listen(process.env.PORT, () =>
-      console.log(`🚀 Servidor corriendo en puerto ${process.env.PORT}`)
-    );
+    const options = {
+      key: fs.readFileSync(path.join(__dirname, "../frontend/localhost+2-key.pem")),
+      cert: fs.readFileSync(path.join(__dirname, "../frontend/localhost+2.pem")),
+    };
+    const server = https.createServer(options, app);
+    server.listen(process.env.PORT, () => {
+      console.log(`App listening on https://localhost:${process.env.PORT}`);
+    });
   });
 })();

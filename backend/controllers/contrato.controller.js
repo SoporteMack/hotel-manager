@@ -4,19 +4,21 @@ const departamentos = require('../models/departamentos');
 const personas = require('../models/personas');
 const path = require("path");
 const fs = require("fs");
+const pagos = require('../models/pagos');
 
 exports.listar = async (req, res) => {
-  const lista = await contratos.findAll({include:
-    [{
-      model:personas,
-      as:'persona',
-      attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
-    },
-  {
-    model:departamentos,
-    as:'departamento',
-    attributes:["descripcion"]
-  }]
+  const lista = await contratos.findAll({
+    include:
+      [{
+        model: personas,
+        as: 'persona',
+        attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
+      },
+      {
+        model: departamentos,
+        as: 'departamento',
+        attributes: ["descripcion"]
+      }]
   });
   res.json(lista);
 }
@@ -142,19 +144,19 @@ exports.porcentajeocupado = async (req, res) => {
   }
 };
 
-exports.contratoxnombre = async (req,res) =>{
+exports.contratoxnombre = async (req, res) => {
   try {
-    const nombre = req.query.nombre; 
+    const nombre = req.query.nombre;
     const apellidoP = req.query.apellidoP;
     const apellidoM = req.query.apellidoM;
     const contratosdb = await contratos.findAll({
-      attributes:["idContrato","idPersona","numDepartamento","deuda","fechaInicio"],
-      where:{estatus:1},
-      include:[{
-        model:personas,
-        as:"persona",
-        attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"],
-        where:{
+      attributes: ["idContrato", "idPersona", "numDepartamento", "deuda", "fechaInicio"],
+      where: { estatus: 1 },
+      include: [{
+        model: personas,
+        as: "persona",
+        attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
+        where: {
           [Op.or]: [
             nombre ? { nombrePersona: { [Op.like]: `%${nombre}%` } } : {},
             apellidoP ? { apellidoPaterno: { [Op.like]: `%${apellidoP}%` } } : {},
@@ -163,11 +165,11 @@ exports.contratoxnombre = async (req,res) =>{
         }
       },
       {
-        model:departamentos,
-        as:"departamento",
-        attributes:["descripcion"]
+        model: departamentos,
+        as: "departamento",
+        attributes: ["descripcion"]
       }
-    ]
+      ]
     })
     return res.status(200).json(contratosdb);
   } catch (error) {
@@ -177,24 +179,72 @@ exports.contratoxnombre = async (req,res) =>{
 
 }
 
-exports.vencetredias = async (fecha)=>{
+exports.vencetredias = async (fecha) => {
 
-  try{
+  try {
     const res = contratos.findAll({
-      attributes:["idcontrato"],
-      include:[
+      attributes: ["idcontrato"],
+      include: [
         {
-          model:personas,
-          as:"persona",
-          attributes:["telefono"]
+          model: personas,
+          as: "persona",
+          attributes: ["telefono"]
         }
       ],
-      where:{fechaPago:fecha},
-      raw:true
+      where: { fechaPago: fecha },
+      raw: true
     })
     return res
-  }catch(e)
-  {
+  } catch (e) {
     return []
+  }
+}
+
+exports.rentasvencidas = async(req,res)=>{
+  try {
+    const rentasConPagos = await this.buscarRentasVencidas();
+    res.status(200).json(rentasConPagos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+exports.buscarRentasVencidas = async () => {
+  try {
+    const rentasv = await contratos.findAll({
+      attributes: ["idContrato", "deuda"],
+      where: { deuda: { [Op.gt]: 0 } },
+      include: [
+        {
+          model: personas,
+          as: "persona",
+          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
+        },
+        {
+          model: departamentos,
+          as: "departamento",
+          attributes: ["descripcion"]
+        }
+      ],
+      raw: true
+    });
+
+    // Usar Promise.all para manejar las operaciones asíncronas dentro del map
+    const rentasConPagos = await Promise.all(rentasv.map(async (rentav) => {
+      const ultimopago = await pagos.findOne({
+        where: { idContrato: rentav.idContrato },
+        order: [['numPago', 'DESC']], // Corregida la sintaxis del order
+        raw: true
+      });
+
+      return {
+        ...rentav,
+        ultimoPago: ultimopago
+      };
+    }));
+  return rentasConPagos
+    
+  } catch (error) {
+    return[];
   }
 }

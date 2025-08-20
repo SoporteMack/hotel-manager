@@ -11,6 +11,7 @@ import CrearContrato from './components/contratos/crearContrato';
 import Pagos from './components/pagos/pagos';
 import AgregarPagos from './components/pagos/agregarPago';
 import EditarContratos from './components/contratos/editarContratos';
+import Configuracion from './components/config/config';
 
 // Ruta protegida
 function PrivateRoute({ children }) {
@@ -63,6 +64,7 @@ function App() {
           <Route path="pagos" element={<Pagos/>}/>
           <Route path='agregarpago' element={<AgregarPagos/>}></Route>
           <Route path='editarcontrato' element={<EditarContratos/>}></Route>
+          <Route path='config' element={<Configuracion/>}></Route>
 
             {/* Agrega más rutas privadas aquí */}
         </Route>

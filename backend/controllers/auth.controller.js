@@ -19,14 +19,15 @@ const login = async (req, res) => {
       return res.status(401).json({ msg: "Contraseña incorrecta" });
     }
 
-    const token = generarToken({ usuario: usuarioDB.usuario });
+    const token = await generarToken({ usuario: usuarioDB.usuario });
 
     res.cookie("token", token, {
-      httpOnly: true, // ⚠️ Muy importante
-      secure: process.env.NODE_ENV === "production", // Solo por HTTPS en producción
-      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 día
+      httpOnly: true,
+      secure: true,  // FORZAR a true porque ngrok usa HTTPS
+      sameSite: 'none', // Para que se envíe en solicitudes cross-site con credenciales
+      maxAge: 24 * 60 * 60 * 1000,
     });
+    
     console.log(res.cookie)
     res.json({ status: true, msg: "Inicio de sesion exitoso" });
   } catch (error) {

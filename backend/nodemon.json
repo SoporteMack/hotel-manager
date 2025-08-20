@@ -1,7 +1,6 @@
 {
-    "watch": ["index.js", "whatsapp", "routes"],
+    "watch": ["app.js", "whatsapp", "routes","controllers","cron"],
     "ignore": ["node_modules", "auth"],
-    "ext": "js,json",
     "exec": "node app.js"
   }
   
