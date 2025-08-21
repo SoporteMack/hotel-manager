@@ -29,12 +29,13 @@ app.use(cookieParser());
   require('./cron/notificaciones');
 
   app.use('/api', require('./routes/api'));
+console.log(process.env.CER_KEY, process.env.CER)
 
   sequelize.sync().then(() => {
     console.log('✅ Base de datos conectada');
     const options = {
-      key: fs.readFileSync(path.join(__dirname, process.env.VITE_CER_KEY)),
-      cert: fs.readFileSync(path.join(__dirname, VITE_CER)),
+      key: fs.readFileSync(process.env.CER_KEY),
+      cert: fs.readFileSync(process.env.CER),
     };
     const server = https.createServer(options, app);
     server.listen(process.env.PORT, () => {
