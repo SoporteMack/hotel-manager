@@ -11,10 +11,6 @@ const https = require("https");
 const app = express();
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const allowedOrigins = process.env.FRONTEND_ORIGINS
-  ? process.env.FRONTEND_ORIGINS.split(',').map(origin => origin.trim())
-  : [];
-
   app.use(cors({
     origin: (origin, callback) => {
       callback(null, origin || true); // devuelve el mismo origin que llegó
@@ -37,8 +33,8 @@ app.use(cookieParser());
   sequelize.sync().then(() => {
     console.log('✅ Base de datos conectada');
     const options = {
-      key: fs.readFileSync(path.join(__dirname, "../frontend/localhost+2-key.pem")),
-      cert: fs.readFileSync(path.join(__dirname, "../frontend/localhost+2.pem")),
+      key: fs.readFileSync(path.join(__dirname, process.env.VITE_CER_KEY)),
+      cert: fs.readFileSync(path.join(__dirname, VITE_CER)),
     };
     const server = https.createServer(options, app);
     server.listen(process.env.PORT, () => {
