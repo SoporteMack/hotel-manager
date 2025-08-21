@@ -69,7 +69,7 @@ async function programarCron() {
 
     console.log(`📅 Programando reporte diario a las ${hora}:00 hrs`);
 
-    currentJob = schedule.scheduleJob(`0 0 ${hora} * * *`, async () => {
+    currentJob = schedule.scheduleJob({rule:`0 5 ${hora} * * *`,tz: 'America/Mexico_City'}, async () => {
       console.log('⏰ Ejecutando cron de reporte diario');
 
       try {
@@ -107,7 +107,7 @@ async function programarCron() {
 }
 
 // Revisar cada minuto si cambió la hora en BD
-schedule.scheduleJob('*/1 * * * *', programarCron);
+schedule.scheduleJob({rule:'0 */59 * * * *',tz: 'America/Mexico_City'} ,programarCron);
 
 // Primera programación al iniciar
 programarCron();
