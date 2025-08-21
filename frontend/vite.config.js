@@ -24,8 +24,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Hotel Manager',
-        short_name: 'Hotel',
+        name: 'Pension Monet',
+        short_name: 'Pension Monet',
         description: 'App para administración de hoteles',
         theme_color: '#ffffff',
         background_color: '#ffffff',
