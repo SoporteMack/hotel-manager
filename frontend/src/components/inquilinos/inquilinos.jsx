@@ -42,6 +42,7 @@ function Inquilinos() {
       setShowModal(false);
       obtenerInquilinos();
     } catch (e) {
+      console.log(e)
       const error = e.response?.data?.errores?.[0]?.mensaje || "Error al guardar inquilino";
       notyf.current.error(error);
     }

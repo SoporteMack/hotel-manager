@@ -36,3 +36,5 @@ build/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+baileys_auth/
