@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
 function ItemTablaContrato({ item }) {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const baseurl = "/api/documentos/obtenertarjetas"
     const [base, setbase] = useState("");
     useEffect(() => {
         const ruta = item.INED;
@@ -12,9 +14,10 @@ function ItemTablaContrato({ item }) {
     const handleDescargartarjetas = (img, img2) => {
         const ineaD = img.replace(/\\/g, "/").split("/").pop();
         const ineaA = img2.replace(/\\/g, "/").split("/").pop();
-        const ruta = base + "/" + ineaD + "/" + ineaA;
+        const ruta = apiUrl+baseurl+base + "/" + ineaD + "/" + ineaA;
+        alert(ruta)
         const url = `api/documentos/obtenertarjetas/${ruta}`;
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.open(ruta, '_blank', 'noopener,noreferrer');
     }
     const handleDescargarComprobante = () => {
         const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();

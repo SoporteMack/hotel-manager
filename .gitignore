@@ -38,3 +38,6 @@ build/
 Thumbs.db
 
 baileys_auth/
+uploads/
+!uploads/templates/
+!uploads/templates/**
