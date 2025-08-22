@@ -15,6 +15,7 @@ function ItemTablaContrato({ item }) {
         const ineaD = img.replace(/\\/g, "/").split("/").pop();
         const ineaA = img2.replace(/\\/g, "/").split("/").pop();
         const ruta = apiUrl+baseurl+base + "/" + ineaD + "/" + ineaA;
+        console.log(ruta)
         const url = `api/documentos/obtenertarjetas/${ruta}`;
         window.open(ruta, '_blank', 'noopener,noreferrer');
     }
