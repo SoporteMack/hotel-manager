@@ -3,17 +3,17 @@ const { getSock } = require('../utils/baileys');
 const { vencetredias } = require('../controllers/contrato.controller');
 
 
-schedule.scheduleJob('0 13  11 * * *', async () => {
+schedule.scheduleJob('0 0 10 * * *', async () => {
   const fecha = new Date();
   fecha.setDate(fecha.getDate()+3);
   const fechaformateada = fromatearfecha(fecha);
-  console.log(fechaformateada)
   const sock = getSock(); // ✅ obtener sock actual
   if (!sock) {
     console.log('⏳ Sock aún no está listo');
     return;
   }
   const res = await vencetredias(fechaformateada);
+  console.log(res)
   res.map(async (contrato) => {
     const numero = '521'+contrato['persona.telefono'];
     try {

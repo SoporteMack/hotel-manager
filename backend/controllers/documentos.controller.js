@@ -80,15 +80,10 @@ exports.comprobante = async (req, res) => {
 };
 
 
-exports.nota = async (req, res) => {
+exports.nota = async (folio) => {
   try {
-    const folio = req.query.folio;
     const dato = await contrato(folio);
-
-    if (dato === null)
-      return res.status(500).json("datos no econtrados");
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=nota.pdf`);
+    const filePath = path.join(__dirname, '../uploads/nota.pdf');
 
     // Simulación de datos
     const nota = {
@@ -99,7 +94,7 @@ exports.nota = async (req, res) => {
         direccion: '4 Poniente 1414, Puebla',
       },
       productos: [
-        { descripcion: 'Abono renta', cantidad: 1, precio: dato.monto },
+        { descripcion: `Abono renta ${dato['contrato.departamento.descripcion']}`, cantidad: 1, precio: dato.monto },
       ],
     };
 
@@ -108,7 +103,7 @@ exports.nota = async (req, res) => {
 
     // Crear PDF
     const doc = new PDFDocument({ margin: 40 });
-    doc.pipe(res);
+    doc.pipe(fs.createWriteStream(filePath));
 
 
     // Encabezado
@@ -196,7 +191,6 @@ exports.reportediario = async () => {
     const totalPagos = pagos.reduce((total, item) => total + item.monto, 0);
     const ocupados = await contarDepartamentos(1);
     const disponibles = await contarDepartamentos(0);
-    console.log(ocupados)
     const doc = new PDFDocument({ margin: 40 });
 
     doc.pipe(fs.createWriteStream(filePath));

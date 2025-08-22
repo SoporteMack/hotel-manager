@@ -1,5 +1,6 @@
 const { where } = require("sequelize");
 const persona = require("../models/personas");
+const { getSock } = require('../utils/baileys');
 
 exports.listar = async (req,res) =>{
     const lista = await persona.findAll();
@@ -9,13 +10,14 @@ exports.listar = async (req,res) =>{
 exports.crear = async (req,res)=>{
    try{
     const {nombrePersona,apellidoPaterno,apellidoMaterno,telefono,correo} = req.body;
-    const personabd= await persona.create({
+    await persona.create({
         nombrePersona:nombrePersona,
         apellidoPaterno:apellidoPaterno,
         apellidoMaterno:apellidoMaterno,
         telefono:telefono,
         correo:correo
     });
+    mensajeBienvenida(telefono);
     res.status(201).json({status:true,msj:"Inquilino Creado con Exito"})
    }catch(e)
    {
@@ -74,3 +76,19 @@ exports.listaActivos = async (req,res) =>
     res.status(500).json({msg:"error al consultar lista de personal"});
   }
 }
+
+const mensajeBienvenida = async (telefono)=>{
+  const sock = getSock(); 
+  if (!sock) {
+    console.log('⏳ Sock aún no está listo');
+    return;
+  }
+  const numero = '521'+telefono
+  try {
+    await sock.sendMessage(`${numero}@s.whatsapp.net`, {
+      text: 'Bienvenido Inquilino'
+    });
+  } catch (error) {
+    console.log("error al enviar mensjae",error)
+  }
+} 

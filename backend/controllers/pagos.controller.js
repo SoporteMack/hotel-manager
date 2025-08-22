@@ -4,6 +4,10 @@ const pagos = require("../models/pagos");
 const moment = require('moment-timezone');
 const personas = require("../models/personas");
 const departamentos = require("../models/departamentos");
+const path = require('path')
+const { nota } = require("./documentos.controller");
+const { getSock } = require('../utils/baileys');
+const fs = require('fs');
 
 
 exports.listar = async (req, res) => {
@@ -21,7 +25,6 @@ exports.crear = async (req, res) => {
     const [hour, minute, second] = timePart.split(':').map(Number);
     const fecha = new Date(`${year}-${month}-$${day}`)
     const response = await restardeuda(idContrato, fecha, monto, deuda);
-    console.log(response)
     if (response) {
       const nuevafecha = moment.tz({
         year,
@@ -56,7 +59,14 @@ exports.crear = async (req, res) => {
         fechaPago: nuevafecha,
         idContrato,
       };
-      await pagos.create(datospago);
+      const pag = await pagos.create(datospago);
+      const foliopago = pag.folio;
+      const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
+      await nota(foliopago);
+      const telefono = await obtenerTelefono(idContrato);
+      await esperarArchivoListo(rutaArchivo)
+      await enviarNota(telefono,rutaArchivo)
+      
 
       res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
     }
@@ -233,4 +243,70 @@ const restardeuda = async (idContrato, fecha, monto, deuda) => {
     console.log(error)
     return false
   }
+}
+
+const obtenerTelefono = async (idContrato)=>
+{
+  const res = await contratos.findOne({
+    attributes:['idContrato'],
+    where:{idContrato:idContrato},
+    include:[{
+      model:personas,
+      as:'persona',
+      attributes:['telefono']
+    }],
+    raw:true
+  })
+  return res['persona.telefono'];
+}
+
+const enviarNota = async (telefono,rutaArchivo) => {
+  const sock = getSock();
+
+  const fecha = new Date();
+  const formatoFecha = fecha.toLocaleDateString('es-MX', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const buffer = fs.readFileSync(rutaArchivo);
+  console.log(`521${telefono}@s.whatsapp.net`);
+  await sock.sendMessage(`521${telefono}@s.whatsapp.net`, {
+    document: buffer,
+    mimetype: 'application/pdf',
+    fileName: 'reporte_diario.pdf',
+    caption: `📄 Aquí está el Nota\n. Fecha: ${formatoFecha}`
+  });
+};
+
+async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
+  return new Promise((resolve, reject) => {
+    const inicio = Date.now();
+    let lastSize = 0;
+
+    const check = () => {
+      if (!fs.existsSync(ruta)) {
+        if (Date.now() - inicio > maxEspera) {
+          return reject(new Error('Archivo no se generó a tiempo'));
+        }
+        return setTimeout(check, intervalo);
+      }
+
+      const stats = fs.statSync(ruta);
+      if (stats.size > 0 && stats.size === lastSize) {
+        return resolve();
+      }
+
+      lastSize = stats.size;
+      if (Date.now() - inicio > maxEspera) {
+        return reject(new Error('Archivo no se estabilizó a tiempo'));
+      }
+
+      setTimeout(check, intervalo);
+    };
+
+    check();
+  });
 }

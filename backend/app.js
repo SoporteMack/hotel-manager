@@ -29,7 +29,6 @@ app.use(cookieParser());
   require('./cron/notificaciones');
 
   app.use('/api', require('./routes/api'));
-console.log(process.env.CER_KEY, process.env.CER)
 
   sequelize.sync().then(() => {
     console.log('✅ Base de datos conectada');
