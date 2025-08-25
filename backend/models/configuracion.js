@@ -14,12 +14,12 @@ const Configuracion = sequelize.define('configuraciones', {
         }
     },
     horaRepDiario: {
-        type: DataTypes.STRING(5), // formato HH:mm
+        type: DataTypes.TIME, // Guarda en formato HH:mm:ss en MySQL
         allowNull: false,
         validate: {
-            notNull: { msg: 'La hora de reporte es obligatoria' },
-            notEmpty: { msg: 'La hora de reporte no puede estar vacía' }
-        }
+          notNull: { msg: 'La hora de reporte es obligatoria' },
+          notEmpty: { msg: 'La hora de reporte no puede estar vacía' }
+        },
     },
     numCuenta: {
         type: DataTypes.STRING(20),

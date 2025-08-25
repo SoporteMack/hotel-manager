@@ -51,7 +51,11 @@ async function programarCron() {
       return;
     }
 
-    let hora = parseInt(config.horaRepDiario, 10);
+    const [horaStr, minutosStr] = config.horaRepDiario.split(':');
+
+    // Convertimos a número
+    const hora = parseInt(horaStr, 10);
+    const minutos = parseInt(minutosStr, 10);
     if (isNaN(hora) || hora < 0 || hora > 23) {
       console.error(`❌ Hora inválida en BD: ${config.horaRepDiario}`);
       hora = 8;
@@ -69,7 +73,7 @@ async function programarCron() {
 
     console.log(`📅 Programando reporte diario a las ${hora}:00 hrs`);
 
-    currentJob = schedule.scheduleJob({rule:`0 5 ${hora} * * *`,tz: 'America/Mexico_City'}, async () => {
+    currentJob = schedule.scheduleJob({ rule: `0 ${minutos} ${hora} * * *`, tz: 'America/Mexico_City' }, async () => {
       console.log('⏰ Ejecutando cron de reporte diario');
 
       try {
@@ -107,7 +111,7 @@ async function programarCron() {
 }
 
 // Revisar cada minuto si cambió la hora en BD
-schedule.scheduleJob({rule:'0 */59 * * * *',tz: 'America/Mexico_City'} ,programarCron);
+schedule.scheduleJob({ rule: '0 */59 * * * *', tz: 'America/Mexico_City' }, programarCron);
 
 // Primera programación al iniciar
 programarCron();
