@@ -23,7 +23,6 @@ function ItemTablaContrato({ item }) {
           responseType: "blob", 
         });
   
-        alert(response);
         // Crear blob y URL
         const file = new Blob([response.data], { type: "application/pdf" });
         const fileURL = window.URL.createObjectURL(file);
