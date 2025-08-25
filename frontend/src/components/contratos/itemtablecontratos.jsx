@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useEffect, useState } from "react"
 function ItemTablaContrato({ item }) {
   const apiUrl = import.meta.env.VITE_API_URL;
@@ -11,19 +12,59 @@ function ItemTablaContrato({ item }) {
 
         setbase(rutaSinArchivo)
     }, [])
-    const handleDescargartarjetas = (img, img2) => {
-        const ineaD = img.replace(/\\/g, "/").split("/").pop();
-        const ineaA = img2.replace(/\\/g, "/").split("/").pop();
-        const ruta = apiUrl+baseurl+base + "/" + ineaD + "/" + ineaA;
-        console.log(ruta)
-        const url = `api/documentos/obtenertarjetas/${ruta}`;
-        window.open(ruta, '_blank', 'noopener,noreferrer');
-    }
-    const handleDescargarComprobante = () => {
+    const handleDescargartarjetas = async (img, img2) => {
+      const ineaD = img.replace(/\\/g, "/").split("/").pop();
+      const ineaA = img2.replace(/\\/g, "/").split("/").pop();
+    
+      const ruta = apiUrl+baseurl+base + "/" + ineaD + "/" + ineaA;
+    
+      try {
+        const response = await axios.get(ruta, {
+          responseType: "blob", 
+        });
+    
+        // Crear blob y URL
+        const file = new Blob([response.data], { type: "application/pdf" });
+        const fileURL = window.URL.createObjectURL(file);
+    
+        // Forzar descarga
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.setAttribute("download", `${ineaD}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    
+        window.URL.revokeObjectURL(fileURL);
+      } catch (error) {
+        console.error("Error al descargar tarjeta:", error);
+      }
+    };
+    const handleDescargarComprobante = async () => {
         const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();
         const ruta = base + "/" + img;
-        const url = `api/documentos/obtenercomprobante/${ruta}`;
-        window.open(url, '_blank', 'noopener,noreferrer');
+        const url = `api/documentos/obtenercomprobante${ruta}`;
+        try {
+          const response = await axios.get(url, {
+            responseType: "blob", 
+          });
+      
+          // Crear blob y URL
+          const file = new Blob([response.data], { type: "application/pdf" });
+          const fileURL = window.URL.createObjectURL(file);
+      
+          // Forzar descarga
+          const link = document.createElement("a");
+          link.href = fileURL;
+          link.setAttribute("download", `${img}.pdf`);
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+      
+          window.URL.revokeObjectURL(fileURL);
+        } catch (error) {
+          console.error("Error al descargar tarjeta:", error);
+        }
     }
     return (
         <tr className="border-t hover:bg-gray-50">

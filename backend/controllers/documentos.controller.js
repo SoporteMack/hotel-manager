@@ -13,31 +13,43 @@ const puppeteer = require('puppeteer');
 const { buscarRentasVencidas } = require('./contrato.controller');
 exports.tarjeta = async (req, res) => {
   try {
-    const img = req.params.img;
-    const img2 = req.params.img2;
-    const fuente = req.params.fuente;
-    const carpeta = req.params.carpeta;
-    const pathdoc = fuente + "/" + carpeta + "/" + img;
-    const pathdoc2 = fuente + "/" + carpeta + "/" + img2;
-    const imgpath = path.join(__dirname, '..', pathdoc);
-    const imgpath2 = path.join(__dirname, '..', pathdoc2);
-    if (!fs.existsSync(imgpath) && !fs.existsSync(imgpath2)) {
-      return res.status(404).send('Imagen no encontrada');
+    const { img, img2, fuente, carpeta } = req.params;
+
+    const pathdoc = path.join(__dirname, "..", fuente, carpeta, img);
+    const pathdoc2 = path.join(__dirname, "..", fuente, carpeta, img2);
+
+    if (!fs.existsSync(pathdoc) || !fs.existsSync(pathdoc2)) {
+      return res.status(404).send("Una o ambas imágenes no se encontraron");
     }
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${img}.pdf`);
-    const doc = new PDFDocument();
+
+    // Cabeceras para descarga directa
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=${img.replace(/\.[^/.]+$/, "")}.pdf`
+    );
+
+    // Crear PDF
+    const doc = new PDFDocument({ margin: 20 });
     doc.pipe(res);
-    const imgWidth = 300;
-    const y = doc.y;
-    doc.image(imgpath, 20, y, { fit: [imgWidth, 200] }); // izquierda
-    doc.image(imgpath2, doc.page.width - imgWidth, y, { fit: [imgWidth, 200] }); // derecha
-    doc.end()
+
+    const imgWidth = 250;
+    const y = 50;
+
+    // Imagen izquierda
+    doc.image(pathdoc, 20, y, { fit: [imgWidth, 200] });
+
+    // Imagen derecha (alineada al borde derecho con margen)
+    doc.image(pathdoc2, doc.page.width - imgWidth - 20, y, {
+      fit: [imgWidth, 200],
+    });
+
+    doc.end();
   } catch (error) {
-    console.log(error);
-    res.status(505).json(error);
+    console.error(error);
+    res.status(500).json(error);
   }
-}
+};
 
 
 exports.comprobante = async (req, res) => {
