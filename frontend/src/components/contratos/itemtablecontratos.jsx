@@ -111,7 +111,7 @@ function ItemTablaContrato({ item }) {
 function ItemCardContratoMobile({ item, onEditar, onDelete }) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas"
-  const [base, setbase] = useState("");
+  const [base, setBase] = useState("");
   
     useEffect(() => {
       const ruta = item.INED;
