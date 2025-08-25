@@ -4,6 +4,7 @@ const pagos = require("../models/pagos");
 const moment = require('moment-timezone');
 const personas = require("../models/personas");
 const departamentos = require("../models/departamentos");
+const configuracion = require("../models/configuracion");
 const path = require('path')
 const { nota } = require("./documentos.controller");
 const { getSock } = require('../utils/baileys');
@@ -262,7 +263,8 @@ const obtenerTelefono = async (idContrato)=>
 
 const enviarNota = async (telefono,rutaArchivo) => {
   const sock = getSock();
-
+  const res = await configuracion.findOne();
+  const msj = res.envioNotas;
   const fecha = new Date();
   const formatoFecha = fecha.toLocaleDateString('es-MX', {
     timeZone: 'America/Mexico_City',
@@ -277,7 +279,7 @@ const enviarNota = async (telefono,rutaArchivo) => {
     document: buffer,
     mimetype: 'application/pdf',
     fileName: 'reporte_diario.pdf',
-    caption: `📄 Aquí está el Nota\n. Fecha: ${formatoFecha}`
+    caption: `Fecha: ${formatoFecha}\n\n` + msj
   });
 };
 
