@@ -23,7 +23,7 @@ function ItemTablaContrato({ item }) {
           responseType: "blob", 
         });
   
-        console.log(response);
+        alert(response);
         // Crear blob y URL
         const file = new Blob([response.data], { type: "application/pdf" });
         const fileURL = window.URL.createObjectURL(file);
@@ -110,7 +110,9 @@ function ItemTablaContrato({ item }) {
     )
 }
 function ItemCardContratoMobile({ item, onEditar, onDelete }) {
-    const [base, setBase] = useState("");
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const baseurl = "/api/documentos/obtenertarjetas"
+  const [base, setbase] = useState("");
   
     useEffect(() => {
       const ruta = item.INED;
@@ -119,18 +121,62 @@ function ItemCardContratoMobile({ item, onEditar, onDelete }) {
       setBase(partes.join("/"));
     }, []);
   
-    const handleDescargartarjetas = (img, img2) => {
+    const handleDescargartarjetas = async (img, img2) => {
       const ineaD = img.replace(/\\/g, "/").split("/").pop();
       const ineaA = img2.replace(/\\/g, "/").split("/").pop();
-      const ruta = base + "/" + ineaD + "/" + ineaA;
-      window.open(`api/documentos/obtenertarjetas/${ruta}`, '_blank', 'noopener,noreferrer');
+    
+      const ruta = apiUrl+baseurl+base + "/" + ineaD + "/" + ineaA;
+    
+      try {
+        const response = await axios.get(ruta, {
+          responseType: "blob", 
+        });
+  
+        alert(response);
+        // Crear blob y URL
+        const file = new Blob([response.data], { type: "application/pdf" });
+        const fileURL = window.URL.createObjectURL(file);
+    
+        // Forzar descarga
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.setAttribute("download", `${ineaD}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    
+        window.URL.revokeObjectURL(fileURL);
+      } catch (error) {
+        console.error("Error al descargar tarjeta:", error);
+      }
     };
   
-    const handleDescargarComprobante = () => {
+    const handleDescargarComprobante = async () => {
       const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();
       const ruta = base + "/" + img;
-      window.open(`api/documentos/obtenercomprobante/${ruta}`, '_blank', 'noopener,noreferrer');
-    };
+      const url = `api/documentos/obtenercomprobante${ruta}`;
+      try {
+        const response = await axios.get(url, {
+          responseType: "blob", 
+        });
+    
+        // Crear blob y URL
+        const file = new Blob([response.data], { type: "application/pdf" });
+        const fileURL = window.URL.createObjectURL(file);
+    
+        // Forzar descarga
+        const link = document.createElement("a");
+        link.href = fileURL;
+        link.setAttribute("download", `${img}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    
+        window.URL.revokeObjectURL(fileURL);
+      } catch (error) {
+        console.error("Error al descargar tarjeta:", error);
+      }
+  }
   
     return (
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 mb-5 transition hover:shadow-md">
