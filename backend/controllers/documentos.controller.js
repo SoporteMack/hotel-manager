@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { getSock } = require('../utils/baileys');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const contratos = require('../models/contratos');
@@ -11,6 +12,7 @@ const Docxtemplater = require('docxtemplater');
 const mammoth = require('mammoth'); // para convertir docx a HTML
 const puppeteer = require('puppeteer');
 const { buscarRentasVencidas } = require('./contrato.controller');
+const Configuracion = require('../models/configuracion');
 exports.tarjeta = async (req, res) => {
   try {
     const { img, img2, fuente, carpeta } = req.params;
@@ -469,13 +471,38 @@ exports.reportediario = async () => {
 
 }
 
-exports.generarContrato = async (req, res) => {
-  const idcontrato = req.body;
-  const contrato = await contratos.findOne({
-  })
+exports.downloadContrato = async (req,res)=>{
+  const idContrato = req.body;
+  const  data= await generarContrato(idContrato);
+  enviarContrato(data.path,data.telefono)
+  res.download(data.path, 'contrato_final.pdf', (err) => {
+    if (err) {
+      console.error('Error al enviar el PDF:', err);
+      return res.status(500).send('No se pudo enviar el PDF');
+    }
+
+    // Eliminar el PDF después de enviarlo si quieres
+    
+  });
+}
+const generarContrato = async (idContrato) => {
+  const contratodb = await contratos.findOne({
+    attributes: ["idContrato"],
+    where: { idContrato:idContrato.idContrato },
+    include: [
+      {
+        model: personas,
+        as: "persona",
+        attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno","telefono"],
+        required: true // Esto asegura que sea INNER JOIN
+      }
+    ],
+    raw:true,
+    nest: true
+  });
   try {
     const datos = {
-      nombre: "JAIRO JESUS REYES JIMENEZ",
+      nombre: (contratodb.persona.nombrePersona+""+contratodb.persona.apellidoPaterno+" "+ contratodb.persona.apellidoMaterno).toString().toUpperCase(),
       direccion: "sin direccion",
       bcomp: "×",
       bpriv: "×",
@@ -504,7 +531,6 @@ exports.generarContrato = async (req, res) => {
     const bufferDocx = doc.getZip().generate({ type: 'nodebuffer' });
     const tempDocxPath = path.resolve(__dirname, 'temp.docx');
     fs.writeFileSync(tempDocxPath, bufferDocx);
-    // Convertir docx a HTML con mammoth
     let { value: html } = await mammoth.convertToHtml({ path: tempDocxPath });
     const imageBuffer = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/encabezado.png'));
     const base64Image = imageBuffer.toString('base64');
@@ -536,21 +562,13 @@ exports.generarContrato = async (req, res) => {
 
     // Opcional: borrar temp docx
     fs.unlinkSync(tempDocxPath);
-    console.log(outputPdfPath)
-    return res.download(outputPdfPath, 'contrato_final.pdf', (err) => {
-      if (err) {
-        console.error('Error al enviar el PDF:', err);
-        return res.status(500).send('No se pudo enviar el PDF');
-      }
-
-      // Eliminar el PDF después de enviarlo si quieres
-      fs.unlinkSync(outputPdfPath);
-    });
+    return {"path":outputPdfPath,"telefono":contratodb.persona.telefono}
+    
+    
 
 
   } catch (error) {
     console.error('Error al generar contrato:', error);
-    res.status(500).send('Error generando el contrato');
   }
 };
 
@@ -672,3 +690,25 @@ const contarDepartamentos = async (estatus) => {
   }
 };
 
+const enviarContrato= async (rutaArchivo,telefono) =>
+{
+  const sock = getSock();
+  const res = await Configuracion.findOne();
+  const msj = res.envioContrato;
+  const fecha = new Date();
+  const formatoFecha = fecha.toLocaleDateString('es-MX', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const buffer = fs.readFileSync(rutaArchivo);
+  console.log(`521${telefono}@s.whatsapp.net`);
+  await sock.sendMessage(`521${telefono}@s.whatsapp.net`, {
+    document: buffer,
+    mimetype: 'application/pdf',
+    fileName: 'reporte_diario.pdf',
+    caption: `Fecha: ${formatoFecha}\n\n` + msj
+  });
+}
