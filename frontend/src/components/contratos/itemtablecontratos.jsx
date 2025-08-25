@@ -22,7 +22,8 @@ function ItemTablaContrato({ item }) {
         const response = await axios.get(ruta, {
           responseType: "blob", 
         });
-    
+  
+        console.log(response);
         // Crear blob y URL
         const file = new Blob([response.data], { type: "application/pdf" });
         const fileURL = window.URL.createObjectURL(file);
