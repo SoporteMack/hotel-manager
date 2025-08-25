@@ -12,7 +12,7 @@ exports.listar = async (req, res) => {
 }
 exports.actualizar = async (req, res) => {
     try {
-      const { telefono, telefonoActual, horaRepDiario, numCuenta, banco, titular } = req.body;
+      const { telefono, telefonoActual, horaRepDiario, numCuenta, banco, titular, bienvenida, envioNotas,envioContrato,vencimiento3Dias,vencimiento1Dia }= req.body;
   
       if (!telefonoActual) {
         return res.status(400).json({ error: "El teléfono actual es obligatorio para actualizar" });
@@ -39,6 +39,11 @@ exports.actualizar = async (req, res) => {
       if (numCuenta !== undefined) datosActualizar.numCuenta = numCuenta;
       if (banco !== undefined) datosActualizar.banco = banco;
       if (titular !== undefined) datosActualizar.titular = titular;
+      if(bienvenida !== undefined) datosActualizar.bienvenida = bienvenida;
+      if(envioNotas !== undefined) datosActualizar.envioNotas = envioNotas;
+      if(envioContrato !== undefined) datosActualizar.envioContrato = envioContrato;
+      if( vencimiento3Dias!== undefined) datosActualizar.vencimiento3Dias = vencimiento3Dias;
+      if(vencimiento1Dia !== undefined) datosActualizar.vencimiento1Dia = vencimiento1Dia;
   
       if (Object.keys(datosActualizar).length === 0) {
         return res.status(400).json({ error: "No hay datos para actualizar" });

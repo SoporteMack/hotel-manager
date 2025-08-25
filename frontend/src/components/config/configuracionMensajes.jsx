@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Notyf } from "notyf";
+import { config as lconfig, actualizarConfiguracion } from "../../api/config";
 import "notyf/notyf.min.css";
 
 export default function ConfiguracionMensajes() {
@@ -10,6 +11,7 @@ export default function ConfiguracionMensajes() {
     }));
 
     const [mensajes, setMensajes] = useState({
+        telefonoActual: "",
         bienvenida: "",
         envioNotas: "",
         envioContrato: "",
@@ -24,8 +26,10 @@ export default function ConfiguracionMensajes() {
         const cargarMensajes = async () => {
             setLoading(true);
             try {
-                const res = await getMensajes().then(r => r.data[0] || {});
+                const res = await lconfig().then((res) => res.data[0] || {});
+                console.log(res)
                 setMensajes({
+                    telefonoActual: res.telefono ?? "",
                     bienvenida: res.bienvenida ?? "",
                     envioNotas: res.envioNotas ?? "",
                     envioContrato: res.envioContrato ?? "",
@@ -62,7 +66,7 @@ export default function ConfiguracionMensajes() {
         }
         setLoading(true);
         try {
-            await actualizarMensajes(mensajes);
+            await actualizarConfiguracion(mensajes);
             notyf.current.success("Mensajes actualizados correctamente");
         } catch (error) {
             notyf.current.error("Error al actualizar mensajes");
