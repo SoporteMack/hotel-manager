@@ -48,7 +48,7 @@ const Configuracion = sequelize.define('configuraciones', {
         }
     },
     bienvenida:{
-        type: DataTypes.STRING(50),
+        type: DataTypes.TEXT(50),
         allowNull: false,
         validate: {
             notNull: { msg: 'La bienvenida es obligatorio' },
@@ -56,7 +56,7 @@ const Configuracion = sequelize.define('configuraciones', {
         }
     },
     envioNotas:{
-        type: DataTypes.STRING(50),
+        type: DataTypes.TEXT(50),
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
@@ -64,7 +64,7 @@ const Configuracion = sequelize.define('configuraciones', {
         }
     },
     envioContrato:{
-        type: DataTypes.STRING(50),
+        type: DataTypes.TEXT(50),
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
@@ -72,7 +72,7 @@ const Configuracion = sequelize.define('configuraciones', {
         }
     },
     vencimiento3Dias:{
-        type: DataTypes.STRING(50),
+        type: DataTypes.TEXT(50),
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
@@ -80,7 +80,7 @@ const Configuracion = sequelize.define('configuraciones', {
         }
     },
     vencimiento1Dia:{
-        type: DataTypes.STRING(50),
+        type: DataTypes.TEXT(50),
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },

@@ -1,6 +1,7 @@
 const { where } = require("sequelize");
 const persona = require("../models/personas");
 const { getSock } = require('../utils/baileys');
+const Configuracion = require("../models/configuracion");
 
 exports.listar = async (req,res) =>{
     const lista = await persona.findAll();
@@ -10,14 +11,15 @@ exports.listar = async (req,res) =>{
 exports.crear = async (req,res)=>{
    try{
     const {nombrePersona,apellidoPaterno,apellidoMaterno,telefono,correo} = req.body;
-    await persona.create({
+   const personabd = await persona.create({
         nombrePersona:nombrePersona,
         apellidoPaterno:apellidoPaterno,
         apellidoMaterno:apellidoMaterno,
         telefono:telefono,
         correo:correo
     });
-    mensajeBienvenida(telefono);
+    const nomcom = personabd.nombrePersona + " " + personabd.apellidoPaterno + " " + personabd.apellidoMaterno;
+    mensajeBienvenida(telefono,nomcom);
     res.status(201).json({status:true,msj:"Inquilino Creado con Exito"})
    }catch(e)
    {
@@ -77,18 +79,30 @@ exports.listaActivos = async (req,res) =>
   }
 }
 
-const mensajeBienvenida = async (telefono)=>{
+const mensajeBienvenida = async (telefono,nombre) => {
   const sock = getSock(); 
+  const res = await Configuracion.findOne();
+  const msj = res?.bienvenida ?? "¡Bienvenido!";
+
   if (!sock) {
-    console.log('⏳ Sock aún no está listo');
+    console.log(' Sock aún no está listo');
     return;
   }
-  const numero = '521'+telefono
+
+  const numero = '521' + telefono; // México (52) + 1
+
   try {
-    await sock.sendMessage(`${numero}@s.whatsapp.net`, {
-      text: 'Bienvenido Inquilino'
-    });
+    // Verificar si el número existe en WhatsApp
+    const [result] = await sock.onWhatsApp(numero + "@s.whatsapp.net");
+    if (!result || !result.exists) {
+      console.log(`El número ${telefono} no está en WhatsApp`);
+      return;
+    }
+
+    // Enviar mensaje si existe
+    await sock.sendMessage(result.jid, { text: nombre+'\n\n' +msj });
+    console.log(`Mensaje enviado a ${telefono}`);
   } catch (error) {
-    console.log("error al enviar mensjae",error)
+    console.log("Error al enviar mensaje:", error);
   }
-} 
+};

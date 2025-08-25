@@ -27,7 +27,6 @@ export default function ConfiguracionMensajes() {
             setLoading(true);
             try {
                 const res = await lconfig().then((res) => res.data[0] || {});
-                console.log(res)
                 setMensajes({
                     telefonoActual: res.telefono ?? "",
                     bienvenida: res.bienvenida ?? "",
@@ -100,7 +99,7 @@ export default function ConfiguracionMensajes() {
                             name={name}
                             value={mensajes[name]}
                             onChange={(e) => {
-                                if (e.target.value.length <= 250) {
+                                if (e.target.value.length <= 1000) {
                                     handleChange(e);
                                 }
                             }}
@@ -109,7 +108,7 @@ export default function ConfiguracionMensajes() {
                             placeholder={`Escribe aquí el mensaje de ${label.toLowerCase()}`}
                         />
                         <p className="text-right text-gray-500 text-sm mt-1">
-                            {mensajes[name].length}/250
+                            {mensajes[name].length}/1000
                         </p>
                         {errores[name] && <p className="text-red-500 text-sm mt-1">{errores[name]}</p>}
                     </div>
