@@ -13,6 +13,9 @@ const mammoth = require('mammoth'); // para convertir docx a HTML
 const puppeteer = require('puppeteer');
 const { buscarRentasVencidas } = require('./contrato.controller');
 const Configuracion = require('../models/configuracion');
+const {NumerosALetras} = require('numero-a-letras');
+
+
 exports.tarjeta = async (req, res) => {
   try {
     const { img, img2, fuente, carpeta } = req.params;
@@ -195,13 +198,13 @@ exports.reportediario = async () => {
     const pagos = await pagosbd(fecha);
     const filePath = path.join(__dirname, '../uploads/reporte diario.pdf');
     const pagosAgrupados = {};
-    const depocupados = 
-    pagos.forEach(p => {
-      if (!pagosAgrupados[p.nombre]) {
-        pagosAgrupados[p.nombre] = [];
-      }
-      pagosAgrupados[p.nombre].push(p);
-    });
+    const depocupados =
+      pagos.forEach(p => {
+        if (!pagosAgrupados[p.nombre]) {
+          pagosAgrupados[p.nombre] = [];
+        }
+        pagosAgrupados[p.nombre].push(p);
+      });
     const totalPagos = pagos.reduce((total, item) => total + item.monto, 0);
     const ocupados = await contarDepartamentos(1);
     const disponibles = await contarDepartamentos(0);
@@ -316,7 +319,7 @@ exports.reportediario = async () => {
       if (!rentasvencidas || !Array.isArray(rentasvencidas)) {
         throw new Error('Datos de rentas vencidas no válidos');
       }
-    
+
       if (rentasvencidas.length === 0) {
         doc.text('No hay rentas vencidas.', { align: 'center' });
       } else {
@@ -326,25 +329,25 @@ exports.reportediario = async () => {
             doc.text(`Registro ${index + 1} inválido`, { align: 'left' });
             return;
           }
-    
+
           // Encabezado con nombre del inquilino (con validación)
           const nombreCompleto = [
             r["persona.nombrePersona"] || 'Nombre no disponible',
             r["persona.apellidoPaterno"] || '',
             r["persona.apellidoMaterno"] || ''
           ].join(' ').trim();
-    
+
           doc
             .fillColor('#000')
             .font('Helvetica-Bold')
             .text(`• ${nombreCompleto}`, { underline: true });
-          
+
           doc.moveDown(0.5);
-        
+
           // Detalles del departamento (con validación)
           const departamento = r["departamento.descripcion"] || 'No especificado';
           const contratoId = r.idContrato || 'N/A';
-          
+
           doc
             .font('Helvetica-Bold')
             .fillColor('#333')
@@ -352,19 +355,19 @@ exports.reportediario = async () => {
             .font('Helvetica')
             .fillColor('#666')
             .text(`${departamento} (Contrato #${contratoId})`);
-        
+
           // Detalles de deuda (con validación y formato seguro)
           let deudaTexto = '$0.00 MXN';
           try {
             const deudaValor = parseFloat(r.deuda) || 0;
-            deudaTexto = `$${deudaValor.toLocaleString('es-MX', { 
-              minimumFractionDigits: 2, 
-              maximumFractionDigits: 2 
+            deudaTexto = `$${deudaValor.toLocaleString('es-MX', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
             })} MXN`;
           } catch (e) {
             console.error('Error formateando deuda:', e);
           }
-    
+
           doc
             .font('Helvetica-Bold')
             .fillColor('#333')
@@ -372,7 +375,7 @@ exports.reportediario = async () => {
             .font('Helvetica')
             .fillColor('#E74C3C')
             .text(deudaTexto);
-    
+
           // Detalles del último pago (con validación completa)
           if (r.ultimoPago && typeof r.ultimoPago === 'object') {
             // Formatear fecha
@@ -381,17 +384,17 @@ exports.reportediario = async () => {
               if (r.ultimoPago.fechaPago) {
                 const fechaPago = new Date(r.ultimoPago.fechaPago);
                 if (!isNaN(fechaPago)) {
-                  fechaPagoTexto = fechaPago.toLocaleDateString('es-MX', { 
-                    day: '2-digit', 
-                    month: 'long', 
-                    year: 'numeric' 
+                  fechaPagoTexto = fechaPago.toLocaleDateString('es-MX', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric'
                   });
                 }
               }
             } catch (e) {
               console.error('Error formateando fecha:', e);
             }
-    
+
             // Formatear monto
             let montoTexto = 'ninguno';
             try {
@@ -401,16 +404,16 @@ exports.reportediario = async () => {
             } catch (e) {
               console.error('Error formateando monto:', e);
             }
-    
+
             // Obtener folio y número de pago
-            const folioTexto = (r.ultimoPago.folio !== undefined && r.ultimoPago.folio !== null) 
-              ? r.ultimoPago.folio.toString() 
+            const folioTexto = (r.ultimoPago.folio !== undefined && r.ultimoPago.folio !== null)
+              ? r.ultimoPago.folio.toString()
               : 'ninguno';
-    
+
             const numPagoTexto = (r.ultimoPago.numPago !== undefined && r.ultimoPago.numPago !== null)
               ? r.ultimoPago.numPago.toString()
               : '0';
-    
+
             doc
               .font('Helvetica-Bold')
               .fillColor('#333')
@@ -418,9 +421,9 @@ exports.reportediario = async () => {
               .font('Helvetica')
               .fillColor('#666')
               .text(`${fechaPagoTexto} - ${montoTexto} (Último Folio #${folioTexto})`);
-            
+
             doc.moveDown(0.3);
-    
+
             doc
               .font('Helvetica-Bold')
               .fillColor('#333')
@@ -436,9 +439,9 @@ exports.reportediario = async () => {
               .font('Helvetica')
               .fillColor('#666')
               .text('ninguno');
-            
+
             doc.moveDown(0.3);
-    
+
             doc
               .font('Helvetica-Bold')
               .fillColor('#333')
@@ -447,7 +450,7 @@ exports.reportediario = async () => {
               .fillColor('#666')
               .text('0');
           }
-    
+
           // Espacio entre registros (excepto después del último)
           if (index < rentasvencidas.length - 1) {
             doc.moveDown(1);
@@ -459,7 +462,7 @@ exports.reportediario = async () => {
       doc.text('Ocurrió un error al generar el reporte', { align: 'center' });
     } finally {
       doc.end();
-      
+
     }
 
     return { estatus: true };
@@ -471,45 +474,71 @@ exports.reportediario = async () => {
 
 }
 
-exports.downloadContrato = async (req,res)=>{
-  const idContrato = req.body;
-  const  data= await generarContrato(idContrato);
-  enviarContrato(data.path,data.telefono)
-  res.download(data.path, 'contrato_final.pdf', (err) => {
-    if (err) {
-      console.error('Error al enviar el PDF:', err);
-      return res.status(500).send('No se pudo enviar el PDF');
+exports.downloadContrato = async (req, res) => {
+  try {
+    const idContrato = req.query.idContrato; // <-- corregido
+
+    if (!idContrato) {
+      return res.status(400).send("Falta el idContrato");
     }
 
-    // Eliminar el PDF después de enviarlo si quieres
-    
-  });
-}
-const generarContrato = async (idContrato) => {
-  const contratodb = await contratos.findOne({
-    attributes: ["idContrato"],
-    where: { idContrato:idContrato.idContrato },
-    include: [
-      {
-        model: personas,
-        as: "persona",
-        attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno","telefono"],
-        required: true // Esto asegura que sea INNER JOIN
+    const data = await generarContrato(idContrato);
+    if (!data || !data.path || !data.telefono) {
+      return res.status(404).send("No se pudo generar el contrato");
+    }
+
+    // Opcional: enviar por WhatsApp
+    await enviarContrato(data.path, data.telefono);
+
+    // Enviar PDF al cliente
+    res.download(data.path, "contrato_final.pdf", (err) => {
+      if (err) {
+        console.error("Error al enviar el PDF:", err);
+        return res.status(500).send("No se pudo enviar el PDF");
       }
-    ],
-    raw:true,
-    nest: true
-  });
+
+      // Opcional: eliminar archivo temporal después de enviarlo
+      fs.unlink(data.path, (unlinkErr) => {
+        if (unlinkErr) console.error("Error al eliminar archivo:", unlinkErr);
+      });
+    });
+  } catch (error) {
+    console.error("Error en downloadContrato:", error);
+    res.status(500).send("Error interno del servidor");
+  }
+};
+const generarContrato = async (idContrato) => { 
+  const contratodb = await findContrato(idContrato);
+  const fechai = new Date(contratodb.fechaInicio);
+  const fechaf = new Date(contratodb.fechaTermino);
+  const config = await datosBanco();
+  const montoalfa = NumerosALetras(contratodb.departamento.costo)
+  const nombre = (contratodb.persona.nombrePersona + "" + contratodb.persona.apellidoPaterno + " " + contratodb.persona.apellidoMaterno).toString().toUpperCase()
   try {
     const datos = {
-      nombre: (contratodb.persona.nombrePersona+""+contratodb.persona.apellidoPaterno+" "+ contratodb.persona.apellidoMaterno).toString().toUpperCase(),
+      nombre: nombre,
       direccion: "sin direccion",
       bcomp: "×",
       bpriv: "×",
       cocina: "×",
       sala: "×",
-      lavado: "×"
-
+      lavado: "×",
+      diai: String(fechai.getDate()).padStart(2,'0'),
+      mesi: String(fechai.getMonth()).padStart(2,'0'),
+      anioi: fechai.getFullYear(),
+      diaf: String(fechaf.getDate()).padStart(2,'0'),
+      mesf: String(fechaf.getMonth()).padStart(2,'0'),
+      aniof: fechaf.getFullYear(),
+      monto: contratodb.departamento.costo,
+      montoalfa:montoalfa,
+      banco: config.banco,
+      titular: config.titular,
+      clave: config.numCuenta,
+      ciudadfirma:'TEHUACAN',
+      diafirma: String(fechai.getDate()).padStart(2,'0'),
+      mesfirma: String(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(fechai)).toUpperCase(),
+      aniofirma:String(fechai.getFullYear()),
+      deposito:contratodb.deposito
     }
     const outputPdfPath = path.resolve(__dirname, '../uploads/templates/', 'contrato_final.pdf');
     const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
@@ -562,9 +591,9 @@ const generarContrato = async (idContrato) => {
 
     // Opcional: borrar temp docx
     fs.unlinkSync(tempDocxPath);
-    return {"path":outputPdfPath,"telefono":contratodb.persona.telefono}
-    
-    
+    return { "path": outputPdfPath, "telefono": contratodb.persona.telefono }
+
+
 
 
   } catch (error) {
@@ -681,7 +710,7 @@ const contarDepartamentos = async (estatus) => {
       },
       col: 'numDepartamento' // Especifica la columna a contar
     });
-    
+
     console.log(`Número de departamentos activos: ${resultado}`);
     return resultado;
   } catch (error) {
@@ -690,8 +719,7 @@ const contarDepartamentos = async (estatus) => {
   }
 };
 
-const enviarContrato= async (rutaArchivo,telefono) =>
-{
+const enviarContrato = async (rutaArchivo, telefono) => {
   const sock = getSock();
   const res = await Configuracion.findOne();
   const msj = res.envioContrato;
@@ -712,3 +740,31 @@ const enviarContrato= async (rutaArchivo,telefono) =>
     caption: `Fecha: ${formatoFecha}\n\n` + msj
   });
 }
+
+const findContrato = async (idContrato) => {
+  return  await contratos.findOne({
+    attributes: ["idContrato","fechaInicio","fechaTermino","deposito"],
+    where: { idContrato: idContrato },
+    include: [
+      {
+        model: personas,
+        as: "persona",
+        attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno", "telefono"],
+        required: true // Esto asegura que sea INNER JOIN
+      },
+      {
+        model: departamentos,
+        as:'departamento',
+        attributes:['costo']
+      }
+    ],
+    raw: true,
+    nest: true
+  });
+}
+
+const datosBanco = async  () =>
+{
+  return await Configuracion.findOne({attributes:['banco','numCuenta','titular']});
+}
+

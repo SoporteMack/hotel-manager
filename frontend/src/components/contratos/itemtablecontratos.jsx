@@ -66,6 +66,35 @@ function ItemTablaContrato({ item }) {
           console.error("Error al descargar tarjeta:", error);
         }
     }
+    const handleDescargarContrato = async (idContrato) => {
+      const url = apiUrl + "/api/documentos/generarcontrato";
+    
+      try {
+        const response = await axios.get(url, {
+          params: { idContrato },
+          responseType: "blob", // recibir PDF como blob
+        });
+        console.log(response)
+        // Aseguramos tipo MIME del PDF
+        const blob = new Blob([response.data], { type: "application/pdf" });
+    
+        // Crear URL temporal para el blob
+        const urlBlob = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = urlBlob;
+        link.download = "contrato_final.pdf"; // nombre del archivo
+        document.body.appendChild(link);
+        link.click();
+    
+        // Limpiar recursos
+        link.remove();
+        window.URL.revokeObjectURL(urlBlob);
+      } catch (error) {
+        console.error("Error al descargar el contrato:", error);
+      }
+    };
+    
+    
     return (
         <tr className="border-t hover:bg-gray-50">
             <td className="px-3 py-1 whitespace-nowrap font-medium">{item.idContrato}</td>
@@ -97,11 +126,20 @@ function ItemTablaContrato({ item }) {
                 </span>
             </td>
             <td className="px-3 py-2 whitespace-nowrap">
+                <span onClick={() => handleDescargarContrato(item.idContrato)} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 cursor-pointer transition">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v12" />
+                    </svg>
+                    Contrato
+                </span>
+            </td>
+            <td className="px-3 py-2 whitespace-nowrap">
                 <span className={`inline-block px-2 py-1 text-xs rounded-full  ${item.estatus ? 'bg-green-100 text-green-700' : 'bg-green-100 text-red-700'}`}>
                     {item.estatus ? 'Activo' : 'Inactivo'}
                 </span>
 
             </td>
+            
             <td className="px-3 py-2 whitespace-nowrap text-right">
                 <button className="text-yellow-600 hover:underline mr-3">Editar</button>
             </td>
