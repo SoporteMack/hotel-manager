@@ -11,8 +11,9 @@ function dashboard() {
             const fecha = new Date();
             const anio = fecha.getFullYear();
             const mes = String(fecha.getMonth()+1).padStart(2,'0');
-            const dia = String(fecha.getDay()).padStart(2,'0');
+            const dia = String(fecha.getDate()).padStart(2,'0');
             const fechaFormateada =  anio+'-'+mes+'-'+dia
+            console.log(fechaFormateada)
             const res = await pagos(fechaFormateada);
             setpagosdeldia(res.data.monto)
         } catch (error) {

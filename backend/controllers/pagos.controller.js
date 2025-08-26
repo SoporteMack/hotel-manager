@@ -120,13 +120,14 @@ exports.editar = async (req, res) => {
 exports.ingresosdeldia = async (req, res) => {
   try {
     const dia = req.query.fecha;
+    console.log(dia)
 
     if (!dia) {
       return res.status(400).json({ status: false, msg: 'Fecha requerida' });
     }
 
-    const start = new Date(`${dia}T00:00:00.000Z`);
-    const end = new Date(`${dia}T23:59:59.999Z`);
+    const start = new Date(`${dia}T00:00:00.000`);
+    const end = new Date(`${dia}T23:59:59.999`);
 
     const resultado = await pagos.findOne({
       attributes: [[fn('SUM', col('monto')), 'pagos']],

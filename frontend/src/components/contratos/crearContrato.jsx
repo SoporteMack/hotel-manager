@@ -1,24 +1,27 @@
-import { useEffect, useState,useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import Camara from "./camara";
 import { listaActivosInquilinos } from "../../api/Inquilinos";
 import { departamentosactivos } from "../../api/departamentos";
 import Lista from "../items/lista";
 import { crearContrato } from "../../api/contratos";
 import { Notyf } from "notyf";
+import axios from "axios";
 
 function CrearContrato() {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const [loading, setLoading] = useState(false);
   const notyf = useRef(new Notyf({
     duration: 10000,
     dismissible: true,
     position: { x: 'center', y: 'top' },
-}));
+  }));
   const [listaInquilinos, setListaInquilinos] = useState([]);
   const [listaDepartamentos, setListaDepartamentos] = useState([]);
   const [inquilinos, setInquilinos] = useState(null);
   const [departamento, setDepartamento] = useState(null);
   const [fechaInicio, setFechaInicio] = useState("");
   const [fechaTermino, setFechaTermino] = useState("");
-  const [deposito,setDeposito] = useState(0);
+  const [deposito, setDeposito] = useState(0);
   const [estatus, setEstatus] = useState(true);
   const [mostrarCamaraPara, setMostrarCamaraPara] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -82,7 +85,7 @@ function CrearContrato() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!inquilinos || !departamento || !fechaInicio || !fechaTermino || deposito<=0) {
+    if (!inquilinos || !departamento || !fechaInicio || !fechaTermino || deposito <= 0) {
       notyf.current.error("valores no validos para crear contrato")
       return;
     }
@@ -96,10 +99,11 @@ function CrearContrato() {
     Object.entries(docs).forEach(([key, file]) => {
       if (file) formData.append(key, file);
     });
+    setLoading(true);
     try {
-
-      await crearContrato(formData);
-
+      const res = await crearContrato(formData).then(res => { return res.data });
+      const idContrato = res.idContrato;
+      await handleDescargarContrato(idContrato);
       // Limpiar formulario
       setInquilinos(null);
       setDepartamento(null);
@@ -117,10 +121,14 @@ function CrearContrato() {
       // Actualizar listas de departamentos y inquilinos
       await cargarListas();
 
-      alert("Contrato guardado correctamente");
+      notyf.current.success(res.msg)
+
     } catch (error) {
       console.log(error);
       alert("Error al guardar contrato");
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -129,11 +137,47 @@ function CrearContrato() {
     { nombre: "ineA", label: "INE parte Treasera" },
     { nombre: "comprobatededomicilio", label: "Comprobante de domicilio" },
     { nombre: "tarjetaD", label: "Tarjeta de trabajo o estudiante parte delantera" },
-    { nombre: "tarjetaA", label:"Tarjeta de trabajo o estudiante parte trasera"}
+    { nombre: "tarjetaA", label: "Tarjeta de trabajo o estudiante parte trasera" }
   ];
 
+  const handleDescargarContrato = async (idContrato) => {
+    const url = apiUrl + "/api/documentos/generarcontrato";
+
+    try {
+      const response = await axios.get(url, {
+        params: { idContrato },
+        responseType: "blob", // recibir PDF como blob
+      });
+      // Aseguramos tipo MIME del PDF
+      const blob = new Blob([response.data], { type: "application/pdf" });
+
+      // Crear URL temporal para el blob
+      const urlBlob = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = urlBlob;
+      link.download = "contrato_final.pdf"; // nombre del archivo
+      document.body.appendChild(link);
+      link.click();
+
+      // Limpiar recursos
+      link.remove();
+      window.URL.revokeObjectURL(urlBlob);
+    } catch (error) {
+      console.error("Error al descargar el contrato:", error);
+    }
+  };
   return (
+
     <div className="max-w-3xl mx-auto p-4 bg-white rounded-lg shadow-md">
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-md flex flex-col items-center gap-3">
+            <div className="loader border-4 border-t-4 border-gray-200 border-t-green-500 rounded-full w-12 h-12 animate-spin"></div>
+            <span className="text-gray-700 font-medium">Guardando contrato...</span>
+          </div>
+        </div>
+      )}
+
       <h2 className="text-2xl font-semibold text-center mb-4">Nuevo Contrato</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -173,15 +217,15 @@ function CrearContrato() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Deposito</label>
-            <input
-              type="number"
-              className="w-full p-2 border rounded-md text-2xl"
-              value={deposito}
-              onChange={(e) => setDeposito(e.target.value)}
-              required
-            />
-         
+          <label className="block text-sm font-medium text-gray-700 mb-1">Deposito</label>
+          <input
+            type="number"
+            className="w-full p-2 border rounded-md text-2xl"
+            value={deposito}
+            onChange={(e) => setDeposito(e.target.value)}
+            required
+          />
+
         </div>
         {/* Estatus */}
         <div className="flex items-center gap-2">

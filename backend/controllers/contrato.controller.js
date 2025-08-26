@@ -73,14 +73,13 @@ exports.crear = async (req, res) => {
     data.tarjetaA = guardarArchivo("tarjetaA", nombre);
 
 
-    await contratos.create(data);
-
+    const condb = await contratos.create(data);
     await departamentos.update(
       { estatus: false },
       { where: { numDepartamento: data.numDepartamento } }
     );
 
-    res.status(201).json({ msg: "Contrato creado correctamente" });
+    res.status(201).json({ msg: "Contrato creado correctamente",idContrato:condb.idContrato});
   } catch (e) {
     // Limpia archivos si hay error
     archivosGuardados.forEach(file => {
