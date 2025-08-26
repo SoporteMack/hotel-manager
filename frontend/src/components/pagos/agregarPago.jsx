@@ -14,6 +14,7 @@ function AgregarPagos() {
     const [paterno, setPaterno] = useState("");
     const [materno, setMaterno] = useState("");
     const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [inquilinos, setInquilinos] = useState([]);
@@ -57,16 +58,19 @@ function AgregarPagos() {
                 monto: pago,
                 fechaPago: fechaFormateada,
                 idContrato: data.idContrato,
-                deuda:data.deuda
+                deuda: data.deuda
             }
-            try{
+            setLoading(true);
+            try {
                 await realizarPago(datapago);
                 notyf.current.success("Pago realizado correctamente");
                 setData(null);
-            }catch(e)
-            {
+            } catch (e) {
                 notyf.current.success("error al relizar al pago volver a intertarlo mas tarde");
                 setData(null);
+            }
+            finally {
+                setLoading(false);
             }
         }
         else {
@@ -84,6 +88,14 @@ function AgregarPagos() {
 
     return (
         <section className="flex-1 flex flex-col h-full p-4 md:p-6">
+            {loading && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                    <div className="bg-white p-6 rounded shadow-md flex flex-col items-center gap-3">
+                        <div className="loader border-4 border-t-4 border-gray-200 border-t-green-500 rounded-full w-12 h-12 animate-spin"></div>
+                        <span className="text-gray-700 font-medium">Guardando Pago...</span>
+                    </div>
+                </div>
+            )}
             <div className="mb-6">
                 <h1 className="text-2xl font-semibold text-gray-800">Agregar Pagos</h1>
                 <p className="text-sm text-gray-500">Sección para agregar pagos a los contratos correspondientes</p>
