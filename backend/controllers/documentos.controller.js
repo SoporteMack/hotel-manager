@@ -469,7 +469,7 @@ exports.reportediario = async () => {
 
 
   } catch (error) {
-    return { estatus: false };
+    return { estatus: false,error:error};
   }
 
 }
