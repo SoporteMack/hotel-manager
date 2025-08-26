@@ -77,6 +77,10 @@ async function programarCron() {
       console.log('⏰ Ejecutando cron de reporte diario');
 
       try {
+        if (fs.existsSync(rutaArchivo)) {
+          fs.unlinkSync(rutaArchivo);
+          console.log("🗑️ Archivo anterior borrado");
+        }
         await reportediario();
         await esperarArchivoListo(rutaArchivo);
 
