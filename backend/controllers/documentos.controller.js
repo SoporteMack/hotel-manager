@@ -630,11 +630,8 @@ const contrato = async (folio) => {
 const pagosbd = async (fecha) => {
   const nuevafecha = fromatearfecha(fecha)
   
-  const start = new Date(`${nuevafecha}T00:00:00.000Z`);
-    const end = new Date(`${nuevafecha}T23:59:59.999Z`);
-    console.log('-------------------------------------------------------------------'+
-      +start+'----------------'+end+
-      +'------------------------------------------')
+  const start = new Date(`${nuevafecha}T00:00:00.000`);
+    const end = new Date(`${nuevafecha}T23:59:59.999`);
   const response = await pagos.findAll(
     {
       attributes: ["folio", "monto", "fechaPago"],
