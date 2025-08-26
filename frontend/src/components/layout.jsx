@@ -4,7 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
 import Sidebar from './sidebar';
 import Header from './partials/header';
-import UpdatePrompt from './components/UpdatePrompt';
+import UpdatePrompt from './UpdatePrompt';
 
 function Layout() {
   const { logout } = useAuth();
