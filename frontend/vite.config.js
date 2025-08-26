@@ -33,7 +33,7 @@ export default defineConfig({
         display: 'standalone',
         scope: '/',
         start_url: '/',
-        version: '1.0.3',
+        version: '1.1.0',
         icons: [
           {
             src: '/icons/icon-128x128.png',
