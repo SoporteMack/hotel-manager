@@ -629,9 +629,9 @@ const contrato = async (folio) => {
 
 const pagosbd = async (fecha) => {
   const nuevafecha = fromatearfecha(fecha)
-  console.log(fecha)
-  const start = new Date(`${nuevafecha}T00:00:00.000`);
-    const end = new Date(`${nuevafecha}T23:59:59.999`);
+  
+  const start = new Date(`${nuevafecha}T00:00:00.000Z`);
+    const end = new Date(`${nuevafecha}T23:59:59.999Z`);
     console.log('-------------------------------------------------------------------'+
       +start+'----------------'+end+
       +'------------------------------------------')
@@ -699,7 +699,7 @@ const rentasvencidas = async () => {
 
 const fromatearfecha = (fecha) => {
   const [dia, mes, anio] = fecha.split('/')
-  return `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+  return `${anio}-${dia.padStart(2, '0')}-${mes.padStart(2, '0')}`;
 }
 
 // 1. Crear un PDF temporal con pdfkit (contenido nuevo)
