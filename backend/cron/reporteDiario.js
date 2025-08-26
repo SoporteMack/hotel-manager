@@ -12,7 +12,7 @@ let currentJob = null;
 let lastHora = null;
 
 // Espera a que el archivo exista y su tamaño se estabilice
-async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
+async function esperarArchivoListo(ruta, maxEspera = 50000, intervalo = 300) {
   return new Promise((resolve, reject) => {
     const inicio = Date.now();
     let lastSize = 0;
