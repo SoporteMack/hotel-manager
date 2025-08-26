@@ -4,12 +4,14 @@ import { Outlet } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
 import Sidebar from './sidebar';
 import Header from './partials/header';
+import UpdatePrompt from './components/UpdatePrompt';
 
 function Layout() {
   const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false); // estado de visibilidad
   return (
     <>
+     <UpdatePrompt />  {/* Aquí el componente de aviso */}
     <div className="flex flex-col bg-gray-100 h-dvh overflow-hidden">
       <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
   
