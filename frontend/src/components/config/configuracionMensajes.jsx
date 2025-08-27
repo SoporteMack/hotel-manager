@@ -3,7 +3,7 @@ import { Notyf } from "notyf";
 import { config as lconfig, actualizarConfiguracion } from "../../api/config";
 import "notyf/notyf.min.css";
 
-export default function ConfiguracionMensajes() {
+export default function ConfiguracionMensajes({setLoadingL}) {
     const notyf = useRef(new Notyf({
         duration: 7000,
         dismissible: true,
@@ -25,6 +25,7 @@ export default function ConfiguracionMensajes() {
     useEffect(() => {
         const cargarMensajes = async () => {
             setLoading(true);
+            setLoadingL(true);
             try {
                 const res = await lconfig().then((res) => res.data[0] || {});
                 setMensajes({
@@ -39,6 +40,7 @@ export default function ConfiguracionMensajes() {
                 notyf.current.error("Error al cargar mensajes");
             } finally {
                 setLoading(false);
+                setLoadingL(false);
             }
         };
         cargarMensajes();

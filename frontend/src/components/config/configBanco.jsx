@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { config as lconfig, actualizarConfiguracion } from "../../api/config";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
-function ConfiguracionBanco() {
+function ConfiguracionBanco({setLoadingL}) {
     const notyf = useRef(new Notyf({
         duration: 7000,
         dismissible: true,
@@ -17,7 +17,6 @@ function ConfiguracionBanco() {
     });
 
     const [loading, setLoading] = useState(false);
-
     // Para controlar errores simples de validación
     const [errores, setErrores] = useState({});
 
@@ -77,6 +76,7 @@ function ConfiguracionBanco() {
         }
 
         setLoading(true);
+        setLoadingL(true);
         try {
             await actualizarConfiguracion(config);
             notyf.current.success("Configuración actualizada correctamente");
@@ -84,6 +84,7 @@ function ConfiguracionBanco() {
             notyf.current.error("Error al actualizar configuración");
         } finally {
             setLoading(false);
+            setLoadingL(false);
         }
     };
     return (

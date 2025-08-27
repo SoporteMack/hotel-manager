@@ -3,7 +3,7 @@ import { config as lconfig, actualizarConfiguracion } from "../../api/config";
 import { Notyf } from "notyf";
 import "notyf/notyf.min.css";
 
-function ConfiguracionNotificaciones() {
+function ConfiguracionNotificaciones({setLoadingL}) {
   const notyf = useRef(
     new Notyf({
       duration: 7000,
@@ -57,6 +57,7 @@ function ConfiguracionNotificaciones() {
     }
 
     setLoading(true);
+    setLoadingL(true)
     try {
       await actualizarConfiguracion(config);
       notyf.current.success("Configuración actualizada correctamente");
@@ -64,6 +65,7 @@ function ConfiguracionNotificaciones() {
       notyf.current.error("Error al actualizar configuración");
     } finally {
       setLoading(false);
+      setLoadingL(false);
       cargarConfig();
     }
   };

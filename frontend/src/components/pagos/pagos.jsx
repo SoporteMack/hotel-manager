@@ -9,9 +9,10 @@ function Pagos() {
   const [fechaFinal, setFechaFinal] = useState("");
   const [pagos, setPagos] = useState([]);
   const [search, setSearch] = useState("");
-  const [isOpen,setIsOpen] = useState(false);
-  const [item,setItem] = useState();
-  const onClose = async ()=>{
+  const [isOpen, setIsOpen] = useState(false);
+  const [item, setItem] = useState();
+  const [loading, setLoading] = useState(false);
+  const onClose = async () => {
     setItem();
     setIsOpen(false);
     const fechas = validarFecha();
@@ -24,7 +25,7 @@ function Pagos() {
       notyf.current.error("Error al consultar pagos.");
     }
   }
-  const handleEditar = async (pago)=>{
+  const handleEditar = async (pago) => {
     setItem(pago);
     setIsOpen(true);
   }
@@ -74,12 +75,14 @@ function Pagos() {
     const fechas = validarFecha();
     if (!fechas) return;
 
+    setLoading(true)
     try {
       const res = await pagosxfecha(fechas.inicio, fechas.fin);
       setPagos(res.data.lista || []);
     } catch (error) {
       notyf.current.error("Error al consultar pagos.");
     }
+    finally { setLoading(false) }
   };
 
   const formatFechaHoraLocal = (fecha) => {
@@ -100,6 +103,14 @@ function Pagos() {
 
   return (
     <section className="h-full p-6 flex flex-col">
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-md flex flex-col items-center gap-3">
+            <div className="loader border-4 border-t-4 border-gray-200 border-t-green-500 rounded-full w-12 h-12 animate-spin"></div>
+            <span className="text-gray-700 font-medium">Guardando Pago...</span>
+          </div>
+        </div>
+      )}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-title-section">Pagos</h1>
         <p className="text-sm text-description-section">Gestiona los Pagos registrados en el sistema</p>
@@ -164,7 +175,7 @@ function Pagos() {
                   {formatFechaHoraLocal(pago.fechaPago)}
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
-                  <button onClick={()=>handleEditar(pago)}>editar</button>
+                  <button onClick={() => handleEditar(pago)}>editar</button>
                 </td>
               </tr>
             ))}
@@ -179,9 +190,9 @@ function Pagos() {
         </table>
       </div>
 
-{
-  item?(<ModalEditarPago isOpen={isOpen} setIsOpen={setIsOpen} onClose={onClose} data={item}/>):(<></>)
-}
+      {
+        item ? (<ModalEditarPago isOpen={isOpen} setIsOpen={setIsOpen} onClose={onClose} data={item} />) : (<></>)
+      }
     </section>
   );
 }
