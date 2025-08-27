@@ -45,7 +45,7 @@ function dashboard() {
                 <TarjetaInicio titulo={"Porcentaje Ocupados"} valor={ `${ocupacion.porcentaje}`} />
             </div>
 
-            <h2 className="text-[22px] font-bold px-4 pb-3 pt-5">Recent Activity</h2>
+            <h2 className="text-[22px] font-bold px-4 pb-3 pt-5">Ultimos Ingresos</h2>
 
         </div>
     );

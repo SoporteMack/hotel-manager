@@ -41,7 +41,7 @@ function Login() {
         onSubmit={handleSubmit}
       >
         <h2 className="text-text-secondary text-2xl sm:text-3xl font-bold leading-tight text-center pb-6">
-          Welcome back
+          Pensión Monet
         </h2>
 
         <div className="flex flex-col gap-5">
