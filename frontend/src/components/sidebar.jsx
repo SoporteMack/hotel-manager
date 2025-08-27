@@ -9,7 +9,7 @@ function Sidebar({ isOpen, onClose }) {
       <div className="flex h-full min-h-[700px] flex-col justify-between bg-white p-4">
         <div className="flex flex-col gap-4">
 
-          <h1 className="text-[#121516] text-base font-medium leading-normal">Hotel Manager</h1>
+          <h1 className="text-[#121516] text-base font-medium leading-normal">Pensión Monet</h1>
 
           <div className="flex flex-col gap-2">
 

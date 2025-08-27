@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react"
-function ItemTablaContrato({ item }) {
+function ItemTablaContrato({ item,setLoading }) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas"
     const [base, setbase] = useState("");
@@ -17,7 +17,7 @@ function ItemTablaContrato({ item }) {
       const ineaA = img2.replace(/\\/g, "/").split("/").pop();
     
       const ruta = apiUrl+baseurl+base + "/" + ineaD + "/" + ineaA;
-    
+    setLoading(true)
       try {
         const response = await axios.get(ruta, {
           responseType: "blob", 
@@ -38,12 +38,16 @@ function ItemTablaContrato({ item }) {
         window.URL.revokeObjectURL(fileURL);
       } catch (error) {
         console.error("Error al descargar tarjeta:", error);
+      }finally
+      {
+        setLoading(false)
       }
     };
     const handleDescargarComprobante = async () => {
         const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();
         const ruta = base + "/" + img;
         const url = `api/documentos/obtenercomprobante${ruta}`;
+        setLoading(true)
         try {
           const response = await axios.get(url, {
             responseType: "blob", 
@@ -64,11 +68,11 @@ function ItemTablaContrato({ item }) {
           window.URL.revokeObjectURL(fileURL);
         } catch (error) {
           console.error("Error al descargar tarjeta:", error);
-        }
+        }finally{setLoading(false)}
     }
     const handleDescargarContrato = async (idContrato) => {
       const url = apiUrl + "/api/documentos/generarcontrato";
-    
+    setLoading(true)
       try {
         const response = await axios.get(url, {
           params: { idContrato },
@@ -91,7 +95,7 @@ function ItemTablaContrato({ item }) {
         window.URL.revokeObjectURL(urlBlob);
       } catch (error) {
         console.error("Error al descargar el contrato:", error);
-      }
+      }finally{setLoading(false)}
     };
     
     

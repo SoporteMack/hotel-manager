@@ -7,6 +7,7 @@ function Contratos() {
   const [filterStatus, setFilterStatus] = useState('Activo');
   const [contratos, setContratos] = useState(null); // null = aún no cargado
   const [search, setSearch] = useState(''); // siempre como string
+  const [loading,setLoading] = useState(false);
 
   useEffect(() => {
     listar();
@@ -40,10 +41,16 @@ function Contratos() {
     });
   }, [contratos, search, filterStatus]);
 
-
   return (
     <section className="max-w-6xl mx-auto p-6">
-
+      {loading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded shadow-md flex flex-col items-center gap-3">
+            <div className="loader border-4 border-t-4 border-gray-200 border-t-green-500 rounded-full w-12 h-12 animate-spin"></div>
+            <span className="text-gray-700 font-medium">Guardando contrato...</span>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="flex items-center gap-2">
           <label htmlFor="filtro" className="text-sm font-medium text-gray-700">Estado:</label>
@@ -81,7 +88,7 @@ function Contratos() {
       {contratos === null ? (
         <p className="text-gray-600 text-center mt-10">Cargando contratos...</p>
       ) : (
-        <TableContratos items={filtredItems} />
+        <TableContratos items={filtredItems} setLoading={setLoading} />
       )}
     </section>
   );
