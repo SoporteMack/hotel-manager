@@ -31,7 +31,7 @@ function TableContratos({ items, onEditar,setLoading,setIsOpen,setContrato}) {
       ) : (
         <div className="w-full px-4 py-6 bg-gray-50 space-y-4 min-h-screen">
           {items.map((item) => (
-            <ItemCardContratoMobile key={item.idContrato} item={item} onEditar={onEditar}  setIsOpen={setIsOpen}  setContrato={setContrato}/>
+            <ItemCardContratoMobile key={item.idContrato} item={item} onEditar={onEditar}  setLoading={setLoading}setIsOpen={setIsOpen}  setContrato={setContrato}/>
           ))}
         </div>
       )}

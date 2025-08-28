@@ -157,7 +157,7 @@ function ItemTablaContrato({ item,setLoading,setIsOpen,setContrato }) {
         </>
     )
 }
-function ItemCardContratoMobile({ item,setIsOpen,setContrato }) {
+function ItemCardContratoMobile({ item,setLoading,setIsOpen,setContrato}) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas"
   const [base, setBase] = useState("");
@@ -228,6 +228,33 @@ function ItemCardContratoMobile({ item,setIsOpen,setContrato }) {
     setContrato(contrato)
     setIsOpen(true);
   }
+  const handleDescargarContrato = async (idContrato) => {
+    const url = apiUrl + "/api/documentos/generarcontrato";
+  setLoading(true)
+    try {
+      const response = await axios.get(url, {
+        params: { idContrato },
+        responseType: "blob", // recibir PDF como blob
+      });
+      console.log(response)
+      // Aseguramos tipo MIME del PDF
+      const blob = new Blob([response.data], { type: "application/pdf" });
+  
+      // Crear URL temporal para el blob
+      const urlBlob = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = urlBlob;
+      link.download = "contrato_final.pdf"; // nombre del archivo
+      document.body.appendChild(link);
+      link.click();
+  
+      // Limpiar recursos
+      link.remove();
+      window.URL.revokeObjectURL(urlBlob);
+    } catch (error) {
+      console.error("Error al descargar el contrato:", error);
+    }finally{setLoading(false)}
+  };
   
     return (
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 mb-5 transition hover:shadow-md">
@@ -274,6 +301,13 @@ function ItemCardContratoMobile({ item,setIsOpen,setContrato }) {
           >
             <DownloadIcon />
             Comprobante
+          </button>
+          <button
+            onClick={() => handleDescargarContrato(item.idContrato)}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition"
+          >
+            <DownloadIcon />
+            Contrato
           </button>
         </div>
   
