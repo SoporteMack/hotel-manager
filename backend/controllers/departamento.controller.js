@@ -81,3 +81,22 @@ exports.listarActivos = async (req,res)=>{
   }
   
 }
+
+exports.listarActivosyActual  = async (req,res) =>{
+  const actual = req.query.numDepartamento;
+  try{
+    const lista = await departamentos.findAll({
+      attributes:["numDepartamento","descripcion"],
+      where:{
+        estatus:true,
+      }
+    })
+    const depactual = await departamentos.findOne({where:{numDepartamento:actual}})
+    const nuevaLista = lista.concat(depactual);
+    res.status(200).json({status:true,lista:nuevaLista})
+  }catch(e)
+  {
+    console.log(e)
+    res.status(500).json({status:false,msg:"error al cargar departamentos"})
+  }
+}

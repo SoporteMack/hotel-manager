@@ -1,9 +1,9 @@
 import axios from "axios";
 import { useEffect, useState } from "react"
-function ItemTablaContrato({ item,setLoading }) {
+function ItemTablaContrato({ item,setLoading,setIsOpen,setContrato }) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas"
-    const [base, setbase] = useState("");
+  const [base, setbase] = useState("");
     useEffect(() => {
         const ruta = item.INED;
         const partes = ruta.replace(/\\/g, "/").split("/");
@@ -98,8 +98,12 @@ function ItemTablaContrato({ item,setLoading }) {
       }finally{setLoading(false)}
     };
     
-    
+    const handleEditar = (contrato)=>{
+      setContrato(contrato)
+      setIsOpen(true);
+    }
     return (
+      <>
         <tr className="border-t hover:bg-gray-50">
             <td className="px-3 py-1 whitespace-nowrap font-medium">{item.idContrato}</td>
             <td className="px-3 py-2 whitespace-nowrap">{`${item.persona.nombrePersona} ${item.persona.apellidoPaterno} ${item.persona.apellidoMaterno}`}</td>
@@ -145,12 +149,15 @@ function ItemTablaContrato({ item,setLoading }) {
             </td>
             
             <td className="px-3 py-2 whitespace-nowrap text-right">
-                <button className="text-yellow-600 hover:underline mr-3">Editar</button>
+                <button className="text-yellow-600 hover:underline mr-3" onClick={()=>handleEditar(item)}>Editar</button>
             </td>
+            
         </tr>
+        
+        </>
     )
 }
-function ItemCardContratoMobile({ item, onEditar, onDelete }) {
+function ItemCardContratoMobile({ item,setIsOpen,setContrato }) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas"
   const [base, setBase] = useState("");
@@ -216,6 +223,11 @@ function ItemCardContratoMobile({ item, onEditar, onDelete }) {
         console.error("Error al descargar tarjeta:", error);
       }
   }
+
+  const handleEditar =async (contrato) =>{
+    setContrato(contrato)
+    setIsOpen(true);
+  }
   
     return (
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 mb-5 transition hover:shadow-md">
@@ -267,7 +279,7 @@ function ItemCardContratoMobile({ item, onEditar, onDelete }) {
   
         <div className="flex justify-end gap-3">
           <button
-            onClick={() =>{navigate(`/editarcontrato/`)}}
+            onClick={()=>handleEditar(item)}
             className="flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-yellow-700 border border-yellow-300 rounded-md hover:bg-yellow-50 transition"
           >
             Editar

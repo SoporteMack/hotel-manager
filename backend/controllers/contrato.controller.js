@@ -247,3 +247,14 @@ exports.buscarRentasVencidas = async () => {
     return[];
   }
 }
+
+exports.actualizarContratogeneral= async (req,res)=>{
+  const data = req.body;
+  try{
+    console.log(data);
+    return res.status(200).Json({estatus:true})
+  }catch(error)
+  {
+
+  }
+}

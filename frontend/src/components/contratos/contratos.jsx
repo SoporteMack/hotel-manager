@@ -3,11 +3,16 @@ import { listarContratos } from '../../api/contratos';
 import TableContratos from './tablacontratos';
 import Lista from '../items/lista';
 
+import EditarContrato from "./editarContratos";
+
 function Contratos() {
   const [filterStatus, setFilterStatus] = useState('Activo');
   const [contratos, setContratos] = useState(null); // null = aún no cargado
   const [search, setSearch] = useState(''); // siempre como string
   const [loading,setLoading] = useState(false);
+  const [isOpen,setIsOpen] = useState(false);
+  const onClose = ()=> setIsOpen(false)
+  const [dataContrato,setDataContrato] = useState()
 
   useEffect(() => {
     listar();
@@ -88,7 +93,11 @@ function Contratos() {
       {contratos === null ? (
         <p className="text-gray-600 text-center mt-10">Cargando contratos...</p>
       ) : (
-        <TableContratos items={filtredItems} setLoading={setLoading} />
+        <>
+        <TableContratos items={filtredItems} setLoading={setLoading} setIsOpen={setIsOpen} setContrato={setDataContrato}/>
+        
+          {dataContrato && (<EditarContrato onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} contrato={dataContrato} setData={setDataContrato}/>)}
+        </>
       )}
     </section>
   );
