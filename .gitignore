@@ -25,6 +25,7 @@ test/
 *.log
 *.env
 .git
+*.pem
 
 # Builds
 dist/

@@ -498,22 +498,61 @@ exports.downloadContrato = async (req, res) => {
       }
 
       // Opcional: eliminar archivo temporal después de enviarlo
-      fs.unlink(data.path, (unlinkErr) => {
-        if (unlinkErr) console.error("Error al eliminar archivo:", unlinkErr);
-      });
+      
     });
   } catch (error) {
     console.error("Error en downloadContrato:", error);
     res.status(500).send("Error interno del servidor");
   }
 };
+
+exports.solodescargacontrato = async (req,res) =>{
+ 
+  try {
+    const idContrato = req.query.idContrato; // <-- corregido
+
+    if (!idContrato) {
+      return res.status(400).send("Falta el idContrato");
+    }
+    const contratodb = await contratos.findOne({
+      attributes:["idContrato","idPersona"],
+      include:[
+        {
+          model:personas,
+          as:"persona",
+          attributes:["nombrePersona","apellidoPaterno","apellidoMaterno","telefono"]
+        }
+      ],
+      where:{idContrato:idContrato}
+    })
+    const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
+    const pathdoc = __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf';
+    //return res.status(200).json({contratodb,"path":pathdoc,nombre})
+    // Opcional: enviar por WhatsApp
+    await enviarContrato(pathdoc, contratodb.persona.telefono);
+
+    // Enviar PDF al cliente
+    res.download(pathdoc, nombre+"contrato_final.pdf", (err) => {
+      if (err) {
+        console.error("Error al enviar el PDF:", err);
+        return res.status(500).send("No se pudo enviar el PDF");
+      }
+
+      // Opcional: eliminar archivo temporal después de enviarlo
+      
+    });
+  } catch (error) {
+    console.error("Error en downloadContrato:", error);
+    res.status(500).send("Error interno del servidor");
+  }
+}
 const generarContrato = async (idContrato) => { 
   const contratodb = await findContrato(idContrato);
   const fechai = new Date(contratodb.fechaInicio);
   const fechaf = new Date(contratodb.fechaTermino);
   const config = await datosBanco();
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
-  const nombre = (contratodb.persona.nombrePersona + "" + contratodb.persona.apellidoPaterno + " " + contratodb.persona.apellidoMaterno).toString().toUpperCase()
+  const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
   try {
     const datos = {
       nombre: nombre,
@@ -540,7 +579,7 @@ const generarContrato = async (idContrato) => {
       aniofirma:String(fechai.getFullYear()),
       deposito:contratodb.deposito
     }
-    const outputPdfPath = path.resolve(__dirname, '../uploads/templates/', 'contrato_final.pdf');
+    const outputPdfPath = path.resolve(__dirname, '../uploads/'+nombre, 'contrato_final.pdf');
     const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
     const zip = new PizZip(contenido);
     const options = {
@@ -581,7 +620,7 @@ const generarContrato = async (idContrato) => {
     await page.setContent(html, { waitUntil: 'networkidle0' });
 
     await page.pdf({
-      path: __dirname + '/../uploads/templates/' + 'contrato_final.pdf',
+      path: __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf',
       format: 'A4',
       printBackground: true,
       margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
@@ -743,7 +782,7 @@ const enviarContrato = async (rutaArchivo, telefono) => {
 
 const findContrato = async (idContrato) => {
   return  await contratos.findOne({
-    attributes: ["idContrato","fechaInicio","fechaTermino","deposito"],
+    attributes: ["idContrato","fechaInicio","fechaTermino","deposito","idPersona","numDepartamento"],
     where: { idContrato: idContrato },
     include: [
       {

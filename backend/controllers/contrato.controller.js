@@ -48,9 +48,9 @@ exports.crear = async (req, res) => {
     if (!persona) return res.status(404).json({ msg: "Persona no encontrada" });
 
     const nombre = `${data.idPersona}_${persona.nombrePersona}_${persona.apellidoPaterno}_${persona.apellidoMaterno}`.replace(/\s+/g, "_");
-    const fechaObj = new Date(data.fechaInicio);
-    const fechaTexto = `contrato_${fechaObj.getDate().toString().padStart(2, "0")}_${(fechaObj.getMonth() + 1).toString().padStart(2, "0")}_${fechaObj.getFullYear()}`;
-    const carpeta = path.join("uploads", `${nombre}_${fechaTexto}`);
+    //const fechaObj = new Date(data.fechaInicio);
+    //const fechaTexto = `contrato_${fechaObj.getDate().toString().padStart(2, "0")}_${(fechaObj.getMonth() + 1).toString().padStart(2, "0")}_${fechaObj.getFullYear()}`;_${fechaTexto}
+    const carpeta = path.join("uploads", `${nombre}`);
     fs.mkdirSync(carpeta, { recursive: true });
 
     const guardarArchivo = (campo, nombre) => {

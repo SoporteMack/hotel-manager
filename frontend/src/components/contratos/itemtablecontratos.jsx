@@ -71,7 +71,7 @@ function ItemTablaContrato({ item,setLoading,setIsOpen,setContrato }) {
         }finally{setLoading(false)}
     }
     const handleDescargarContrato = async (idContrato) => {
-      const url = apiUrl + "/api/documentos/generarcontrato";
+      const url = apiUrl + "/api/documentos/contrato";
     setLoading(true)
       try {
         const response = await axios.get(url, {
@@ -229,7 +229,7 @@ function ItemCardContratoMobile({ item,setLoading,setIsOpen,setContrato}) {
     setIsOpen(true);
   }
   const handleDescargarContrato = async (idContrato) => {
-    const url = apiUrl + "/api/documentos/generarcontrato";
+    const url = apiUrl + "/api/documentos/contrato";
   setLoading(true)
     try {
       const response = await axios.get(url, {
