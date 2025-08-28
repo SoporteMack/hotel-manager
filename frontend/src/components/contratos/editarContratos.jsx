@@ -3,13 +3,33 @@ import { listaActivosInquilinos } from "../../api/Inquilinos";
 import { departamentosactivosyactual } from "../../api/departamentos";
 import { useEffect, useState, useRef } from "react";
 import Lista from "../items/lista";
-function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData }) {
+import { actualizargeneral } from '../../api/contratos';
+import { Notyf } from 'notyf';
+function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpenloader }) {
     const [listaInquilinos, setListaInquilinos] = useState([]);
     const [listaDepartamentos, setListaDepartamentos] = useState([]);
     const [inquilinos, setInquilinos] = useState(null);
     const [departamento, setDepartamento] = useState(null);
+    const [idContrato, setIdContrato] = useState();
+    const [idPersona, setIdPersona] = useState();
+    const [numDepartamento, setNumDepartamento] = useState();
+    const [deposito, setDeposito] = useState();
+    const [deuda, setDeuda] = useState();
+    const [fechaInicio, setFechaInicio] = useState();
+    const [fechaTermino, setFechaTermino] = useState();
+    const [errores, setErrores] = useState({});
+    const notyf = useRef(new Notyf({
+        duration: 10000,
+        dismissible: true,
+        position: { x: 'center', y: 'top' },
+      }));
     useEffect(() => {
         cargarListas(contrato);
+        setIdContrato(contrato.idContrato);
+        setDeuda(contrato.deuda);
+        setDeposito(contrato.deposito);
+        setFechaInicio(contrato.fechaInicio);
+        setFechaTermino(contrato.fechaTermino);
     }, []);
     const cargarListas = async (contrato) => {
         try {
@@ -38,9 +58,50 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData }) {
         setData();
         setIsOpen(false);
     }
-    const handleguardar = ()=>{
-        
-    }
+    const handleguardar = async (e) => {
+        e.preventDefault();
+        setIsOpenloader(true);
+        setIsOpen(false);
+        const erroresValidacion = validarContrato({ idPersona, numDepartamento, deuda, deposito, fechaInicio, fechaTermino });
+        setErrores(erroresValidacion);
+        if (Object.keys(erroresValidacion).length > 0) return;
+      
+        const payload = {
+          idContrato,
+          idPersona,
+          numDepartamento,
+          deposito,
+          deuda,
+          fechaInicio,
+          fechaTermino
+        };
+      
+        try {
+          await actualizargeneral(payload); // axios o fetch debe enviar JSON
+          notyf.current.success("Contrato actualizado correctamente");
+        } catch (error) {
+          notyf.current.error("Error al actualizar contrato");
+        } finally {
+          setIsOpenloader(false);
+          setIsOpen(true)
+        }
+      };
+      
+
+    // Función de validación independiente
+    const validarContrato = ({ idPersona, numDepartamento, deuda, deposito, fechaInicio, fechaTermino }) => {
+        const errores = {};
+
+        if (!idPersona) errores.idPersona = "Selecciona una persona";
+        if (!numDepartamento) errores.numDepartamento = "Selecciona un departamento";
+        if (!deuda || isNaN(deuda)) errores.deuda = "Ingresa una deuda válida";
+        if (!deposito || isNaN(deposito)) errores.deposito = "Ingresa un depósito válido";
+        if (!fechaInicio) errores.fechaInicio = "Selecciona fecha de inicio";
+        if (!fechaTermino) errores.fechaTermino = "Selecciona fecha de término";
+
+        return errores;
+    };
+
     return (
         <Dialog open={isOpen} onClose={onClose} as="div" className="relative z-50 w-full h-100">
             <DialogBackdrop
@@ -58,17 +119,18 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData }) {
                             <div className="border-b pb-4">
                                 <DialogTitle className="text-2xl font-bold text-gray-800">Departamento {contrato.departamento.descripcion}</DialogTitle>
                                 <Description className="text-gray-500">Información sobre el contrato de arrendamineto de la persona {('\n', contrato.persona.nombrePesona)} {contrato.persona.apellidoPaterno} {contrato.persona.apellidoMaterno}</Description>
-                                <input type="text" defaultValue={contrato.persona.nombrePersona} />
                             </div>
                             <div className="overflow-x-auto h-[40vh]">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2 ">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Persona *</label>
-                                        <Lista options={listaInquilinos} value={inquilinos} defaultValue={contrato.idPersona} onChange={setInquilinos} />
+                                        <Lista options={listaInquilinos} value={inquilinos} defaultValue={contrato.idPersona} onChange={setIdPersona} />
+                                        {errores.idPersona && <p className="text-red-500 text-sm">{errores.idPersona}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Departamento *</label>
-                                        <Lista options={listaDepartamentos} value={departamento} defaultValue={contrato.numDepartamento} onChange={setDepartamento} />
+                                        <Lista options={listaDepartamentos} value={departamento} defaultValue={contrato.numDepartamento} onChange={setNumDepartamento}/>
+                                        {errores.numDepartamento && <p className="text-red-500 text-sm">{errores.numDepartamento}</p>}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
@@ -76,17 +138,21 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData }) {
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Deuda *</label>
                                         <input
                                             type="text"
+                                            onChange={(e) =>setDeuda(e.target.value)}
                                             defaultValue={contrato.deuda}
-                                            className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
-                                        />
+                                            className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"/>
+                                            {errores.deuda && <p className="text-red-500 text-sm">{errores.deuda}</p>}
+                                        
                                     </div>
                                     <div className="">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Deposito *</label>
                                         <input
                                             type="text"
+                                            onChange={(e) =>setDeposito(e.target.value)}
                                             defaultValue={contrato.deposito}
                                             className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                                         />
+                                         {errores.deposito && <p className="text-red-500 text-sm">{errores.deposito}</p>}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
@@ -95,16 +161,20 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData }) {
                                         <input
                                             type="date"
                                             defaultValue={contrato.fechaInicio}
+                                            onChange={(e) =>setFechaInicio(e.target.value)}
                                             className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                                         />
+                                         {errores.fechaInicio && <p className="text-red-500 text-sm">{errores.fechaInicio}</p>}
                                     </div>
                                     <div className="">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Termino *</label>
                                         <input
                                             type="date"
+                                            onChange={(e) =>setFechaTermino(e.target.value)}
                                             defaultValue={contrato.fechaTermino}
                                             className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                                         />
+                                         {errores.fechaTermino && <p className="text-red-500 text-sm">{errores.fechaTermino}</p>}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4 p-2">

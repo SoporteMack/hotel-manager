@@ -1,10 +1,22 @@
-const { where, Op, fn, col, DATE } = require('sequelize');
+const {Op, fn, col} = require('sequelize');
 const contratos = require('../models/contratos');
 const departamentos = require('../models/departamentos');
 const personas = require('../models/personas');
-const path = require("path");
-const fs = require("fs");
 const pagos = require('../models/pagos');
+const Configuracion = require('../models/configuracion')
+
+const path = require('path');
+const fs = require('fs');
+
+const { getSock } = require('../utils/baileys');
+
+
+const PizZip = require('pizzip');
+const Docxtemplater = require('docxtemplater');
+const mammoth = require('mammoth'); // para convertir docx a HTML
+const puppeteer = require('puppeteer');
+const { NumerosALetras } = require('numero-a-letras');
+
 
 exports.listar = async (req, res) => {
   const lista = await contratos.findAll({
@@ -250,11 +262,158 @@ exports.buscarRentasVencidas = async () => {
 
 exports.actualizarContratogeneral= async (req,res)=>{
   const data = req.body;
+  console.log(data)
   try{
-    console.log(data);
-    return res.status(200).Json({estatus:true})
+    const response = await contratos.findOne({attributes:["idContrato","idPersona","numDepartamento","deposito","deuda","fechaInicio","fechaTermino"],where:{idContrato:data.idContrato}})
+    if(!response)
+      return res.status(404).json({estatus:false,msg:"Contrato no Encotrado"});
+    const datos = {};
+    if(data.idPersona !== undefined) datos.idPersona = data.idPersona ;
+    if(data.numDepartamento !== undefined) datos.numDepartamento = data.numDepartamento; 
+    if(data.deposito  !== undefined) datos.deposito = data.deposito;
+    if(data.deuda !== undefined) datos.deuda = data.deuda;
+    if(data.fechaInicio !== undefined) datos.fechaInicio = data.fechaInicio;
+    if(data.fechaTermino !==  undefined) datos.fechaTermino = data.fechaTermino;
+
+    console.log(datos)
+    if (Object.keys(data).length === 0) {
+      return res.status(400).json({ error: "No hay datos para actualizar" });
+    }
+    await contratos.update(datos, {
+      where: {idContrato:data.idContrato }
+    });
+
+    await generarContrato(data.idContrato)
+    res.status(200).json({ msg: "Contrato Actulizado" });
+    return res.status(200).json({estatus:true,response})
   }catch(error)
   {
-
+    console.log(error)
+    return res.status(500).json({estatus:false,error:error})
   }
 }
+
+
+const generarContrato = async (idContrato) => { 
+  const contratodb = await findContrato(idContrato);
+  const fechai = new Date(contratodb.fechaInicio);
+  const fechaf = new Date(contratodb.fechaTermino);
+  const config = await datosBanco();
+  const montoalfa = NumerosALetras(contratodb.departamento.costo)
+  const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
+  try {
+    const datos = {
+      nombre: nombre,
+      direccion: "sin direccion",
+      bcomp: "×",
+      bpriv: "×",
+      cocina: "×",
+      sala: "×",
+      lavado: "×",
+      diai: String(fechai.getDate()).padStart(2,'0'),
+      mesi: String(fechai.getMonth()).padStart(2,'0'),
+      anioi: fechai.getFullYear(),
+      diaf: String(fechaf.getDate()).padStart(2,'0'),
+      mesf: String(fechaf.getMonth()).padStart(2,'0'),
+      aniof: fechaf.getFullYear(),
+      monto: contratodb.departamento.costo,
+      montoalfa:montoalfa,
+      banco: config.banco,
+      titular: config.titular,
+      clave: config.numCuenta,
+      ciudadfirma:'TEHUACAN',
+      diafirma: String(fechai.getDate()).padStart(2,'0'),
+      mesfirma: String(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(fechai)).toUpperCase(),
+      aniofirma:String(fechai.getFullYear()),
+      deposito:contratodb.deposito
+    }
+    const outputPdfPath = path.resolve(__dirname, '../uploads/'+nombre, 'contrato_final.pdf');
+    const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
+    const zip = new PizZip(contenido);
+    const options = {
+      delimiters: {
+        start: "{",
+        end: "}",
+      },
+    };
+    const doc = new Docxtemplater(zip, options);
+
+    try {
+      doc.render(datos);
+    } catch (error) {
+      console.error('Error al renderizar docx:', error);
+      throw error;
+    }
+    const bufferDocx = doc.getZip().generate({ type: 'nodebuffer' });
+    const tempDocxPath = path.resolve(__dirname, 'temp.docx');
+    fs.writeFileSync(tempDocxPath, bufferDocx);
+    let { value: html } = await mammoth.convertToHtml({ path: tempDocxPath });
+    const imageBuffer = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/encabezado.png'));
+    const base64Image = imageBuffer.toString('base64');
+    const mimeType = 'image/png'; // Cambia si usas .jpg, .webp, etc.
+
+    // Incrustar imagen en el HTML
+    html = `
+  <div style="">
+    <img src="data:image/png;base64,${base64Image}" style="width: 800px;" />
+  </div>
+  <div style="text-align: justify;">
+    ${html}
+  </div>
+`;
+    // Lanzar Puppeteer para generar PDF desde HTML
+    const browser = await puppeteer.launch({  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']});
+    const page = await browser.newPage();
+
+    await page.setContent(html, { waitUntil: 'networkidle0',timeout:0});
+
+    await page.pdf({
+      path: __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf',
+      format: 'A4',
+      printBackground: true,
+      margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
+    });
+
+    await browser.close();
+
+    // Opcional: borrar temp docx
+    fs.unlinkSync(tempDocxPath);
+    return { "path": outputPdfPath, "telefono": contratodb.persona.telefono }
+
+
+
+
+  } catch (error) {
+    console.error('Error al generar contrato:', error);
+  }
+};
+
+const findContrato = async (idContrato) => {
+  return  await contratos.findOne({
+    attributes: ["idContrato","fechaInicio","fechaTermino","deposito","idPersona","numDepartamento"],
+    where: { idContrato: idContrato },
+    include: [
+      {
+        model: personas,
+        as: "persona",
+        attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno", "telefono"],
+        required: true // Esto asegura que sea INNER JOIN
+      },
+      {
+        model: departamentos,
+        as:'departamento',
+        attributes:['costo']
+      }
+    ],
+    raw: true,
+    nest: true
+  });
+}
+
+
+const datosBanco = async  () =>
+  {
+    return await Configuracion.findOne({attributes:['banco','numCuenta','titular']});
+  }
+  
+  

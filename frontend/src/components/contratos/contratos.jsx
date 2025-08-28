@@ -96,7 +96,7 @@ function Contratos() {
         <>
         <TableContratos items={filtredItems} setLoading={setLoading} setIsOpen={setIsOpen} setContrato={setDataContrato}/>
         
-          {dataContrato && (<EditarContrato onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} contrato={dataContrato} setData={setDataContrato}/>)}
+          {dataContrato && (<EditarContrato onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} contrato={dataContrato} setData={setDataContrato} setIsOpenloader={setLoading}/>)}
         </>
       )}
     </section>
