@@ -20,53 +20,60 @@ exports.crear = async (req, res) => {
   try {
     const { monto, fechaPago, idContrato, deuda } = req.body;
 
-    // Validar fecha
-    if (!fechaPago) return res.status(400).json({ status: false, msg: "Fecha de pago requerida" });
-
-    // Parsear fecha enviada desde front (YYYY-MM-DD HH:mm:ss)
+    // Parsear la fecha en la zona 'America/Mexico_City'
     const [datePart, timePart] = fechaPago.split(' ');
     const [year, month, day] = datePart.split('-').map(Number);
     const [hour, minute, second] = timePart.split(':').map(Number);
+    const fecha = new Date(`${year}-${month}-$${day}`)
+    const response = await restardeuda(idContrato, fecha, monto, deuda);
+    if (response) {
+      const nuevafecha = moment.tz({
+        year,
+        month: month,
+        day,
+        hour,
+        minute,
+        second
+      }, 'America/Mexico_City').format('YYYY-MM-DD HH:mm:ss');
+      console.log(fecha)
+      const resultado = await pagos.findOne({
+        attributes: ["numPago"],
+        where: { idContrato },
+        include: {
+          model: contratos,
+          attributes: ["estatus"],
+          required: true
+        },
+        order: [["numPago", "DESC"]],
+      });
 
-    // Guardar fecha exacta como string para evitar conversión de zona horaria
-    const fechaStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`;
+      const siguienteNumPago = resultado ? resultado.numPago + 1 : 1;
+      const estatusContrato = await contratos.findByPk(idContrato);
+      const statusIdContrato = estatusContrato?.estatus ?? null;
 
-    // Lógica de restar deuda
-    const response = await restardeuda(idContrato, fechaStr, monto, deuda);
-    if (!response) return res.status(500).json({ status: false, msg: "Pago no agregado correctamente" });
+      if (!statusIdContrato)
+        return res.status(404).json({ status: false, msg: "contrato no activo" });
 
-    // Obtener siguiente número de pago
-    const resultado = await pagos.findOne({
-      attributes: ["numPago"],
-      where: { idContrato },
-      include: { model: contratos, attributes: ["estatus"], required: true },
-      order: [["numPago", "DESC"]],
-    });
-    const siguienteNumPago = resultado ? resultado.numPago + 1 : 1;
+      const datospago = {
+        numPago: siguienteNumPago,
+        monto,
+        fechaPago: nuevafecha,
+        idContrato,
+      };
+      const pag = await pagos.create(datospago);
+      const foliopago = pag.folio;
+      const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
+      await nota(foliopago);
+      const telefono = await obtenerTelefono(idContrato);
+      await esperarArchivoListo(rutaArchivo)
+      await enviarNota(telefono,rutaArchivo)
+      
 
-    // Verificar estatus del contrato
-    const estatusContrato = await contratos.findByPk(idContrato);
-    if (!estatusContrato?.estatus) return res.status(404).json({ status: false, msg: "Contrato no activo" });
-
-    // Crear pago
-    const datospago = {
-      numPago: siguienteNumPago,
-      monto,
-      fechaPago: fechaStr, // se guarda literal en DB
-      idContrato,
-    };
-    const pag = await pagos.create(datospago);
-
-    // Generar nota y enviar
-    const foliopago = pag.folio;
-    const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
-    await nota(foliopago);
-    const telefono = await obtenerTelefono(idContrato);
-    await esperarArchivoListo(rutaArchivo);
-    await enviarNota(telefono, rutaArchivo);
-
-    res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
-
+      res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
+    }
+    else {
+      res.status(500).json({ status: false, msg: "Pago no agregado correctamente" });
+    }
   } catch (e) {
     console.error(e);
     res.status(500).json({ status: false, msg: "Pago no agregado" });
