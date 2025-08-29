@@ -57,44 +57,56 @@ exports.tarjeta = async (req, res) => {
 };
 
 
+
 exports.comprobante = async (req, res) => {
   try {
     const { img, fuente, carpeta } = req.params;
-    const pathdoc = path.join(__dirname, '..', fuente, carpeta, img);
+    const pathdoc = path.join(__dirname, "..", fuente, carpeta, img);
 
     if (!fs.existsSync(pathdoc)) {
-      return res.status(404).send('Imagen no encontrada');
+      return res.status(404).send("Imagen no encontrada");
     }
 
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${img}.pdf`);
+    // Quitar extensión original (.png, .jpg, etc.)
+    const baseName = img.replace(/\.[^/.]+$/, "");
 
-    const margen = 40; // margen de seguridad
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${baseName}.pdf"`
+    );
+
+    const margen = 40;
     const doc = new PDFDocument({
-      size: 'A4',
-      margins: {
-        top: margen,
-        bottom: margen,
-        left: margen,
-        right: margen,
-      }
+      size: "A4",
+      margins: { top: margen, bottom: margen, left: margen, right: margen },
     });
 
     doc.pipe(res);
 
-    // Cargar imagen ajustada a toda la hoja menos los márgenes
-    doc.image(pathdoc, {
-      fit: [doc.page.width - 2 * margen, doc.page.height - 2 * margen],
-      align: 'center',
-      valign: 'center'
-    });
+    // Escalar la imagen manteniendo proporción
+    const imgData = doc.openImage(pathdoc);
+    const maxWidth = doc.page.width - 2 * margen;
+    const maxHeight = doc.page.height - 2 * margen;
+
+    const scale = Math.min(maxWidth / imgData.width, maxHeight / imgData.height);
+    const imgW = imgData.width * scale;
+    const imgH = imgData.height * scale;
+
+    const x = (doc.page.width - imgW) / 2;
+    const y = (doc.page.height - imgH) / 2;
+
+    doc.image(pathdoc, x, y, { width: imgW, height: imgH });
 
     doc.end();
   } catch (error) {
     console.error(error);
-    res.status(500).json({ mensaje: 'Error al generar comprobante', error });
+    res
+      .status(500)
+      .json({ mensaje: "Error al generar comprobante", error });
   }
 };
+
 
 
 exports.nota = async (folio) => {

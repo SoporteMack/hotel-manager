@@ -5,7 +5,7 @@ import { useEffect, useState, useRef } from "react";
 import Lista from "../items/lista";
 import { actualizargeneral } from '../../api/contratos';
 import { Notyf } from 'notyf';
-function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpenloader }) {
+function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData, setIsOpenloader }) {
     const [listaInquilinos, setListaInquilinos] = useState([]);
     const [listaDepartamentos, setListaDepartamentos] = useState([]);
     const [inquilinos, setInquilinos] = useState(null);
@@ -17,12 +17,13 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpe
     const [deuda, setDeuda] = useState();
     const [fechaInicio, setFechaInicio] = useState();
     const [fechaTermino, setFechaTermino] = useState();
+    const [estatus,setEstatus] = useState();
     const [errores, setErrores] = useState({});
     const notyf = useRef(new Notyf({
         duration: 10000,
         dismissible: true,
         position: { x: 'center', y: 'top' },
-      }));
+    }));
     useEffect(() => {
         cargarListas(contrato);
         setIdContrato(contrato.idContrato);
@@ -30,6 +31,7 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpe
         setDeposito(contrato.deposito);
         setFechaInicio(contrato.fechaInicio);
         setFechaTermino(contrato.fechaTermino);
+        setEstatus(contrato.estatus)
     }, []);
     const cargarListas = async (contrato) => {
         try {
@@ -54,9 +56,9 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpe
             notyf.current.error("error al cargar los datos");
         }
     };
-    const handledata = (data) => {
-        setData();
-        setIsOpen(false);
+    const handleChange = async (e) =>{
+        const { name, value, type, checked } = e.target;
+        setEstatus(type === 'checkbox' ? checked : value)
     }
     const handleguardar = async (e) => {
         e.preventDefault();
@@ -64,29 +66,29 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpe
         setIsOpen(false);
         const erroresValidacion = validarContrato({ idPersona, numDepartamento, deuda, deposito, fechaInicio, fechaTermino });
         setErrores(erroresValidacion);
-        if (Object.keys(erroresValidacion).length > 0) return;
-      
+        if (Object.keys(erroresValidacion).length > 0) { setIsOpenloader(false); setIsOpen(true); return };
+
         const payload = {
-          idContrato,
-          idPersona,
-          numDepartamento,
-          deposito,
-          deuda,
-          fechaInicio,
-          fechaTermino
+            idContrato,
+            idPersona,
+            numDepartamento,
+            deposito,
+            deuda,
+            fechaInicio,
+            fechaTermino
         };
-      
+
         try {
-          await actualizargeneral(payload); // axios o fetch debe enviar JSON
-          notyf.current.success("Contrato actualizado correctamente");
+            await actualizargeneral(payload); // axios o fetch debe enviar JSON
+            notyf.current.success("Contrato actualizado correctamente");
         } catch (error) {
-          notyf.current.error("Error al actualizar contrato");
+            notyf.current.error("Error al actualizar contrato");
         } finally {
-          setIsOpenloader(false);
-          setIsOpen(true)
+            setIsOpenloader(false);
+            setIsOpen(true)
         }
-      };
-      
+    };
+
 
     // Función de validación independiente
     const validarContrato = ({ idPersona, numDepartamento, deuda, deposito, fechaInicio, fechaTermino }) => {
@@ -129,7 +131,7 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpe
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Departamento *</label>
-                                        <Lista options={listaDepartamentos} value={departamento} defaultValue={contrato.numDepartamento} onChange={setNumDepartamento}/>
+                                        <Lista options={listaDepartamentos} value={departamento} defaultValue={contrato.numDepartamento} onChange={setNumDepartamento} />
                                         {errores.numDepartamento && <p className="text-red-500 text-sm">{errores.numDepartamento}</p>}
                                     </div>
                                 </div>
@@ -138,21 +140,21 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpe
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Deuda *</label>
                                         <input
                                             type="text"
-                                            onChange={(e) =>setDeuda(e.target.value)}
+                                            onChange={(e) => setDeuda(e.target.value)}
                                             defaultValue={contrato.deuda}
-                                            className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"/>
-                                            {errores.deuda && <p className="text-red-500 text-sm">{errores.deuda}</p>}
-                                        
+                                            className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200" />
+                                        {errores.deuda && <p className="text-red-500 text-sm">{errores.deuda}</p>}
+
                                     </div>
                                     <div className="">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Deposito *</label>
                                         <input
                                             type="text"
-                                            onChange={(e) =>setDeposito(e.target.value)}
+                                            onChange={(e) => setDeposito(e.target.value)}
                                             defaultValue={contrato.deposito}
                                             className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                                         />
-                                         {errores.deposito && <p className="text-red-500 text-sm">{errores.deposito}</p>}
+                                        {errores.deposito && <p className="text-red-500 text-sm">{errores.deposito}</p>}
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-2">
@@ -161,25 +163,54 @@ function editarContrato({ onClose, isOpen, setIsOpen, contrato, setData,setIsOpe
                                         <input
                                             type="date"
                                             defaultValue={contrato.fechaInicio}
-                                            onChange={(e) =>setFechaInicio(e.target.value)}
+                                            onChange={(e) => setFechaInicio(e.target.value)}
                                             className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                                         />
-                                         {errores.fechaInicio && <p className="text-red-500 text-sm">{errores.fechaInicio}</p>}
+                                        {errores.fechaInicio && <p className="text-red-500 text-sm">{errores.fechaInicio}</p>}
                                     </div>
                                     <div className="">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Fecha Termino *</label>
                                         <input
                                             type="date"
-                                            onChange={(e) =>setFechaTermino(e.target.value)}
+                                            onChange={(e) => setFechaTermino(e.target.value)}
                                             defaultValue={contrato.fechaTermino}
                                             className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                                         />
-                                         {errores.fechaTermino && <p className="text-red-500 text-sm">{errores.fechaTermino}</p>}
+                                        {errores.fechaTermino && <p className="text-red-500 text-sm">{errores.fechaTermino}</p>}
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm text-gray-700">Estatus</span>
+                                        <label htmlFor="estatus" className="relative cursor-pointer">
+                                            <input
+                                                id="estatus"
+                                                type="checkbox"
+                                                name="estatus"
+                                                defaultChecked={contrato.estatus}
+                                                onChange={handleChange}
+                                                className="sr-only peer"
+                                            />
+                                            <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
+                                            <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 peer-checked:translate-x-full"></div>
+                                        </label>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 gap-4 p-2">
-                                    <button type="submit">Actulizar</button>
+                                <div className="flex justify-end gap-2 pt-10">
+                                    <button
+                                        type="submit"
+                                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                    >
+                                        Guardar
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500"
+                                    >
+                                        Cancelar
+                                    </button>
                                 </div>
+
                             </div>
 
                         </div>

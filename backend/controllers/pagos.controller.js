@@ -232,6 +232,53 @@ exports.listarpagoporpersona = async (req, res) => {
 
 }
 
+
+exports.obtenerUltimos5IngresosDelDia = async (req,res) => {
+  try {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // inicio del día
+    const manana = new Date(hoy);
+    manana.setDate(hoy.getDate() + 1); // inicio del siguiente día
+
+    const ultimos5 = await pagos.findAll({
+      where: {
+        fechaPago: {
+          [Op.gte]: hoy,
+          [Op.lt]: manana
+        }
+      },
+      order: [['fechaPago', 'DESC']], // más recientes primero
+      limit: 5,
+      include: [
+        {
+          model: contratos,
+          as:"contrato",
+          attributes: ['idContrato'] ,
+          include:[{
+            model:personas,
+            as:"persona",
+            attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+          },
+        {
+          model:departamentos,
+          as: "departamento",
+          attributes:['descripcion']
+        }]
+        }
+      ]
+    });
+    const ultimos5Formateados = ultimos5.map(pago => ({
+      ...pago.toJSON(), // si no estás usando raw: true
+      fechaPago: pago.fechaPago.toLocaleString('es-MX', { timeZone: 'America/Mexico_City' })
+    }));
+
+    return res.status(200).json(ultimos5Formateados);
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({msg:"errro al obtner los datos"});
+  }
+};
+
 const restardeuda = async (idContrato, fecha, monto, deuda) => {
   try {
     const nuevafecha = new Date(fecha);
@@ -281,6 +328,7 @@ const enviarNota = async (telefono,rutaArchivo) => {
     caption: `Fecha: ${formatoFecha}\n\n` + msj
   });
 };
+
 
 async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
   return new Promise((resolve, reject) => {

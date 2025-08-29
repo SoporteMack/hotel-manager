@@ -95,6 +95,7 @@ function CrearContrato() {
     formData.append("fechaInicio", fechaInicio);
     formData.append("fechaTermino", fechaTermino);
     formData.append("estatus", estatus);
+    formData.append("deposito",deposito);
 
     Object.entries(docs).forEach(([key, file]) => {
       if (file) formData.append(key, file);

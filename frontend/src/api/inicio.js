@@ -7,5 +7,6 @@ const API = axios.create({
 });
  export const pagosdeldia = (fecha) =>  API.get('api/pagos/montosdeldia', {params: { fecha } });
  export const ocupacion = () => API.get('api/contratos/ocupacion');
+ export const ultimospagos = () =>API.get('api/pagos/ultimospagos');
   
 
