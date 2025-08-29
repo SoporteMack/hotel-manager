@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Notyf } from "notyf";
 import { pagosxfecha } from "../../api/pagos";
 import ModalEditarPago from "./modalEditarPago";
@@ -12,6 +12,10 @@ function Pagos() {
   const [isOpen, setIsOpen] = useState(false);
   const [item, setItem] = useState();
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    inicio();
+  }, [])
   const onClose = async () => {
     setItem();
     setIsOpen(false);
@@ -84,6 +88,44 @@ function Pagos() {
     }
     finally { setLoading(false) }
   };
+  const inicio = async () => {
+    const hoy = new Date();
+
+    // Primer día a las 00:00:00
+    // Primer día del mes
+    const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+    primerDia.setHours(0, 0, 0, 0);
+
+    setFechaInicio(
+      primerDia.getFullYear() + '-' +
+      String(primerDia.getMonth() + 1).padStart(2, '0') + '-' +
+      String(primerDia.getDate()).padStart(2, '0')
+    );
+
+
+
+    // Último día a las 23:59:59
+    const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+    ultimoDia.setHours(23, 59, 59, 999);
+    setFechaFinal(
+      ultimoDia.getFullYear() + '-' +
+      String(ultimoDia.getMonth() + 1).padStart(2, '0') + '-' +
+      String(ultimoDia.getDate()).padStart(2, '0')
+    );
+
+    const pdiaf = formatFechaHoraLocal(primerDia);
+    const udiaf = formatFechaHoraLocal(ultimoDia);
+    setLoading(true)
+    try {
+      const res = await pagosxfecha(pdiaf, udiaf).then(res => { return res.data });
+      setPagos(res.lista || []);
+    } catch (error) {
+      console.log(error)
+      notyf.current.error("error al cargar pagos")
+    } finally { setLoading(false) }
+  };
+
+
 
   const formatFechaHoraLocal = (fecha) => {
     const f = new Date(fecha);
@@ -129,13 +171,13 @@ function Pagos() {
       <div className="flex flex-col md:flex-row md:items-center gap-3 ">
         <input
           type="date"
-          value={fechaInicio}
+          defaultValue={fechaInicio}
           onChange={e => setFechaInicio(e.target.value)}
           className="w-full md:w-48 border border-gray-300 rounded px-4 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
         />
         <input
           type="date"
-          value={fechaFinal}
+          defaultValue={fechaFinal}
           onChange={e => setFechaFinal(e.target.value)}
           className="w-full md:w-48 border border-gray-300 rounded px-4 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
         />
