@@ -25,10 +25,10 @@ exports.crear = async (req, res) => {
     const [year, month, day] = datePart.split('-').map(Number);
     const [hour, minute, second] = timePart.split(':').map(Number);
 
-    // Crear fecha en JS correctamente (meses 0-11)
+    // Crear fecha en hora de México
     const fecha = new Date(year, month - 1, day, hour, minute, second);
 
-    // Lógica de restar deuda
+    // Restar deuda
     const response = await restardeuda(idContrato, fecha, monto, deuda);
     if (!response) return res.status(500).json({ status: false, msg: "Pago no agregado correctamente" });
 
@@ -36,11 +36,7 @@ exports.crear = async (req, res) => {
     const resultado = await pagos.findOne({
       attributes: ["numPago"],
       where: { idContrato },
-      include: {
-        model: contratos,
-        attributes: ["estatus"],
-        required: true
-      },
+      include: { model: contratos, attributes: ["estatus"], required: true },
       order: [["numPago", "DESC"]],
     });
     const siguienteNumPago = resultado ? resultado.numPago + 1 : 1;
@@ -50,11 +46,11 @@ exports.crear = async (req, res) => {
     if (!estatusContrato?.estatus)
       return res.status(404).json({ status: false, msg: "Contrato no activo" });
 
-    // Crear el pago con la fecha exacta enviada
+    // Crear pago en hora de México
     const datospago = {
       numPago: siguienteNumPago,
       monto,
-      fechaPago: fecha, // se guarda tal cual
+      fechaPago: fecha, // Sequelize convertirá correctamente a -06:00
       idContrato,
     };
     const pag = await pagos.create(datospago);
@@ -73,6 +69,7 @@ exports.crear = async (req, res) => {
     res.status(500).json({ status: false, msg: "Pago no agregado" });
   }
 };
+
 
 exports.editar = async (req, res) => {
   try {
