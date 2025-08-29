@@ -20,60 +20,54 @@ exports.crear = async (req, res) => {
   try {
     const { monto, fechaPago, idContrato, deuda } = req.body;
 
-    // Parsear la fecha en la zona 'America/Mexico_City'
+    // Parsear la fecha enviada desde el front (YYYY-MM-DD HH:mm:ss)
     const [datePart, timePart] = fechaPago.split(' ');
     const [year, month, day] = datePart.split('-').map(Number);
     const [hour, minute, second] = timePart.split(':').map(Number);
-    const fecha = new Date(`${year}-${month}-$${day}`)
+
+    // Crear fecha en JS correctamente (meses 0-11)
+    const fecha = new Date(year, month - 1, day, hour, minute, second);
+
+    // Lógica de restar deuda
     const response = await restardeuda(idContrato, fecha, monto, deuda);
-    if (response) {
-      const nuevafecha = moment.tz({
-        year,
-        month: month,
-        day,
-        hour,
-        minute,
-        second
-      }, 'America/Mexico_City').format('YYYY-MM-DD HH:mm:ss');
+    if (!response) return res.status(500).json({ status: false, msg: "Pago no agregado correctamente" });
 
-      const resultado = await pagos.findOne({
-        attributes: ["numPago"],
-        where: { idContrato },
-        include: {
-          model: contratos,
-          attributes: ["estatus"],
-          required: true
-        },
-        order: [["numPago", "DESC"]],
-      });
+    // Obtener siguiente número de pago
+    const resultado = await pagos.findOne({
+      attributes: ["numPago"],
+      where: { idContrato },
+      include: {
+        model: contratos,
+        attributes: ["estatus"],
+        required: true
+      },
+      order: [["numPago", "DESC"]],
+    });
+    const siguienteNumPago = resultado ? resultado.numPago + 1 : 1;
 
-      const siguienteNumPago = resultado ? resultado.numPago + 1 : 1;
-      const estatusContrato = await contratos.findByPk(idContrato);
-      const statusIdContrato = estatusContrato?.estatus ?? null;
+    // Verificar estatus del contrato
+    const estatusContrato = await contratos.findByPk(idContrato);
+    if (!estatusContrato?.estatus)
+      return res.status(404).json({ status: false, msg: "Contrato no activo" });
 
-      if (!statusIdContrato)
-        return res.status(404).json({ status: false, msg: "contrato no activo" });
+    // Crear el pago con la fecha exacta enviada
+    const datospago = {
+      numPago: siguienteNumPago,
+      monto,
+      fechaPago: fecha, // se guarda tal cual
+      idContrato,
+    };
+    const pag = await pagos.create(datospago);
 
-      const datospago = {
-        numPago: siguienteNumPago,
-        monto,
-        fechaPago: nuevafecha,
-        idContrato,
-      };
-      const pag = await pagos.create(datospago);
-      const foliopago = pag.folio;
-      const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
-      await nota(foliopago);
-      const telefono = await obtenerTelefono(idContrato);
-      await esperarArchivoListo(rutaArchivo)
-      await enviarNota(telefono,rutaArchivo)
-      
+    // Generar nota y enviar
+    const foliopago = pag.folio;
+    const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
+    await nota(foliopago);
+    const telefono = await obtenerTelefono(idContrato);
+    await esperarArchivoListo(rutaArchivo);
+    await enviarNota(telefono, rutaArchivo);
 
-      res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
-    }
-    else {
-      res.status(500).json({ status: false, msg: "Pago no agregado correctamente" });
-    }
+    res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
   } catch (e) {
     console.error(e);
     res.status(500).json({ status: false, msg: "Pago no agregado" });
