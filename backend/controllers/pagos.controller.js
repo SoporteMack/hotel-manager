@@ -20,16 +20,19 @@ exports.crear = async (req, res) => {
   try {
     const { monto, fechaPago, idContrato, deuda } = req.body;
 
-    // Parsear la fecha enviada desde el front (YYYY-MM-DD HH:mm:ss)
+    // Validar fecha
+    if (!fechaPago) return res.status(400).json({ status: false, msg: "Fecha de pago requerida" });
+
+    // Parsear fecha enviada desde front (YYYY-MM-DD HH:mm:ss)
     const [datePart, timePart] = fechaPago.split(' ');
     const [year, month, day] = datePart.split('-').map(Number);
     const [hour, minute, second] = timePart.split(':').map(Number);
 
-    // Crear fecha en hora de México
-    const fecha = new Date(year, month - 1, day, hour, minute, second);
+    // Guardar fecha exacta como string para evitar conversión de zona horaria
+    const fechaStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')} ${String(hour).padStart(2,'0')}:${String(minute).padStart(2,'0')}:${String(second).padStart(2,'0')}`;
 
-    // Restar deuda
-    const response = await restardeuda(idContrato, fecha, monto, deuda);
+    // Lógica de restar deuda
+    const response = await restardeuda(idContrato, fechaStr, monto, deuda);
     if (!response) return res.status(500).json({ status: false, msg: "Pago no agregado correctamente" });
 
     // Obtener siguiente número de pago
@@ -43,14 +46,13 @@ exports.crear = async (req, res) => {
 
     // Verificar estatus del contrato
     const estatusContrato = await contratos.findByPk(idContrato);
-    if (!estatusContrato?.estatus)
-      return res.status(404).json({ status: false, msg: "Contrato no activo" });
+    if (!estatusContrato?.estatus) return res.status(404).json({ status: false, msg: "Contrato no activo" });
 
-    // Crear pago en hora de México
+    // Crear pago
     const datospago = {
       numPago: siguienteNumPago,
       monto,
-      fechaPago: fecha, // Sequelize convertirá correctamente a -06:00
+      fechaPago: fechaStr, // se guarda literal en DB
       idContrato,
     };
     const pag = await pagos.create(datospago);
@@ -64,12 +66,12 @@ exports.crear = async (req, res) => {
     await enviarNota(telefono, rutaArchivo);
 
     res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
+
   } catch (e) {
     console.error(e);
     res.status(500).json({ status: false, msg: "Pago no agregado" });
   }
 };
-
 
 exports.editar = async (req, res) => {
   try {
