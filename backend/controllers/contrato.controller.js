@@ -284,8 +284,8 @@ exports.actualizarContratogeneral= async (req,res)=>{
     });
 
     await generarContrato(data.idContrato)
+    enviarmsg(data.idContrato);
     res.status(200).json({ msg: "Contrato Actulizado" });
-    return res.status(200).json({estatus:true,response})
   }catch(error)
   {
     console.log(error)
@@ -415,5 +415,32 @@ const datosBanco = async  () =>
   {
     return await Configuracion.findOne({attributes:['banco','numCuenta','titular']});
   }
+
+const enviarmsg = async (idContrato) =>{
+  const sock = getSock();
+  const res = await contratos.findOne({
+    attributes:["idContrato"],
+    where:{idContrato:idContrato},
+    include:[{
+      model:personas,
+      as:"persona",
+      attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+    }]
+  }).then(res => {return res.persona})
+
+  const telefono = await Configuracion.findOne().then(res =>{return res.telefono});
+  const nom = res.nombrePersona + " "  + res.apellidoPaterno + " "  + res.apellidoMaterno;
+  const msj = "se actulizo contrato numero " + idContrato + "\n de la persona " + nom
+  const numero = '521' + telefono;
+    try {
+      await sock.sendMessage(`${numero}@s.whatsapp.net`, {
+        text: msj
+      });
+      console.log(`✅ Mensaje enviado a ${numero}`);
+
+    } catch (err) {
+      console.error('❌ Error al enviar mensaje:', err);
+    }
+}
   
   
