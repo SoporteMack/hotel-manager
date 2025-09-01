@@ -100,6 +100,7 @@ function ModalEditarPago({ onClose, isOpen, data }) {
                                     id="pago"
                                     type="number"
                                     className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
+                                    defaultValue={data.monto}
                                     onChange={(e) => setPago(Number(e.target.value) || 0)}
                                 />
                             </div>
@@ -115,7 +116,6 @@ function ModalEditarPago({ onClose, isOpen, data }) {
 
 
                         </div>
-                        {pago}
                     </div>
                 </DialogPanel>
             </div>

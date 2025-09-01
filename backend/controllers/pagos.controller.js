@@ -35,7 +35,6 @@ exports.crear = async (req, res) => {
         minute,
         second
       }, 'America/Mexico_City').format('YYYY-MM-DD HH:mm:ss');
-      console.log(fecha)
       const resultado = await pagos.findOne({
         attributes: ["numPago"],
         where: { idContrato },
@@ -67,7 +66,8 @@ exports.crear = async (req, res) => {
       const telefono = await obtenerTelefono(idContrato);
       await esperarArchivoListo(rutaArchivo)
       await enviarNota(telefono,rutaArchivo)
-      
+      const telefonoadmin = await configuracion.findOne().then(res =>{return res.telefono});
+      await enviarNota(telefonoadmin,rutaArchivo)
 
       res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
     }
@@ -108,7 +108,13 @@ exports.editar = async (req, res) => {
 
     // Actualiza la deuda del contrato
     await contratos.update({ deuda: nuevaDeuda }, { where: { idContrato: idContrato } });
-
+    await nota(folio);
+    const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
+    const telefono = await obtenerTelefono(idContrato);
+    await enviarNota(telefono,rutaArchivo);
+    await enviarmsg(idContrato,folio);
+    const telefonoadmin = await configuracion.findOne().then(res =>{return res.telefono});
+    await enviarNota(telefonoadmin,rutaArchivo);
     return res.status(201).json({ estatus: true, msj: "Monto y deuda actualizados correctamente" });
 
   } catch (error) {
@@ -359,3 +365,31 @@ async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
     check();
   });
 }
+const enviarmsg = async (idContrato,folio) =>{
+  const sock = getSock();
+  const res = await contratos.findOne({
+    attributes:["idContrato"],
+    where:{idContrato:idContrato},
+    include:[{
+      model:personas,
+      as:"persona",
+      attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+    }]
+  }).then(res => {return res.persona})
+
+  const telefono = await configuracion.findOne().then(res =>{return res.telefono});
+  const nom = res.nombrePersona + " "  + res.apellidoPaterno + " "  + res.apellidoMaterno;
+  const msj = "se actulizo pago de folio " + folio + "\n de la persona " + nom
+  const numero = '521' + telefono;
+    try {
+      await sock.sendMessage(`${numero}@s.whatsapp.net`, {
+        text: msj
+      });
+      console.log(`✅ Mensaje enviado a ${numero}`);
+
+    } catch (err) {
+      console.error('❌ Error al enviar mensaje:', err);
+    }
+}
+  
+  
