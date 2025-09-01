@@ -104,5 +104,9 @@ const mensajeBienvenida = async (telefono,nombre) => {
     console.log(`Mensaje enviado a ${telefono}`);
   } catch (error) {
     console.log("Error al enviar mensaje:", error);
+  }finally{
+    const numeroadmin = '521' + res.telefono;
+    const [resulta] = await sock.onWhatsApp(numeroadmin + "@s.whatsapp.net");
+    await sock.sendMessage(resulta.jid, { text: 'Se agergo Inquilino \n\n'+nombre });
   }
 };
