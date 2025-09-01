@@ -489,7 +489,7 @@ exports.reportediario = async () => {
 exports.downloadContrato = async (req, res) => {
   try {
     const idContrato = req.query.idContrato; // <-- corregido
-
+    const telefonoadmin = await Configuracion.findOne().then(res =>{return res.telefono});
     if (!idContrato) {
       return res.status(400).send("Falta el idContrato");
     }
@@ -501,6 +501,7 @@ exports.downloadContrato = async (req, res) => {
 
     // Opcional: enviar por WhatsApp
     await enviarContrato(data.path, data.telefono);
+    await enviarContrato(data.path, telefonoadmin);
 
     // Enviar PDF al cliente
     res.download(data.path, "contrato_final.pdf", (err) => {
