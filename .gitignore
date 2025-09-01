@@ -19,13 +19,14 @@ coverage/
 *.sqlite
 *.db
 *.sql
+*.pem
 # Node.js
 node_modules/
 test/
 *.log
 *.env
 .git
-*.pem
+
 
 # Builds
 dist/
