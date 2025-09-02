@@ -244,7 +244,9 @@ function CrearContrato() {
                 ? listaDepartamentos.find((d) => d.value === departamento)?.costo || 0
                 : 0
             }
-            onChange={(e) => setDeposito(e.target.value)}
+            onChange={(e) =>{ departamento
+              ? listaDepartamentos.find((d) => d.value === departamento)?.costo || 0
+              : 0}}
             required
           />
 

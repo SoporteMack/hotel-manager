@@ -95,7 +95,7 @@ function ConfiguracionBanco({setLoadingL}) {
 
             <form onSubmit={handleSubmit} noValidate>
                 <div className="mb-4">
-                    <label htmlFor="telefono" className="block font-medium mb-1">Teléfono</label>
+                    <label htmlFor="telefono" className="block font-medium mb-1">Titular</label>
                     <input
                         type="text"
                         id="titular"
@@ -103,7 +103,7 @@ function ConfiguracionBanco({setLoadingL}) {
                         value={config.titular}
                         onChange={handleChange}
                         className={`w-full px-3 py-2 border rounded ${errores.telefono ? "border-red-500" : "border-gray-300"}`}
-                        placeholder="Ej. 5512345678"
+                        placeholder="Juan"
                     />
                     {errores.titular && <p className="text-red-500 text-sm mt-1">{errores.titular}</p>}
                 </div>

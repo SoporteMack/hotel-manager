@@ -318,9 +318,10 @@ const generarContrato = async (idContrato) => {
   const config = await datosBanco();
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
   const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
+  const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
   try {
     const datos = {
-      nombre: nombre,
+      nombre: String(nom).toUpperCase(),
       direccion: "sin direccion",
       bcomp: "×",
       bpriv: "×",

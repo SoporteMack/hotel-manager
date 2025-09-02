@@ -569,7 +569,7 @@ const generarContrato = async (idContrato) => {
   const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
   try {
     const datos = {
-      nombre: nom,
+      nombre: String(nom).toUpperCase(),
       direccion: "C. 1 Nte 222, Centro de la Ciudad, 75700 Tehuacán, Pue.",
       diai: String(fechai.getDate()).padStart(2,'0'),
       mesi: String(fechai.getMonth()).padStart(2,'0'),
