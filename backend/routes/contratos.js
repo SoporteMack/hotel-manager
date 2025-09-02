@@ -21,4 +21,6 @@ router.get('/ocupacion',verificarToken,contratos.porcentajeocupado);
 router.get('/contratoxpersona',verificarToken,contratos.contratoxnombre);
 router.get('/rentasvencidas',verificarToken,contratos.rentasvencidas); 
 router.post('/actualizargeneral',verificarToken,contratos.actualizarContratogeneral);
+router.get('/nombredep',verificarToken,contratos.nombreDep);
+router.get('/undia',verificarToken,contratos.venceundia);
 module.exports = router;

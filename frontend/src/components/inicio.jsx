@@ -1,20 +1,19 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import TarjetaInicio from "./inicio/tarjetainicio";
 import { pagosdeldia as pagos, ocupacion as totalocupacion, ultimospagos as upagos } from "../api/inicio";
+import { Tab, TabGroup, TabList, TabPanels, TabPanel } from "@headlessui/react";
+import IngresosDiarios from "./inicio/ingresosdiarios";
+import RentasVencidas from "./inicio/rentasvencidas";
+import VenceUnDia from "./inicio/venceundia";
+
+function classNames(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
 
 function Dashboard() {
-  const [selectedPago, setSelectedPago] = useState(null);
   const [pagosDelDia, setPagosDelDia] = useState(0);
+  const [pagosDelMes,setPagosdelMes] = useState(0);
   const [ocupacion, setOcupacion] = useState({ libres: 0, porcentaje: 0 });
-  const [ultimosPagos, setUltimosPagos] = useState([]);
-  const [loadingPagos, setLoadingPagos] = useState(true);
-
-  const getMontoColor = (monto) => {
-    if (monto > 1000) return "text-green-600";
-    if (monto > 500) return "text-yellow-600";
-    return "text-red-600";
-  };
 
   const obtenerPagosDelDia = async () => {
     try {
@@ -23,13 +22,33 @@ function Dashboard() {
       const mes = String(fecha.getMonth() + 1).padStart(2, "0");
       const dia = String(fecha.getDate()).padStart(2, "0");
       const fechaFormateada = `${anio}-${mes}-${dia}`;
-      const res = await pagos(fechaFormateada);
+      const res = await pagos(fechaFormateada,fechaFormateada);
       setPagosDelDia(res.data.monto);
     } catch (error) {
       console.error(error);
     }
   };
-
+  const pagosdelmes = async ()=>{
+    try {
+      const fecha = new Date();
+      const anio = fecha.getFullYear();
+      const mes = fecha.getMonth() + 1; // 1-12
+    
+      // Primer día del mes
+      const primerDia = `${anio}-${String(mes).padStart(2, "0")}-01`;
+    
+      // Último día del mes → usar el "0" del mes siguiente
+      const ultimoDia = new Date(anio, mes, 0).getDate();
+      const ultimoDiaFormateado = `${anio}-${String(mes).padStart(2, "0")}-${String(ultimoDia).padStart(2, "0")}`;
+    
+      const res = await pagos(primerDia, ultimoDiaFormateado);
+      setPagosdelMes(res.data.monto);
+    
+    } catch (error) {
+      console.error(error);
+    }
+    
+  }
   const obtenerOcupacion = async () => {
     try {
       const res = await totalocupacion();
@@ -39,129 +58,76 @@ function Dashboard() {
     }
   };
 
-  const obtenerUltimosPagos = async () => {
-    try {
-      const res = await upagos();
-      setUltimosPagos(res.data || []);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingPagos(false); // importante ponerlo en finally
-    }
-  };
-
   useEffect(() => {
-    obtenerPagosDelDia();
     obtenerOcupacion();
-    obtenerUltimosPagos();
+    obtenerPagosDelDia();
+    pagosdelmes();
   }, []);
 
   return (
-    <div>
-      <div className="flex flex-wrap justify-between gap-3 p-4">
-        <p className="text-2xl sm:text-3xl font-bold min-w-72">Inicio</p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Encabezado */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Inicio</h1>
+        <p className="text-gray-600">Resumen general de la operación</p>
       </div>
 
-      <div className="flex flex-wrap gap-4 p-4">
-        <TarjetaInicio titulo="Ingresos Recientes" valor={`$${pagosDelDia}`} />
-        <TarjetaInicio titulo="Departamentos Libres" valor={`${ocupacion.libres}`} />
-        <TarjetaInicio titulo="Porcentaje Ocupados" valor={`${ocupacion.porcentaje}`} />
+      {/* Tarjetas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+          <TarjetaInicio titulo="Ingresos Diarios" valor={`$${pagosDelDia}`} />
+        </div>
+        <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+          <TarjetaInicio titulo="Ingresos Mensuales" valor={`$${pagosDelMes}`} />
+        </div>
+        <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+          <TarjetaInicio titulo="Departamentos Libres" valor={`${ocupacion.libres}`} />
+        </div>
+        <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+          <TarjetaInicio titulo="Ocupación" valor={`${ocupacion.porcentaje}%`} />
+        </div>
       </div>
 
-      <h2 className="text-[22px] font-bold px-4 pb-3 pt-5">Últimos 5 Ingresos del día</h2>
-
-      <div className="grid gap-4 px-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {/* Loader skeleton */}
-        {loadingPagos &&
-          Array.from({ length: 3 }).map((_, idx) => (
-            <motion.div
-              key={idx}
-              className="bg-gray-200 rounded-lg p-4 flex flex-col gap-2 animate-pulse h-28"
-            />
-          ))}
-
-        {/* Pagos reales */}
-        {!loadingPagos &&
-          ultimosPagos.length > 0 &&
-          ultimosPagos.map((ingreso, idx) => (
-            <motion.div
-              key={idx}
-              className="bg-white border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center
-                 hover:shadow-xl cursor-pointer relative group"
-              whileHover={{ scale: 1.03, boxShadow: "0 10px 25px rgba(0,0,0,0.15)" }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setSelectedPago(ingreso)}
+      {/* Tabs */}
+      <TabGroup>
+        <TabList className="flex space-x-3 bg-white rounded-xl p-2 shadow mb-6">
+          {["Ingresos Diarios", "Vencimientos a 1 Día", "Vencidos"].map((tabName) => (
+            <Tab
+              key={tabName}
+              className={({ selected }) =>
+                classNames(
+                  "flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all",
+                  selected
+                    ? "bg-blue-600 text-white shadow"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                )
+              }
             >
-              <div className="flex-1">
-                <p className="font-medium text-gray-800 text-sm sm:text-base">
-                  {ingreso.contrato.departamento.descripcion}
-                </p>
-                <p className="text-gray-500 text-xs sm:text-sm mt-1">{ingreso.fechaPago}</p>
-              </div>
-
-              <div
-                className={`mt-2 sm:mt-0 sm:ml-4 font-semibold text-lg sm:text-xl ${getMontoColor(
-                  ingreso.monto
-                )}`}
-              >
-                ${ingreso.monto}
-              </div>
-
-              <span className="absolute top-2 right-2 bg-gray-700 text-white text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-80 transition-opacity duration-200">
-                Ver más
-              </span>
-            </motion.div>
+              {tabName}
+            </Tab>
           ))}
+        </TabList>
 
-        {/* No hay pagos */}
-        {!loadingPagos && ultimosPagos.length === 0 && (
-          <p className="text-gray-500 col-span-full">No hay ingresos registrados hoy</p>
-        )}
-      </div>
+        <TabPanels>
+          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Ingresos de la Semana</h2>
+            <p className="text-gray-600">Aquí se mostrarán los gráficos o datos.</p>
+            <IngresosDiarios/>
+          </TabPanel>
 
-      {/* Modal animado */}
-      <AnimatePresence>
-        {selectedPago && (
-          <motion.div
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="bg-white rounded-xl p-6 w-11/12 max-w-md shadow-2xl relative"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            >
-              <h3 className="text-xl font-semibold mb-4">Detalle del Pago</h3>
-              <p>
-                <strong>Folio:</strong> {selectedPago.folio}
-              </p>
-              <p>
-                <strong>Departamento:</strong> {selectedPago.contrato.departamento.descripcion}
-              </p>
-              <p>
-                <strong>Fecha:</strong> {selectedPago.fechaPago}
-              </p>
-              <p>
-                <strong>Cliente:</strong>{" "}
-                {selectedPago.contrato?.persona?.nombrePersona || ""}{" "}
-                {selectedPago.contrato?.persona?.apellidoPaterno || ""}{" "}
-                {selectedPago.contrato?.persona?.apellidoMaterno || ""}
-              </p>
+          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Vencimientos a 1 Día</h2>
+            <p className="text-gray-600">Aquí se mostrarán los vencimientos próximos.</p>
+            <VenceUnDia/>
+          </TabPanel>
 
-              <button
-                className="mt-6 w-full px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
-                onClick={() => setSelectedPago(null)}
-              >
-                Cerrar
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Departamentos Vencidos</h2>
+            <p className="text-gray-600">Aquí aparecerán los pagos atrasados.</p>
+            <RentasVencidas/>
+          </TabPanel>
+        </TabPanels>
+      </TabGroup>
     </div>
   );
 }

@@ -125,14 +125,15 @@ exports.editar = async (req, res) => {
 
 exports.ingresosdeldia = async (req, res) => {
   try {
-    const dia = req.query.fecha;
+    const dia = req.query.fechaInicio;
+    const dia2 = req.query.fechaFinal;
 
     if (!dia) {
       return res.status(400).json({ status: false, msg: 'Fecha requerida' });
     }
 
     const start = new Date(`${dia}T00:00:00.000Z`);
-    const end = new Date(`${dia}T23:59:59.999Z`);
+    const end = new Date(`${dia2}T23:59:59.999Z`);
     const resultado = await pagos.findOne({
       attributes: [[fn('SUM', col('monto')), 'pagos']],
       where: {
@@ -254,7 +255,6 @@ exports.obtenerUltimos5IngresosDelDia = async (req,res) => {
         }
       },
       order: [['fechaPago', 'DESC']], // más recientes primero
-      limit: 5,
       include: [
         {
           model: contratos,

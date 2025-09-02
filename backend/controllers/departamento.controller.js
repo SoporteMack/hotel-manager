@@ -68,7 +68,7 @@ exports.actualizar = async (req, res) => {
 exports.listarActivos = async (req,res)=>{
   try{
     const lista = await departamentos.findAll({
-      attributes:["numDepartamento","descripcion"],
+      attributes:["numDepartamento","descripcion","costo"],
       where:{
         estatus:true
       }

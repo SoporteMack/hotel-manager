@@ -16,6 +16,7 @@ const Docxtemplater = require('docxtemplater');
 const mammoth = require('mammoth'); // para convertir docx a HTML
 const puppeteer = require('puppeteer');
 const { NumerosALetras } = require('numero-a-letras');
+const persona = require('../models/personas');
 
 
 exports.listar = async (req, res) => {
@@ -190,6 +191,17 @@ exports.contratoxnombre = async (req, res) => {
 
 }
 
+exports.venceundia = async (req,res)=>
+{
+  try{
+    const dia = req.query.fecha;
+    const resp = await this.vencetredias(dia);
+    return res.status(200).json(resp);  
+  }catch(error)
+  {
+    return res.status(500).json([]);
+  }
+}
 exports.vencetredias = async (fecha) => {
 
   try {
@@ -199,7 +211,12 @@ exports.vencetredias = async (fecha) => {
         {
           model: personas,
           as: "persona",
-          attributes: ["telefono"]
+          attributes: ["nombrePersona","apellidoPaterno","apellidoMaterno","telefono"]
+        },
+        {
+          model:departamentos,
+          as:"departamento",
+          attributes:["descripcion"]
         }
       ],
       where: { fechaPago: fecha },
@@ -443,4 +460,27 @@ const enviarmsg = async (idContrato) =>{
     }
 }
   
+exports.nombreDep = async (req,res)=>
+{
+  const {numdep} = req.query;
+  console.log(numdep)
   
+  try{
+    const response = await contratos.findOne({
+      where:{numDepartamento:numdep,estatus:true},
+      attributes:["numDepartamento"],
+      include:[
+        {
+          model:persona,
+          as:"persona",
+          attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+        }
+      ]
+    }).then(res => {return (res.persona.nombrePersona + " " + res.persona.apellidoPaterno + " " + res.persona.apellidoMaterno)})
+    res.status(200).json(response);
+  }catch(error)
+  {
+    console.log(error)
+    res.status(500).json(error);
+  }
+}

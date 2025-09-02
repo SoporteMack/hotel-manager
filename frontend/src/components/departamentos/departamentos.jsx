@@ -11,7 +11,7 @@ function Departamentos() {
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [departamentoEditar, setDepartamentoEditar] = useState(null);
-  const [filtro, setFiltro] = useState('Libre');
+  const [filtro, setFiltro] = useState('Todos');
   const [buscar, setBuscar] = useState('');
 
   const notyf = useRef(new Notyf({

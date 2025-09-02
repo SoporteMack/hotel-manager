@@ -566,15 +566,11 @@ const generarContrato = async (idContrato) => {
   const config = await datosBanco();
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
   const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
+  const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
   try {
     const datos = {
-      nombre: nombre,
-      direccion: "sin direccion",
-      bcomp: "×",
-      bpriv: "×",
-      cocina: "×",
-      sala: "×",
-      lavado: "×",
+      nombre: nom,
+      direccion: "C. 1 Nte 222, Centro de la Ciudad, 75700 Tehuacán, Pue.",
       diai: String(fechai.getDate()).padStart(2,'0'),
       mesi: String(fechai.getMonth()).padStart(2,'0'),
       anioi: fechai.getFullYear(),
