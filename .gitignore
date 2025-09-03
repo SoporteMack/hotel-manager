@@ -26,9 +26,6 @@ test/
 .git
 
 
-# Builds
-dist/
-build/
 
 # SSL keys (no subir a producción)
 *.pem
