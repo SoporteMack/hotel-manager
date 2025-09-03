@@ -76,22 +76,15 @@ const contratos = sequelize.define('contratos', {
   },
   comprobanteDeDomicilio: {
     type: DataTypes.STRING,
-    allowNull: false,
-    validate: {
-      notEmpty: { msg: "El Comprobante de Domicilio no debe de estar vacío" }
-    }
+    allowNull: true
   },
   tarjetaD: {
     type: DataTypes.STRING,
-    validate: {
-      notEmpty: { msg: "El Tarjeta no debe de estar vacío" }
-    }
+    allowNull:true
   }, 
   tarjetaA: {
     type: DataTypes.STRING,
-    validate: {
-      notEmpty: { msg: "El Tarjeta no debe de estar vacío" }
-    }
+    allowNull:true
   },
   docContrato: {
     type: DataTypes.STRING,

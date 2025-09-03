@@ -28,9 +28,6 @@ function CrearContrato() {
   const [docs, setDocs] = useState({
     ineD: useRef(null),
     ineA: useRef(null),
-    comprobatededomicilio: useRef(null),
-    tarjetaD: useRef(null),
-    tarjetaA: useRef(null),
   });
 
   // Función para cargar listas de inquilinos y departamentos
@@ -60,7 +57,25 @@ function CrearContrato() {
 
   useEffect(() => {
     cargarListas();
+    const formatfecha = (fecha) => {
+      return fecha.getFullYear() + "-" + String(fecha.getMonth()).padStart(2, "0") + "-" + String(fecha.getDate()).padStart(2, "0");
+    }
+    const fecha = new Date();
+    const fechaS = new Date(fecha); // importante: crear nueva fecha para no mutar la misma
+    fechaS.setMonth(fecha.getMonth() + 6);
+  
+    setFechaInicio(formatfecha(fecha));
+    setFechaTermino(formatfecha(fechaS));
   }, []);
+  
+  // 👇 ESTE useEffect es adicional, no lo metas dentro del de arriba
+  useEffect(() => {
+    if (departamento) {
+      const costo = listaDepartamentos.find((d) => d.value === departamento)?.costo || 0;
+      setDeposito(costo);
+    }
+  }, [departamento, listaDepartamentos]);
+  
 
   const handleFileChange = (e, tipo) => {
     const file = e.target.files[0];
@@ -87,6 +102,7 @@ function CrearContrato() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!inquilinos || !departamento || !fechaInicio || !fechaTermino || deposito <= 0) {
+      console.log(inquilinos, departamento, fechaInicio, fechaTermino, deposito)
       notyf.current.error("valores no validos para crear contrato")
       return;
     }
@@ -114,10 +130,7 @@ function CrearContrato() {
       setEstatus(true);
       setDocs({
         ineD: null,
-        ineA: null,
-        comprobatededomicilio: null,
-        tarjetaD: null,
-        tarjetaA: null,
+        ineA: null
       });
 
       // Actualizar listas de departamentos y inquilinos
@@ -136,10 +149,7 @@ function CrearContrato() {
 
   const camposDocumentos = [
     { nombre: "ineD", label: "INE parte delatera" },
-    { nombre: "ineA", label: "INE parte Treasera" },
-    { nombre: "comprobatededomicilio", label: "Comprobante de domicilio" },
-    { nombre: "tarjetaD", label: "Tarjeta de trabajo o estudiante parte delantera" },
-    { nombre: "tarjetaA", label: "Tarjeta de trabajo o estudiante parte trasera" }
+    { nombre: "ineA", label: "INE parte Treasera" }
   ];
 
   const handleDescargarContrato = async (idContrato) => {
@@ -179,12 +189,13 @@ function CrearContrato() {
       // Ajustar formato YYYY-MM-DD
       const anio = fecha.getFullYear();
       const mes = String(fecha.getMonth() + 1).padStart(2, "0");
-      const dia = String(fecha.getDate() +1).padStart(2, "0");
+      const dia = String(fecha.getDate() + 1).padStart(2, "0");
       setFechaTermino(`${anio}-${mes}-${dia}`);
     } else {
       setFechaTermino("");
     }
   };
+ 
   return (
 
     <div className="max-w-3xl mx-auto p-4 bg-white rounded-lg shadow-md">
@@ -239,14 +250,8 @@ function CrearContrato() {
           <input
             type="number"
             className="w-full p-2 border rounded-md text-2xl"
-            value={
-              departamento
-                ? listaDepartamentos.find((d) => d.value === departamento)?.costo || 0
-                : 0
-            }
-            onChange={(e) =>{ departamento
-              ? listaDepartamentos.find((d) => d.value === departamento)?.costo || 0
-              : 0}}
+            value={deposito}
+            onChange={(e) => setDeposito(Number(e.target.value))}
             required
           />
 

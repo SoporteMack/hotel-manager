@@ -18,7 +18,7 @@ function Contratos() {
     listar();
   }, []);
 
-  async function listar() {
+  const listar  = async function () {
     try {
       const lista = await listarContratos().then(res => res.data);
       setContratos(lista);
@@ -94,7 +94,7 @@ function Contratos() {
         <p className="text-gray-600 text-center mt-10">Cargando contratos...</p>
       ) : (
         <>
-        <TableContratos items={filtredItems} setLoading={setLoading} setIsOpen={setIsOpen} setContrato={setDataContrato}/>
+        <TableContratos items={filtredItems} setLoading={setLoading} setIsOpen={setIsOpen} setContrato={setDataContrato} listar={listar}/>
         
           {dataContrato && (<EditarContrato onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} contrato={dataContrato} setData={setDataContrato} setIsOpenloader={setLoading}/>)}
         </>

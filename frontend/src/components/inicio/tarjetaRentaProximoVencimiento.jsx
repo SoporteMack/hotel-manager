@@ -7,7 +7,7 @@ function TarjetaRentaProximoVencimiento({ renta }) {
             {renta["persona.nombrePersona"]} {renta["persona.apellidoPaterno"]} {renta["persona.apellidoMaterno"]}
           </h3>
           <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">
-            Vence hoy
+            Vence mañana
           </span>
         </div>
   

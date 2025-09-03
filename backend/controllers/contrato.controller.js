@@ -1,4 +1,4 @@
-const {Op, fn, col} = require('sequelize');
+const { Op, fn, col, where } = require('sequelize');
 const contratos = require('../models/contratos');
 const departamentos = require('../models/departamentos');
 const personas = require('../models/personas');
@@ -35,7 +35,40 @@ exports.listar = async (req, res) => {
   });
   res.json(lista);
 }
-
+exports.subirComprobante = async (req, res) => {
+  const archivosGuardados = [];
+  try {
+    const data = req.body;
+    const files = req.files;
+    const persona = await personas.findOne({
+      attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
+      where: { idPersona: data.idPersona }
+    });
+    if (!persona) return res.status(404).json({ msg: "Persona no encontrada" });
+    const nombre = `${data.idPersona}_${persona.nombrePersona}_${persona.apellidoPaterno}_${persona.apellidoMaterno}_${data.numDepartamento}`.replace(/\s+/g, "_");
+    const carpeta = path.join("uploads", `${nombre}`);
+    fs.mkdirSync(carpeta, { recursive: true });
+    const guardarArchivo = (campo, nombre) => {
+      if (files[campo]?.[0]) {
+        const archivo = files[campo][0];
+        const ext = path.extname(archivo.originalname);
+        const nombreArchivo = `${campo}_${Date.now()}_${nombre}${ext}`;
+        const fullPath = path.join(carpeta, nombreArchivo);
+        fs.writeFileSync(fullPath, archivo.buffer);
+        archivosGuardados.push(fullPath);
+        return `/${fullPath.replace(/\\\\/g, "/")}`;
+      }
+      return null;
+    };
+    data.comprobanteDeDomicilio = guardarArchivo("comprobatededomicilio", nombre);
+    const condb = await contratos.update({comprobanteDeDomicilio:data.comprobanteDeDomicilio}, { where: { idContrato: data.idContrato } } )
+    console.log(data)
+    res.status(200).json(condb);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error);
+  }
+}
 exports.crear = async (req, res) => {
   const archivosGuardados = [];
 
@@ -60,7 +93,7 @@ exports.crear = async (req, res) => {
     });
     if (!persona) return res.status(404).json({ msg: "Persona no encontrada" });
 
-    const nombre = `${data.idPersona}_${persona.nombrePersona}_${persona.apellidoPaterno}_${persona.apellidoMaterno}`.replace(/\s+/g, "_");
+    const nombre = `${data.idPersona}_${persona.nombrePersona}_${persona.apellidoPaterno}_${persona.apellidoMaterno}_${data.numDepartamento}`.replace(/\s+/g, "_");
     //const fechaObj = new Date(data.fechaInicio);
     //const fechaTexto = `contrato_${fechaObj.getDate().toString().padStart(2, "0")}_${(fechaObj.getMonth() + 1).toString().padStart(2, "0")}_${fechaObj.getFullYear()}`;_${fechaTexto}
     const carpeta = path.join("uploads", `${nombre}`);
@@ -92,7 +125,7 @@ exports.crear = async (req, res) => {
       { where: { numDepartamento: data.numDepartamento } }
     );
 
-    res.status(201).json({ msg: "Contrato creado correctamente",idContrato:condb.idContrato});
+    res.status(201).json({ msg: "Contrato creado correctamente", idContrato: condb.idContrato });
   } catch (e) {
     // Limpia archivos si hay error
     archivosGuardados.forEach(file => {
@@ -191,14 +224,12 @@ exports.contratoxnombre = async (req, res) => {
 
 }
 
-exports.venceundia = async (req,res)=>
-{
-  try{
+exports.venceundia = async (req, res) => {
+  try {
     const dia = req.query.fecha;
     const resp = await this.vencetredias(dia);
-    return res.status(200).json(resp);  
-  }catch(error)
-  {
+    return res.status(200).json(resp);
+  } catch (error) {
     return res.status(500).json([]);
   }
 }
@@ -211,12 +242,12 @@ exports.vencetredias = async (fecha) => {
         {
           model: personas,
           as: "persona",
-          attributes: ["nombrePersona","apellidoPaterno","apellidoMaterno","telefono"]
+          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno", "telefono"]
         },
         {
-          model:departamentos,
-          as:"departamento",
-          attributes:["descripcion"]
+          model: departamentos,
+          as: "departamento",
+          attributes: ["descripcion"]
         }
       ],
       where: { fechaPago: fecha },
@@ -228,7 +259,7 @@ exports.vencetredias = async (fecha) => {
   }
 }
 
-exports.rentasvencidas = async(req,res)=>{
+exports.rentasvencidas = async (req, res) => {
   try {
     const rentasConPagos = await this.buscarRentasVencidas();
     res.status(200).json(rentasConPagos);
@@ -270,82 +301,76 @@ exports.buscarRentasVencidas = async () => {
         ultimoPago: ultimopago
       };
     }));
-  return rentasConPagos
-    
+    return rentasConPagos
+
   } catch (error) {
-    return[];
+    return [];
   }
 }
 
-exports.actualizarContratogeneral= async (req,res)=>{
+exports.actualizarContratogeneral = async (req, res) => {
   const data = req.body;
   console.log(data)
-  try{
-    const response = await contratos.findOne({attributes:["idContrato","idPersona","numDepartamento","deposito","deuda","fechaInicio","fechaTermino"],where:{idContrato:data.idContrato}})
-    if(!response)
-      return res.status(404).json({estatus:false,msg:"Contrato no Encotrado"});
+  try {
+    const response = await contratos.findOne({ attributes: ["idContrato", "idPersona", "numDepartamento", "deposito", "deuda", "fechaInicio", "fechaTermino"], where: { idContrato: data.idContrato } })
+    if (!response)
+      return res.status(404).json({ estatus: false, msg: "Contrato no Encotrado" });
     const datos = {};
-    if(data.idPersona !== undefined) datos.idPersona = data.idPersona ;
-    if(data.numDepartamento !== undefined) datos.numDepartamento = data.numDepartamento; 
-    if(data.deposito  !== undefined) datos.deposito = data.deposito;
-    if(data.deuda !== undefined) datos.deuda = data.deuda;
-    if(data.fechaInicio !== undefined) datos.fechaInicio = data.fechaInicio;
-    if(data.fechaTermino !==  undefined) datos.fechaTermino = data.fechaTermino;
+    if (data.idPersona !== undefined) datos.idPersona = data.idPersona;
+    if (data.numDepartamento !== undefined) datos.numDepartamento = data.numDepartamento;
+    if (data.deposito !== undefined) datos.deposito = data.deposito;
+    if (data.deuda !== undefined) datos.deuda = data.deuda;
+    if (data.fechaInicio !== undefined) datos.fechaInicio = data.fechaInicio;
+    if (data.fechaTermino !== undefined) datos.fechaTermino = data.fechaTermino;
 
     console.log(datos)
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ error: "No hay datos para actualizar" });
     }
     await contratos.update(datos, {
-      where: {idContrato:data.idContrato }
+      where: { idContrato: data.idContrato }
     });
 
     await generarContrato(data.idContrato)
     enviarmsg(data.idContrato);
     res.status(200).json({ msg: "Contrato Actulizado" });
-  }catch(error)
-  {
+  } catch (error) {
     console.log(error)
-    return res.status(500).json({estatus:false,error:error})
+    return res.status(500).json({ estatus: false, error: error })
   }
 }
 
 
-const generarContrato = async (idContrato) => { 
+const generarContrato = async (idContrato) => {
   const contratodb = await findContrato(idContrato);
   const fechai = new Date(contratodb.fechaInicio);
   const fechaf = new Date(contratodb.fechaTermino);
   const config = await datosBanco();
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
-  const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
+  const nombre = `${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
   const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
   try {
     const datos = {
       nombre: String(nom).toUpperCase(),
-      direccion: "sin direccion",
-      bcomp: "×",
-      bpriv: "×",
-      cocina: "×",
-      sala: "×",
-      lavado: "×",
-      diai: String(fechai.getDate()).padStart(2,'0'),
-      mesi: String(fechai.getMonth()).padStart(2,'0'),
+      direccion: "C. 1 Nte 222, Centro de la Ciudad, 75700 Tehuacán, Pue.",
+      diai: String(fechai.getDate()).padStart(2, '0'),
+      mesi: String(fechai.getMonth()).padStart(2, '0'),
       anioi: fechai.getFullYear(),
-      diaf: String(fechaf.getDate()).padStart(2,'0'),
-      mesf: String(fechaf.getMonth()).padStart(2,'0'),
+      diaf: String(fechaf.getDate()).padStart(2, '0'),
+      mesf: String(fechaf.getMonth()).padStart(2, '0'),
       aniof: fechaf.getFullYear(),
       monto: contratodb.departamento.costo,
-      montoalfa:montoalfa,
+      montoalfa: montoalfa,
       banco: config.banco,
       titular: config.titular,
       clave: config.numCuenta,
-      ciudadfirma:'TEHUACAN',
-      diafirma: String(fechai.getDate()).padStart(2,'0'),
+      ciudadfirma: 'TEHUACAN',
+      diafirma: String(fechai.getDate()).padStart(2, '0'),
       mesfirma: String(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(fechai)).toUpperCase(),
-      aniofirma:String(fechai.getFullYear()),
-      deposito:contratodb.deposito
+      aniofirma: String(fechai.getFullYear()),
+      deposito: contratodb.deposito
     }
-    const outputPdfPath = path.resolve(__dirname, '../uploads/'+nombre, 'contrato_final.pdf');
+    const outputPdfPath = path.resolve(__dirname, '../uploads/' + nombre, 'contrato_final.pdf');
     const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
     const zip = new PizZip(contenido);
     const options = {
@@ -380,13 +405,13 @@ const generarContrato = async (idContrato) => {
   </div>
 `;
     // Lanzar Puppeteer para generar PDF desde HTML
-    const browser = await puppeteer.launch({  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']});
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] });
     const page = await browser.newPage();
 
-    await page.setContent(html, { waitUntil: 'networkidle0',timeout:0});
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 0 });
 
     await page.pdf({
-      path: __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf',
+      path: __dirname + '/../uploads/' + nombre + '/' + 'contrato_final.pdf',
       format: 'A4',
       printBackground: true,
       margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
@@ -407,8 +432,8 @@ const generarContrato = async (idContrato) => {
 };
 
 const findContrato = async (idContrato) => {
-  return  await contratos.findOne({
-    attributes: ["idContrato","fechaInicio","fechaTermino","deposito","idPersona","numDepartamento"],
+  return await contratos.findOne({
+    attributes: ["idContrato", "fechaInicio", "fechaTermino", "deposito", "idPersona", "numDepartamento"],
     where: { idContrato: idContrato },
     include: [
       {
@@ -419,8 +444,8 @@ const findContrato = async (idContrato) => {
       },
       {
         model: departamentos,
-        as:'departamento',
-        attributes:['costo']
+        as: 'departamento',
+        attributes: ['costo']
       }
     ],
     raw: true,
@@ -429,58 +454,55 @@ const findContrato = async (idContrato) => {
 }
 
 
-const datosBanco = async  () =>
-  {
-    return await Configuracion.findOne({attributes:['banco','numCuenta','titular']});
-  }
+const datosBanco = async () => {
+  return await Configuracion.findOne({ attributes: ['banco', 'numCuenta', 'titular'] });
+}
 
-const enviarmsg = async (idContrato) =>{
+const enviarmsg = async (idContrato) => {
   const sock = getSock();
   const res = await contratos.findOne({
-    attributes:["idContrato"],
-    where:{idContrato:idContrato},
-    include:[{
-      model:personas,
-      as:"persona",
-      attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+    attributes: ["idContrato"],
+    where: { idContrato: idContrato },
+    include: [{
+      model: personas,
+      as: "persona",
+      attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
     }]
-  }).then(res => {return res.persona})
+  }).then(res => { return res.persona })
 
-  const telefono = await Configuracion.findOne().then(res =>{return res.telefono});
-  const nom = res.nombrePersona + " "  + res.apellidoPaterno + " "  + res.apellidoMaterno;
+  const telefono = await Configuracion.findOne().then(res => { return res.telefono });
+  const nom = res.nombrePersona + " " + res.apellidoPaterno + " " + res.apellidoMaterno;
   const msj = "se actulizo contrato numero " + idContrato + "\n de la persona " + nom
   const numero = '521' + telefono;
-    try {
-      await sock.sendMessage(`${numero}@s.whatsapp.net`, {
-        text: msj
-      });
-      console.log(`✅ Mensaje enviado a ${numero}`);
+  try {
+    await sock.sendMessage(`${numero}@s.whatsapp.net`, {
+      text: msj
+    });
+    console.log(`✅ Mensaje enviado a ${numero}`);
 
-    } catch (err) {
-      console.error('❌ Error al enviar mensaje:', err);
-    }
+  } catch (err) {
+    console.error('❌ Error al enviar mensaje:', err);
+  }
 }
-  
-exports.nombreDep = async (req,res)=>
-{
-  const {numdep} = req.query;
+
+exports.nombreDep = async (req, res) => {
+  const { numdep } = req.query;
   console.log(numdep)
-  
-  try{
+
+  try {
     const response = await contratos.findOne({
-      where:{numDepartamento:numdep,estatus:true},
-      attributes:["numDepartamento"],
-      include:[
+      where: { numDepartamento: numdep, estatus: true },
+      attributes: ["numDepartamento"],
+      include: [
         {
-          model:persona,
-          as:"persona",
-          attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+          model: persona,
+          as: "persona",
+          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
         }
       ]
-    }).then(res => {return (res.persona.nombrePersona + " " + res.persona.apellidoPaterno + " " + res.persona.apellidoMaterno)})
+    }).then(res => { return (res.persona.nombrePersona + " " + res.persona.apellidoPaterno + " " + res.persona.apellidoMaterno) })
     res.status(200).json(response);
-  }catch(error)
-  {
+  } catch (error) {
     console.log(error)
     res.status(500).json(error);
   }

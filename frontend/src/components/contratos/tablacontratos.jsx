@@ -1,7 +1,7 @@
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { ItemTablaContrato, ItemCardContratoMobile } from './itemtablecontratos';
 
-function TableContratos({ items, onEditar,setLoading,setIsOpen,setContrato}) {
+function TableContratos({ items, onEditar,setLoading,setIsOpen,setContrato,listar}) {
   const isMobile = useIsMobile();
 
   return (
@@ -23,7 +23,7 @@ function TableContratos({ items, onEditar,setLoading,setIsOpen,setContrato}) {
             </thead>
             <tbody>
               {items.map((item) => (
-                <ItemTablaContrato key={item.idContrato} item={item} onEditar={onEditar}setLoading={setLoading}setIsOpen={setIsOpen}  setContrato={setContrato}/>
+                <ItemTablaContrato key={item.idContrato} item={item} onEditar={onEditar}setLoading={setLoading}setIsOpen={setIsOpen}  setContrato={setContrato} listar={listar}/>
               ))}
             </tbody>
           </table>

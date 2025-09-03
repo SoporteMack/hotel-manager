@@ -17,6 +17,7 @@ router.post(
   ]),
   contratos.crear
 );
+router.post('/subircomprobante',verificarToken,upload.fields([{ name: "comprobatededomicilio", maxCount: 1 },]),contratos.subirComprobante);
 router.get('/ocupacion',verificarToken,contratos.porcentajeocupado);
 router.get('/contratoxpersona',verificarToken,contratos.contratoxnombre);
 router.get('/rentasvencidas',verificarToken,contratos.rentasvencidas); 

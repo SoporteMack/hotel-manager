@@ -23,7 +23,7 @@ function VenceUnDia() {
         return hoy.getFullYear() + "-" + String(hoy.getMonth()).padStart(2, "0") + "-" + String(hoy.getDate() + 1).padStart(2, "0");
     }
     return (
-        <div className="p-4 sm:p-6 bg-gray-50 min-h-screen">
+        <div className="p-4 sm:p-6 bg-gray-50">
           {/* Encabezado */}
           <div className="mb-6 text-center">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-800 mb-2">
