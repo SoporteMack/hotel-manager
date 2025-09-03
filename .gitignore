@@ -8,8 +8,6 @@ yarn-debug.log*
 yarn-error.log*
 
 # Ignora carpetas de producción o temporales
-dist/
-build/
 .env
 .DS_Store
 *.local
