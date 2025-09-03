@@ -8,6 +8,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # Ignora carpetas de producción o temporales
+dist/
+build/
 .env
 .DS_Store
 *.local
@@ -26,6 +28,9 @@ test/
 .git
 
 
+# Builds
+dist/
+build/
 
 # SSL keys (no subir a producción)
 *.pem
