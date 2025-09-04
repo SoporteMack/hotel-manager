@@ -9,9 +9,9 @@ exports.findusuario= async (req,res) =>
 
 exports.crearusuario = async (req,res)=>{
     try{
-    const {usuario,password} = req.body;
+    const {usuario,password,rol} = req.body;
     const hash = await bcrypt.hash(password, 10);
-    const usuarioBD = usuariomodel.create({usuario:usuario,password:hash});
+    const usuarioBD = usuariomodel.create({usuario:usuario,password:hash,role:rol});
 
     
      // Responder al cliente

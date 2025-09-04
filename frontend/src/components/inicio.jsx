@@ -69,6 +69,7 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Encabezado */}
       <TabGroup>
+        
         <TabList className="flex space-x-3 bg-white rounded-xl p-2 shadow mb-6">
           {["Ingresos Diarios", "Vencimientos a 1 Día", "Vencidos"].map((tabName) => (
             <Tab
@@ -86,6 +87,27 @@ function Dashboard() {
             </Tab>
           ))}
         </TabList>
+         {/* Tabs */}
+
+
+
+         <TabPanels>
+          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
+            <IngresosDiarios />
+          </TabPanel>
+
+          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Vencimientos a 1 Día</h2>
+            <p className="text-gray-600">Aquí se mostrarán los vencimientos próximos.</p>
+            <VenceUnDia />
+          </TabPanel>
+
+          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Departamentos Vencidos</h2>
+            <p className="text-gray-600">Aquí aparecerán los pagos atrasados.</p>
+            <RentasVencidas />
+          </TabPanel>
+        </TabPanels>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Inicio</h1>
           <p className="text-gray-600">Resumen general de la operación</p>
@@ -107,27 +129,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Tabs */}
-
-
-
-        <TabPanels>
-          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
-            <IngresosDiarios />
-          </TabPanel>
-
-          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Vencimientos a 1 Día</h2>
-            <p className="text-gray-600">Aquí se mostrarán los vencimientos próximos.</p>
-            <VenceUnDia />
-          </TabPanel>
-
-          <TabPanel className="bg-white p-6 rounded-xl shadow-md">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Departamentos Vencidos</h2>
-            <p className="text-gray-600">Aquí aparecerán los pagos atrasados.</p>
-            <RentasVencidas />
-          </TabPanel>
-        </TabPanels>
+       
       </TabGroup>
     </div>
   );

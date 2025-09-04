@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 
 const usuario = sequelize.define('usuario',{
     usuario:{type:DataTypes.STRING,primaryKey:true,allowNull:false},
-    password:DataTypes.STRING
+    password:DataTypes.STRING,
+    role:{type:DataTypes.STRING,defaultValue:"ayudante"}
 },{timestamps:false})
 module.exports = usuario;

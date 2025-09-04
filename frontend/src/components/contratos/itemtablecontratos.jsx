@@ -2,12 +2,14 @@ import axios from "axios";
 import { useEffect, useState } from "react"
 import { Pencil, Paperclip } from "lucide-react";
 import ModalAgregarDocs from "./modalAgregarDocs";
-function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato,listar }) {
+import { useAuth } from "../../context/authContext";
+function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato, listar }) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas"
   const [base, setbase] = useState("");
   const [modalAddDoc, setModalAddDoc] = useState(false);
-  const [partes,setPartes] = useState([])
+  const [partes, setPartes] = useState([])
+  const{user}= useAuth();
   useEffect(() => {
     const ruta = item.INED;
     setPartes(ruta.replace(/\\/g, "/").split("/"));
@@ -49,6 +51,7 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato,listar }) 
   const handleDescargarComprobante = async () => {
     const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();
     const ruta = base + "/" + img;
+    console.log(ruta)
     const url = apiUrl + `/api/documentos/obtenercomprobante${ruta}`;
     setLoading(true);
 
@@ -83,12 +86,12 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato,listar }) 
   };
 
 
-  const handleDescargarContrato = async (idContrato,carpeta) => {
+  const handleDescargarContrato = async (idContrato, carpeta) => {
     const url = apiUrl + "/api/documentos/contrato";
     setLoading(true)
     try {
       const response = await axios.get(url, {
-        params: { idContrato, carpeta},
+        params: { idContrato, carpeta },
         responseType: "blob", // recibir PDF como blob
       });
       console.log(response)
@@ -125,12 +128,12 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato,listar }) 
         <td className="px-3 py-2 whitespace-nowrap">{`${item.persona.nombrePersona} ${item.persona.apellidoPaterno} ${item.persona.apellidoMaterno}`}</td>
         <td className="px-2 py-1 whitespace-nowrap">{item.departamento.descripcion}</td>
         <td className="px-3 py-2 whitespace-nowrap">
-          <span onClick={() => handleDescargartarjetas(item.INED, item.INEA)} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 cursor-pointer transition">
+          <button onClick={() => handleDescargartarjetas(item.INED, item.INEA)} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 cursor-pointer transition">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v12" />
             </svg>
             INE
-          </span>
+          </button>
 
         </td>
         <td className="px-3 py-2 whitespace-nowrap">
@@ -156,7 +159,7 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato,listar }) 
 
         </td>
         <td className="px-3 py-2 whitespace-nowrap">
-          <span
+          <button
             onClick={item.tarjetaA ? () => handleDescargartarjetas(item.tarjetaD, item.tarjetaA) : undefined}
             className={`inline-flex items-center gap-1 px-3 py-1.5 text-sm border rounded-md transition
     ${!item.tarjetaA
@@ -174,11 +177,11 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato,listar }) 
               <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v12" />
             </svg>
             Tarjeta
-          </span>
+          </button>
 
         </td>
         <td className="px-3 py-2 whitespace-nowrap">
-          <button onClick={() => handleDescargarContrato(item.idContrato,partes[2])} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 cursor-pointer transition">
+          <button onClick={() => handleDescargarContrato(item.idContrato, partes[2])} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 border border-indigo-200 rounded-md hover:bg-indigo-50 cursor-pointer transition">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 4v12" />
             </svg>
@@ -194,20 +197,20 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato,listar }) 
 
 
         <td className="px-3 py-2 whitespace-nowrap text-right space-x-2">
-          <button
+          {user?.rol === "admin" &&(<button
             onClick={() => handleEditar(item)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-100 transition"
           >
             <Pencil size={16} />
             Editar
-          </button>
-          <button
+          </button>)}
+          {(!item.comprobanteDeDomicilio || !item.tarjetaA) && (<button
             onClick={handleAgregarDoc}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-100 transition"
           >
             <Paperclip size={16} />
             Agregar Doc
-          </button>
+          </button>)}
         </td>
 
 
@@ -220,10 +223,11 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas"
   const [base, setBase] = useState("");
+  const [partes,setPartes] =useState([]);
   const [modalAddDoc, setModalAddDoc] = useState(false);
   useEffect(() => {
     const ruta = item.INED;
-    const partes = ruta.replace(/\\/g, "/").split("/");
+     setPartes(ruta.replace(/\\/g, "/").split("/"));
     partes.pop();
     setBase(partes.join("/"));
   }, []);
@@ -260,6 +264,7 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
     const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();
     const ruta = base + "/" + img;
     const url = apiUrl + `/api/documentos/obtenercomprobante${ruta}`;
+    console.log(url)
     setLoading(true)
     try {
       const response = await axios.get(url, {
@@ -288,15 +293,14 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
     setContrato(contrato)
     setIsOpen(true);
   }
-  const handleDescargarContrato = async (idContrato) => {
+  const handleDescargarContrato = async (idContrato,carpeta) => {
     const url = apiUrl + "/api/documentos/contrato";
     setLoading(true)
     try {
       const response = await axios.get(url, {
-        params: { idContrato },
+        params: { idContrato,carpeta},
         responseType: "blob", // recibir PDF como blob
       });
-      console.log(response)
       // Aseguramos tipo MIME del PDF
       const blob = new Blob([response.data], { type: "application/pdf" });
 
@@ -324,18 +328,18 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
         <h3 className="font-semibold text-lg text-gray-900">
           Contrato #{item.idContrato}
         </h3>
-        <span className={`text-xs font-semibold px-2 py-1 rounded-full ${item.estatus ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+        <h6 className={`text-xs font-semibold px-2 py-1 rounded-full ${item.estatus ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
           {item.estatus ? 'Activo' : 'Inactivo'}
-        </span>
+        </h6>
       </div>
 
       <div className="text-sm text-gray-700 space-y-1 mb-4">
         <p>
-          <span className="font-medium">Inquilino: </span>
+          <h6 className="font-medium">Inquilino: </h6>
           {`${item.persona.nombrePersona} ${item.persona.apellidoPaterno} ${item.persona.apellidoMaterno || ''}`}
         </p>
         <p>
-          <span className="font-medium">Departamento: </span>
+          <h6 className="font-medium">Departamento: </h6>
           {item.departamento?.descripcion}
         </p>
       </div>
@@ -364,10 +368,10 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
         </button>
 
         <button
-          onClick={handleDescargarComprobante}
-          disabled={!item.comprobante} // se bloquea si no hay comprobante
+          onClick={()=>handleDescargarComprobante()}
+          disabled={!item.comprobanteDeDomicilio} // se bloquea si no hay comprobante
           className={`flex items-center gap-1 px-3 py-1.5 text-sm border rounded-md transition
-    ${!item.comprobante
+    ${!item.comprobanteDeDomicilio
               ? "text-gray-400 bg-gray-200 border-gray-300 cursor-not-allowed"
               : "text-indigo-600 bg-indigo-50 border-indigo-200 hover:bg-indigo-100"
             }`}
@@ -377,7 +381,7 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
         </button>
 
         <button
-          onClick={() => handleDescargarContrato(item.idContrato)}
+          onClick={() => handleDescargarContrato(item.idContrato,partes[2])}
           className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition"
         >
           <DownloadIcon />
@@ -393,7 +397,7 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
           <Pencil size={16} />
           Editar
         </button>
-       {!item.comprobanteDeDomicilio || !item.tarjetaA && ( <button
+        {(!item.comprobanteDeDomicilio || !item.tarjetaA) && (<button
           onClick={handleAgregarDoc}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-100 transition"
         >

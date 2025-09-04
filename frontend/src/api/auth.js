@@ -7,5 +7,5 @@ const API = axios.create({
 });
 console.log(apiUrl)
 export const login = (credenciales) => API.post('api/auth/login', credenciales);
-export const logout = () => API.post('api/logout');
+export const logout = () => API.post('api/auth/logout');
 export const validarToken = () => API.get('api/auth/validar')

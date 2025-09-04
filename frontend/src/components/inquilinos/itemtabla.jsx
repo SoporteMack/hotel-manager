@@ -66,13 +66,6 @@ function ItemCardMobile({ nombrePersona, apellidoPaterno, apellidoMaterno, telef
 
             Editar
           </button>
-          <button
-    onClick={onDelete}
-    className="flex items-center gap-1 border border-btn-border-delete text-btn-text-delete hover:border-btn-border-hover-delete hover:to-btn-text-hover-delete px-3 py-1 rounded-md text-sm transition duration-200"
-    
-          >
-            Eliminar
-          </button>
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@ export default function ModalAgregarDocs({ isOpen, setIsOpen, item,listar}) {
   return (
     <>
       {/* Modal principal */}
-      <Dialog open={isOpen && !comprobante} onClose={() => setIsOpen(false)} className="relative z-50 w-full h-full">
+      <Dialog open={isOpen && !comprobante} onClose={() => setIsOpen(false)} className="relative z-50 w-full h-full" as="div">
         <DialogBackdrop className="fixed inset-0 bg-black/30" />
         <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-6">
           <DialogPanel className="w-full max-w-sm sm:max-w-md rounded-lg bg-white p-4 sm:p-6 shadow-xl">

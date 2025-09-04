@@ -19,7 +19,7 @@ const login = async (req, res) => {
       return res.status(401).json({ msg: "Contraseña incorrecta" });
     }
 
-    const token = await generarToken({ usuario: usuarioDB.usuario });
+    const token = await generarToken({ usuario: usuarioDB.usuario,rol:usuarioDB.role });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -28,7 +28,6 @@ const login = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
     
-    console.log(res.cookie)
     res.json({ status: true, msg: "Inicio de sesion exitoso" });
   } catch (error) {
     console.error(error);
@@ -37,19 +36,34 @@ const login = async (req, res) => {
 };
 const validartoken = async (req, res) => {
   const token = req.cookies?.token;
-  console.log('token:',token)
     if (!token)
       return res.status(401).json({ autenticado: false});
   
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      return res.status(200).json({ autenticado: true })
+      console.log(decoded)
+      return res.status(200).json({ autenticado: true,rol:decoded.rol})
     } catch(e) {
       console.log(e)
       return res.status(401).json({ msg: "Token inválido o expirado" });
     }
 };
+// controllers/authController.js
+const logout = (req, res) => {
+  // Borra la cookie del token
+  res.clearCookie('token', {
+    httpOnly: true,   // misma configuración que al crear la cookie
+    secure: process.env.NODE_ENV === 'production', // si es https
+    sameSite: 'strict'
+  });
+
+  return res.status(200).json({ msg: 'Sesión cerrada correctamente' });
+};
+
+module.exports = { logout };
+
 module.exports = {
   login,
-  validartoken
+  validartoken,
+  logout
 };

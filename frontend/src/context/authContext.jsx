@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
     validarToken()
       .then(res => {
         if (res.data.autenticado) {
-          setUser({}); // O setUser con datos del usuario si los tienes
+          setUser({rol:res.data.rol}); // O setUser con datos del usuario si los tienes
         } else {
           setUser(null);
         }
@@ -21,8 +21,15 @@ export function AuthProvider({ children }) {
 
   const login = async (credenciales) => {
     const res = await apiLogin(credenciales);
-    if (res.data.status) {
-      setUser({}); // O con datos reales
+    if (res.data.status) { // O con datos reales
+      validarToken().then(res => {
+        if (res.data.autenticado) {
+          setUser({rol:res.data.rol}); // O setUser con datos del usuario si los tienes
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => setUser(null));;
       return true;
     } else {
       throw new Error(res.data.msg);
