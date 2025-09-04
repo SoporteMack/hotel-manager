@@ -19,6 +19,12 @@ export const crearContrato = (formData) =>
         'Content-Type': 'multipart/form-data'
       }
     });
+    export const subirTarjeta = (formData) =>
+      API.post('api/contratos/subirtarjeta', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 // Puedes agregar más funciones si necesitas
 export const listarContratos = () => API.get('api/contratos/listar');
 export const eliminarContrato = (idContrato) => API.delete(`api/contratos/${idContrato}`);

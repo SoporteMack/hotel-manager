@@ -21,14 +21,12 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato, listar })
   const handleDescargartarjetas = async (img, img2) => {
     const ineaD = img.replace(/\\/g, "/").split("/").pop();
     const ineaA = img2.replace(/\\/g, "/").split("/").pop();
-
-    const ruta = apiUrl + baseurl + base + "/" + ineaD + "/" + ineaA;
+    const ruta = apiUrl + baseurl+"/"+partes[1]+"/"+partes[2]+"/"+ineaD+"/"+ineaA;
     setLoading(true)
     try {
       const response = await axios.get(ruta, {
         responseType: "blob",
       });
-
       // Crear blob y URL
       const file = new Blob([response.data], { type: "application/pdf" });
       const fileURL = window.URL.createObjectURL(file);
@@ -44,46 +42,36 @@ function ItemTablaContrato({ item, setLoading, setIsOpen, setContrato, listar })
       window.URL.revokeObjectURL(fileURL);
     } catch (error) {
       console.error("Error al descargar tarjeta:", error);
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   };
+
   const handleDescargarComprobante = async () => {
     const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();
-    const ruta = base + "/" + img;
-    console.log(ruta)
-    const url = apiUrl + `/api/documentos/obtenercomprobante${ruta}`;
-    setLoading(true);
-
+    const url = apiUrl + "/api/documentos/obtenercomprobante"+"/"+partes[1]+"/"+partes[2]+"/"+img;
+    console.log(url)
+    setLoading(true)
     try {
-      const response = await axios.get(url, { responseType: "blob" });
+      const response = await axios.get(url, {
+        responseType: "blob",
+      });
 
-      // Quitar extensión original y reemplazar por .pdf
-      let filename = img.replace(/\.[^/.]+$/, "") + ".pdf";
-
-      // Si el backend manda filename, úsalo
-      const disposition = response.headers["content-disposition"];
-      if (disposition && disposition.includes("filename=")) {
-        filename = disposition.split("filename=")[1].replace(/"/g, "");
-      }
-
+      // Crear blob y URL
       const file = new Blob([response.data], { type: "application/pdf" });
       const fileURL = window.URL.createObjectURL(file);
 
+      // Forzar descarga
       const link = document.createElement("a");
       link.href = fileURL;
-      link.setAttribute("download", filename);
+      link.setAttribute("download", `${img}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();
 
       window.URL.revokeObjectURL(fileURL);
     } catch (error) {
-      console.error("Error al descargar comprobante:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      console.error("Error al descargar tarjeta:", error);
+    } finally { setLoading(false) }
+  }
 
 
   const handleDescargarContrato = async (idContrato, carpeta) => {
@@ -235,8 +223,7 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
   const handleDescargartarjetas = async (img, img2) => {
     const ineaD = img.replace(/\\/g, "/").split("/").pop();
     const ineaA = img2.replace(/\\/g, "/").split("/").pop();
-
-    const ruta = apiUrl + baseurl + base + "/" + ineaD + "/" + ineaA;
+    const ruta = apiUrl + baseurl+"/"+partes[1]+"/"+partes[2]+"/"+ineaD+"/"+ineaA;
     setLoading(true)
     try {
       const response = await axios.get(ruta, {
@@ -262,8 +249,7 @@ function ItemCardContratoMobile({ item, setLoading, setIsOpen, setContrato }) {
 
   const handleDescargarComprobante = async () => {
     const img = item.comprobanteDeDomicilio.replace(/\\/g, "/").split("/").pop();
-    const ruta = base + "/" + img;
-    const url = apiUrl + `/api/documentos/obtenercomprobante${ruta}`;
+    const url = apiUrl + "/api/documentos/obtenercomprobante"+"/"+partes[1]+"/"+partes[2]+"/"+img;
     console.log(url)
     setLoading(true)
     try {

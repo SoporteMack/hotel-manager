@@ -69,6 +69,41 @@ exports.subirComprobante = async (req, res) => {
     res.status(500).json(error);
   }
 }
+exports.subirTarjeta =async(req,res)=>{
+  const archivosGuardados = [];
+  try {
+    const data = req.body;
+    const files = req.files;
+    const persona = await personas.findOne({
+      attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
+      where: { idPersona: data.idPersona }
+    });
+    if (!persona) return res.status(404).json({ msg: "Persona no encontrada" });
+    const nombre = `${data.idPersona}_${persona.nombrePersona}_${persona.apellidoPaterno}_${persona.apellidoMaterno}_${data.numDepartamento}`.replace(/\s+/g, "_");
+    const carpeta = path.join("uploads", `${nombre}`);
+    fs.mkdirSync(carpeta, { recursive: true });
+    const guardarArchivo = (campo, nombre) => {
+      if (files[campo]?.[0]) {
+        const archivo = files[campo][0];
+        const ext = path.extname(archivo.originalname);
+        const nombreArchivo = `${campo}_${Date.now()}_${nombre}${ext}`;
+        const fullPath = path.join(carpeta, nombreArchivo);
+        fs.writeFileSync(fullPath, archivo.buffer);
+        archivosGuardados.push(fullPath);
+        return `/${fullPath.replace(/\\\\/g, "/")}`;
+      }
+      return null;
+    };
+    data.tarjetaA = guardarArchivo("tarjetaA", nombre);
+    data.tarjetaD = guardarArchivo("tarjetaD", nombre);
+    const condb = await contratos.update({tarjetaA:data.tarjetaA,tarjetaD:data.tarjetaD}, { where: { idContrato: data.idContrato } } )
+    console.log(data)
+    res.status(200).json(condb);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error);
+  }
+}
 exports.crear = async (req, res) => {
   const archivosGuardados = [];
 

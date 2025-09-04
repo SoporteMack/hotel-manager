@@ -33,11 +33,17 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
     }
   }, [item]); // <-- importante que se vuelva a ejecutar cuando cambie "item"
 
+  const sanitizeInput = (texto) =>
+    texto
+      .normalize("NFD")                // separa letras y acentos
+      .replace(/[\u0300-\u036f]/g, "") // elimina acentos
+      .replace(/,/g, "").toUpperCase();              // elimina comas
+  
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: sanitizeInput(value)
     }));
   };
 

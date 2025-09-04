@@ -2,9 +2,11 @@ import { useState } from "react";
 import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from "@headlessui/react";
 import { Home, IdCard } from "lucide-react";
 import ModalComprobante from "./modalComprobante";
+import ModalTajetaE from "./modalTarjetaE";
 
 export default function ModalAgregarDocs({ isOpen, setIsOpen, item,listar}) {
   const [comprobante,setComprobante] = useState(false); 
+  const [tarjetaE,setTarjetaE] = useState(false);
   const onClose = ()=>{
     setIsOpen(false)
   }
@@ -26,18 +28,19 @@ export default function ModalAgregarDocs({ isOpen, setIsOpen, item,listar}) {
                 <Home size={18} />
                 Comprobante de domicilio
               </button>)}
-              <button
-                onClick={() => setModalType("estudiante")}
+              {!item.tarjetaA && item.tarjetaD &&(<button
+                onClick={() => setTarjetaE(true)}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
               >
                 <IdCard size={18} />
                 Tarjeta de estudiante
-              </button>
+              </button>)}
             </div>
           </DialogPanel>
         </div>
       </Dialog>
       <ModalComprobante isOpen={comprobante} setIsOpen={setComprobante} item={item} onClose={onClose} listar={listar}/>
+      <ModalTajetaE isOpen={tarjetaE} setIsOpen={setTarjetaE} item={item} onClose={onClose} listar={listar}/>
     </>
   );
 }
