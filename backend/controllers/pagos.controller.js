@@ -132,8 +132,10 @@ exports.ingresosdeldia = async (req, res) => {
       return res.status(400).json({ status: false, msg: 'Fecha requerida' });
     }
 
-    const start = new Date(`${dia}T00:00:00.000Z`);
-    const end = new Date(`${dia2}T23:59:59.999Z`);
+    const start = new Date(dia);
+    start.setHours(0,0,0,0);
+    const end = new Date(dia2);
+    end.setHours(23,59,59,59);
     const resultado = await pagos.findOne({
       attributes: [[fn('SUM', col('monto')), 'pagos']],
       where: {
