@@ -785,7 +785,7 @@ const enviarContrato = async (rutaArchivo, telefono) => {
   await sock.sendMessage(`521${telefono}@s.whatsapp.net`, {
     document: buffer,
     mimetype: 'application/pdf',
-    fileName: 'reporte_diario.pdf',
+    fileName: 'Contrato.pdf',
     caption: `Fecha: ${formatoFecha}\n\n` + msj
   });
 }
