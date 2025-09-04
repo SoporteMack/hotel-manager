@@ -133,10 +133,10 @@ exports.ingresosdeldia = async (req, res) => {
     }
 
     const start = new Date(dia);
+    start.setDate(start.getDate()+1);
     start.setHours(0,0,0,0);
     const end = new Date(dia2);
     end.setHours(23,59,59,59);
-    console.log('hora------------------------->',start,end)
     const resultado = await pagos.findOne({
       attributes: [[fn('SUM', col('monto')), 'pagos']],
       where: {
