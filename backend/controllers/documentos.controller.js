@@ -523,6 +523,7 @@ exports.solodescargacontrato = async (req,res) =>{
  
   try {
     const idContrato = req.query.idContrato; // <-- corregido
+    const carpeta = req.query.carpeta;
 
     if (!idContrato) {
       return res.status(400).send("Falta el idContrato");
@@ -538,7 +539,7 @@ exports.solodescargacontrato = async (req,res) =>{
       ],
       where:{idContrato:idContrato}
     })
-    const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
+    const nombre =carpeta;
     const pathdoc = __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf';
     //return res.status(200).json({contratodb,"path":pathdoc,nombre})
     // Opcional: enviar por WhatsApp
@@ -565,7 +566,7 @@ const generarContrato = async (idContrato) => {
   const fechaf = new Date(contratodb.fechaTermino);
   const config = await datosBanco();
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
-  const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}`.replace(/\s+/g, "_");
+  const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}_${contratodb.numDepartamento}`.replace(/\s+/g, "_");
   const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
   try {
     const datos = {
