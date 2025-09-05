@@ -61,7 +61,7 @@ exports.subirComprobante = async (req, res) => {
       return null;
     };
     data.comprobanteDeDomicilio = guardarArchivo("comprobatededomicilio", nombre);
-    const condb = await contratos.update({comprobanteDeDomicilio:data.comprobanteDeDomicilio}, { where: { idContrato: data.idContrato } } )
+    const condb = await contratos.update({ comprobanteDeDomicilio: data.comprobanteDeDomicilio }, { where: { idContrato: data.idContrato } })
     console.log(data)
     res.status(200).json(condb);
   } catch (error) {
@@ -69,7 +69,7 @@ exports.subirComprobante = async (req, res) => {
     res.status(500).json(error);
   }
 }
-exports.subirTarjeta =async(req,res)=>{
+exports.subirTarjeta = async (req, res) => {
   const archivosGuardados = [];
   try {
     const data = req.body;
@@ -96,7 +96,7 @@ exports.subirTarjeta =async(req,res)=>{
     };
     data.tarjetaA = guardarArchivo("tarjetaA", nombre);
     data.tarjetaD = guardarArchivo("tarjetaD", nombre);
-    const condb = await contratos.update({tarjetaA:data.tarjetaA,tarjetaD:data.tarjetaD}, { where: { idContrato: data.idContrato } } )
+    const condb = await contratos.update({ tarjetaA: data.tarjetaA, tarjetaD: data.tarjetaD }, { where: { idContrato: data.idContrato } })
     console.log(data)
     res.status(200).json(condb);
   } catch (error) {
@@ -393,6 +393,7 @@ const generarContrato = async (idContrato) => {
       anioi: fechai.getFullYear(),
       diaf: String(fechaf.getDate()).padStart(2, '0'),
       mesf: String(fechaf.getMonth()).padStart(2, '0'),
+      opciones: ["Baño privado", "Closet", "Base para Colchon"],
       aniof: fechaf.getFullYear(),
       monto: contratodb.departamento.costo,
       montoalfa: montoalfa,
@@ -405,6 +406,7 @@ const generarContrato = async (idContrato) => {
       aniofirma: String(fechai.getFullYear()),
       deposito: contratodb.deposito
     }
+    console.log('--------------------------------',datos.opciones)
     const outputPdfPath = path.resolve(__dirname, '../uploads/' + nombre, 'contrato_final.pdf');
     const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
     const zip = new PizZip(contenido);
@@ -413,6 +415,8 @@ const generarContrato = async (idContrato) => {
         start: "{",
         end: "}",
       },
+      paragraphLoop: true,
+      linebreaks: true,
     };
     const doc = new Docxtemplater(zip, options);
 

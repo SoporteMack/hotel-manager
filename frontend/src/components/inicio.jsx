@@ -5,6 +5,7 @@ import { Tab, TabGroup, TabList, TabPanels, TabPanel } from "@headlessui/react";
 import IngresosDiarios from "./inicio/ingresosdiarios";
 import RentasVencidas from "./inicio/rentasvencidas";
 import VenceUnDia from "./inicio/venceundia";
+import { useAuth } from "../context/authContext";
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(" ");
@@ -14,6 +15,7 @@ function Dashboard() {
   const [pagosDelDia, setPagosDelDia] = useState(0);
   const [pagosDelMes, setPagosdelMes] = useState(0);
   const [ocupacion, setOcupacion] = useState({ libres: 0, porcentaje: 0 });
+  const { user } = useAuth();
 
   const obtenerPagosDelDia = async () => {
     try {
@@ -69,7 +71,7 @@ function Dashboard() {
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Encabezado */}
       <TabGroup>
-        
+
         <TabList className="flex space-x-3 bg-white rounded-xl p-2 shadow mb-6">
           {["Ingresos Diarios", "Vencimientos a 1 Día", "Vencidos"].map((tabName) => (
             <Tab
@@ -87,11 +89,11 @@ function Dashboard() {
             </Tab>
           ))}
         </TabList>
-         {/* Tabs */}
+        {/* Tabs */}
 
 
 
-         <TabPanels>
+        <TabPanels>
           <TabPanel className="bg-white p-6 rounded-xl shadow-md">
             <IngresosDiarios />
           </TabPanel>
@@ -118,9 +120,12 @@ function Dashboard() {
           <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
             <TarjetaInicio titulo="Ingresos Diarios" valor={`$${pagosDelDia}`} />
           </div>
-          <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
-            <TarjetaInicio titulo="Ingresos Mensuales" valor={`$${pagosDelMes}`} />
-          </div>
+          {
+            user?.rol === "admin" && (
+              <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
+                <TarjetaInicio titulo="Ingresos Mensuales" valor={`$${pagosDelMes}`} />
+              </div>)
+          }
           <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition">
             <TarjetaInicio titulo="Departamentos Libres" valor={`${ocupacion.libres}`} />
           </div>
@@ -129,7 +134,7 @@ function Dashboard() {
           </div>
         </div>
 
-       
+
       </TabGroup>
     </div>
   );

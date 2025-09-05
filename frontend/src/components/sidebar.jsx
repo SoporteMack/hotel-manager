@@ -2,64 +2,61 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/authContext';
 
 function Sidebar({ isOpen, onClose }) {
-  const { user,logout } = useAuth();
-  const handleLogout = () =>
-  {
+  const { user, logout } = useAuth();
+  const handleLogout = () => {
     logout();
   }
   return (
     <div
-      className={`fixed z-40 inset-y-0 left-0 w-80 bg-white transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
+      className={`fixed z-40 inset-y-0 left-0 w-60 bg-white transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:static lg:translate-x-0`}
     >
       <div className="flex h-full min-h-[700px] flex-col justify-between bg-white p-4">
         <div className="flex flex-col gap-4">
 
-          <h1 className="text-[#121516] text-base font-medium leading-normal">Pensión Monet</h1>
+          <h1 className="text-[#121516] text-base font-medium leading-normal">RENTAS</h1>
 
           <div className="flex flex-col gap-2">
 
+            {/** Dashboard */}
+            <NavLink
+              to="/inicio"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors duration-200 ${isActive ? 'bg-item-sidebar-active text-black' : 'hover:bg-gray-100 text-gray-600'
+                }`
+              }
+            >
+              <div className="text-inherit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              </div>
+              <span className="text-sm">Inicio</span>
+            </NavLink>
 
 
-            {user?.rol === "admin" && (
-              <>
-                {/** Dashboard */}
-                <NavLink
-                  to="/inicio"
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors duration-200 ${isActive ? 'bg-item-sidebar-active text-black' : 'hover:bg-gray-100 text-gray-600'
-                    }`
-                  }
-                >
-                  <div className="text-inherit">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                      <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                  </div>
-                  <span className="text-sm">Inicio</span>
-                </NavLink>
-                {/**Departamento */}
-                <NavLink
-                  to="/departamentos"
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors duration-200 ${isActive ? 'bg-item-sidebar-active text-black' : 'hover:bg-gray-100 text-gray-600'
-                    }`
-                  }
-                >
-                  <div className="text-inherit">
-                    {/* Icono de edificio */}
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path d="M3 3h18v18H3z" />
-                      <path d="M9 3v18M15 3v18" />
-                      <path d="M3 9h18M3 15h18" />
-                    </svg>
-                  </div>
-                  <span className="text-sm">Departamentos</span>
-                </NavLink>
-              </>)}
+            {/**Departamento */}
+            <NavLink
+              to="/departamentos"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors duration-200 ${isActive ? 'bg-item-sidebar-active text-black' : 'hover:bg-gray-100 text-gray-600'
+                }`
+              }
+            >
+              <div className="text-inherit">
+                {/* Icono de edificio */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M3 3h18v18H3z" />
+                  <path d="M9 3v18M15 3v18" />
+                  <path d="M3 9h18M3 15h18" />
+                </svg>
+              </div>
+              <span className="text-sm">Departamentos</span>
+            </NavLink>
+
             {/* Inquilinos */}
             <NavLink
               to="/inquilinos"
@@ -206,29 +203,31 @@ function Sidebar({ isOpen, onClose }) {
                 <span className="text-sm">Conifguración</span>
               </NavLink>
             </>)}
-
-
+            <button
+              onClick={handleLogout}
+              className="mt-auto flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 text-gray-600 w-full"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M17 16l4-4-4-4M21 12H9M13 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8" />
+              </svg>
+              <span>Cerrar sesión</span>
+            </button>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          className="mt-auto flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-gray-100 text-gray-600 w-full"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M17 16l4-4-4-4M21 12H9M13 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8" />
-          </svg>
-          <span>Cerrar sesión</span>
-        </button>
+
       </div>
     </div>
+
+
+
   );
 }
 

@@ -13,7 +13,7 @@ function Header({ toggleSidebar }) {
             ></path>
           </svg>
         </div>
-        <h2 className="text-lg font-bold text-text-secondary">Pensión</h2>
+        <h2 className="text-lg font-bold text-text-secondary">MONET</h2>
       </div>
 
       {/* Botón visible solo en móviles */}

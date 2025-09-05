@@ -11,3 +11,5 @@ const API = axios.create({
  export const agregarDepartamento = (data) =>  API.post('api/departamentos/crear',data);
  export const actualizarDepartamento = (id,data) =>  API.put('api/departamentos/actualizar/'+id,data);
  export const nombredep = (numdep) =>API.get('api/contratos/nombredep',{params:{numdep:numdep}});
+ export const detalles = () =>API.get('api/detalles/listar');
+ export const crearDetalle = (data) => API.post('api/detalles/crear',data);

@@ -4,6 +4,7 @@ import { departamentos as listaDepartamentos, agregarDepartamento, actualizarDep
 import TarjetaDepartamento from "./tarjetaDepartamento";
 import Lista from "../items/lista";
 import { Notyf } from "notyf";
+import { useAuth } from "../../context/authContext";
 
 function Departamentos() {
   const [departamentos, setDepartamentos] = useState([]);
@@ -13,11 +14,12 @@ function Departamentos() {
   const [departamentoEditar, setDepartamentoEditar] = useState(null);
   const [filtro, setFiltro] = useState('Todos');
   const [buscar, setBuscar] = useState('');
+  const { user } = useAuth();
 
   const notyf = useRef(new Notyf({
     duration: 3000,
     dismissible: true,
-    position: { x: 'rigth', y: 'top' },
+    position: { x: 'right', y: 'top' },
   }));
 
   const cargarDepartamentos = async () => {
@@ -58,7 +60,7 @@ function Departamentos() {
       }
       setModalVisible(false);
       cargarDepartamentos();
-    } catch (error) {
+    } catch {
       notyf.current.error("No se pudo completar la acción");
     }
   };
@@ -76,39 +78,39 @@ function Departamentos() {
     });
   }, [departamentos, buscar, filtro]);
 
-  if (loading) return <p className="text-center mt-6">Cargando departamentos...</p>;
+  if (loading) return <p className="text-center mt-6 text-gray-500">Cargando departamentos...</p>;
   if (error) return <p className="text-center mt-6 text-red-600">{error}</p>;
 
   return (
-    <section className="max-w-4xl mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">Departamentos</h1>
-        <p className="text-sm text-gray-500">Gestiona los departamentos registrados en el sistema.</p>
+    <section className="max-w-5xl mx-auto p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Departamentos</h1>
+        <p className="text-gray-500 mt-1">Gestiona los departamentos registrados en el sistema.</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 mb-4">
-        {/* Filtro por estado */}
+      {/* Filtros y búsqueda */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div className="flex items-center gap-2">
           <label htmlFor="filtro" className="text-sm font-medium text-gray-700">Estado:</label>
           <Lista
-          options={[
-            { value: "Todos", label: "Todos" },
-            { value: "Libre", label: "Libre" },
-            { value: "Ocupado", label: "Ocupado" },
-          ]}
-          value={{ filtro }}
-          onChange={setFiltro}
-        />
+            options={[
+              { value: "Todos", label: "Todos" },
+              { value: "Libre", label: "Libre" },
+              { value: "Ocupado", label: "Ocupado" },
+            ]}
+            value={filtro}
+            onChange={setFiltro}
+          />
         </div>
 
-        {/* Input búsqueda */}
         <div className="relative w-full sm:w-72">
           <input
             type="text"
             placeholder="Buscar departamento..."
             value={buscar}
             onChange={(e) => setBuscar(e.target.value)}
-            className="w-full border border-gray-300 rounded px-4 py-2 pl-10 text-sm focus:outline-none focus:ring focus:ring-blue-200"
+            className="w-full border border-gray-200 rounded-md px-4 py-2 pl-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 shadow-sm transition"
           />
           <svg
             className="absolute left-3 top-2.5 w-5 h-5 text-gray-400"
@@ -122,32 +124,39 @@ function Departamentos() {
         </div>
       </div>
 
-      <button
-        onClick={abrirModalNuevo}
-        className="border bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition mb-6"
-      >
-        + Agregar Departamento
-      </button>
+      {/* Botón agregar */}
+      {user?.rol === "admin" && (
+        <div className="flex justify-end mb-6">
+          <button
+            onClick={abrirModalNuevo}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 text-sm font-medium hover:bg-gray-100 transition"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Agregar Departamento
+          </button>
+        </div>
+      )}
 
+      {/* Lista de departamentos */}
       <div>
         {itemFiltrado.length === 0 ? (
-          <p className="text-center text-gray-500">No hay departamentos disponibles.</p>
+          <p className="text-center text-gray-400">No hay departamentos disponibles.</p>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {itemFiltrado.map(({ numDepartamento, descripcion, costo, estatus }) => (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {itemFiltrado.map((dep) => (
               <TarjetaDepartamento
-                key={numDepartamento}
-                numDepartamento={numDepartamento}
-                descripcion={descripcion}
-                costo={costo}
-                estatus={estatus}
-                abrirModalEditar={abrirModalEditar}
+                key={dep.numDepartamento}
+                {...dep}
+                abrirModalEditar={()=>abrirModalEditar(dep)}
               />
             ))}
           </div>
         )}
       </div>
 
+      {/* Modal */}
       <ModalDepartamento
         visible={modalVisible}
         onClose={() => setModalVisible(false)}

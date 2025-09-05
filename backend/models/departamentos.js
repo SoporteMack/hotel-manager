@@ -1,5 +1,6 @@
 const {DataTypes} = require('sequelize');
 const sequelize = require('../config/database');
+const detalles = require('./detalle');
 const departamentos = sequelize.define('departamentos',{
     numDepartamento:{
         type:DataTypes.INTEGER,
@@ -32,4 +33,13 @@ const departamentos = sequelize.define('departamentos',{
 },{
     timestamps:false
 })
+
+departamentos.associate = (models) => {
+    departamentos.belongsToMany(models.Detalles, {
+      through: 'departamentosDetalle',
+      foreignKey: 'numDepartamento',
+      otherKey: 'idDetalle',
+      timestamps: false
+    });
+  };
 module.exports = departamentos;

@@ -54,7 +54,7 @@ function App() {
 
           {/* Solo admin */}
           <Route path="inquilinos" element={<RoleRoute allowedRoles={["admin", "ayudante"]}> <Inquilinos /></RoleRoute>} />
-          <Route path="departamentos" element={<RoleRoute allowedRoles={["admin"]}><Departamentos /></RoleRoute>} />
+          <Route path="departamentos" element={<RoleRoute allowedRoles={["admin","ayudante"]}><Departamentos /></RoleRoute>} />
           <Route path="contratos" element={<RoleRoute allowedRoles={["admin", "ayudante"]}><Contratos /></RoleRoute>} />
           <Route path="crearcontrato" element={<RoleRoute allowedRoles={["admin", "ayudante"]}><CrearContrato /></RoleRoute>} />
           <Route path="editarcontrato" element={<RoleRoute allowedRoles={["admin"]}> <EditarContratos /></RoleRoute>} />

@@ -587,7 +587,8 @@ const generarContrato = async (idContrato) => {
       diafirma: String(fechai.getDate()).padStart(2,'0'),
       mesfirma: String(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(fechai)).toUpperCase(),
       aniofirma:String(fechai.getFullYear()),
-      deposito:contratodb.deposito
+      deposito:contratodb.deposito,
+      opciones:["Baño privado","Closet","Base para Colchon", "Colchon"]
     }
     const outputPdfPath = path.resolve(__dirname, '../uploads/'+nombre, 'contrato_final.pdf');
     const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
