@@ -55,7 +55,7 @@ const contratos = sequelize.define('contratos', {
     }
   },
   fechaTermino: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,
     allowNull: false,
     validate: {
       isDate: { msg: "fecha de Término de contrato no valida" }

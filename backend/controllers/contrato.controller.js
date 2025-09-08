@@ -232,7 +232,12 @@ exports.contratoxnombre = async (req, res) => {
     const apellidoM = req.query.apellidoM;
     const contratosdb = await contratos.findAll({
       attributes: ["idContrato", "idPersona", "numDepartamento", "deuda", "fechaInicio"],
-      where: { estatus: 1 },
+      where: {
+        [Op.or]: [
+          { deuda: { [Op.ne]: 0 } },
+          { estatus: 1 }
+        ]
+      },
       include: [{
         model: personas,
         as: "persona",
@@ -306,9 +311,12 @@ exports.rentasvencidas = async (req, res) => {
 
 exports.buscarRentasVencidas = async () => {
   try {
+    const hoy = new Date();
+    // Normalizar a 00:00:00 para comparar solo fecha
+    hoy.setHours(0, 0, 0, 0);
     const rentasv = await contratos.findAll({
       attributes: ["idContrato", "deuda"],
-      where: { deuda: { [Op.gt]: 0 } },
+      where: {fechaTermino: { [Op.gte]: hoy }},
       include: [
         {
           model: personas,
@@ -385,14 +393,13 @@ const generarContrato = async (idContrato) => {
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
   const nombre = `${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}_${contratodb.numDepartamento}`.replace(/\s+/g, "_");
   const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
-  const detalles =[];
-  const detallesdb = await Departamentos.findByPk(contratodb.departamento.numDepartamento,{
-    include:Detalles,
+  const detalles = [];
+  const detallesdb = await Departamentos.findByPk(contratodb.departamento.numDepartamento, {
+    include: Detalles,
     through: { attributes: [] }
-  }).then(res => {return res.detalles})
+  }).then(res => { return res.detalles })
 
-  await detallesdb.map((item)=>
-  {
+  await detallesdb.map((item) => {
     detalles.push(item.descripcion)
   })
   try {
@@ -419,10 +426,10 @@ const generarContrato = async (idContrato) => {
       deposito: contratodb.deposito
     }
     if (!detalles || detalles.length === 0) {
-      datos = {...datosS}
+      datos = { ...datosS }
     }
-    else{
-      datos = {...datosS,opciones:detalles}
+    else {
+      datos = { ...datosS, opciones: detalles }
     }
     console.log(datos)
 
@@ -503,7 +510,7 @@ const findContrato = async (idContrato) => {
       {
         model: departamentos,
         as: 'departamento',
-        attributes: ['numDepartamento','costo']
+        attributes: ['numDepartamento', 'costo']
       }
     ],
     raw: true,
@@ -566,13 +573,12 @@ exports.nombreDep = async (req, res) => {
   }
 }
 
-exports.editarObservaciones = async (req,res) =>
-{
+exports.editarObservaciones = async (req, res) => {
   try {
-    const data =  req.body;
-    await contratos.update({observaciones:data.observaciones},{where:{idContrato:data.idContrato}})
-    res.status(200).json({status:true,msg:"se atulizaron correctamnete las observaciones "})
+    const data = req.body;
+    await contratos.update({ observaciones: data.observaciones }, { where: { idContrato: data.idContrato } })
+    res.status(200).json({ status: true, msg: "se atulizaron correctamnete las observaciones " })
   } catch (error) {
-    res.status(500).json({statu:false,msg:"error al acutlizar observaciones"})
+    res.status(500).json({ statu: false, msg: "error al acutlizar observaciones" })
   }
 }

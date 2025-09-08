@@ -10,7 +10,6 @@ function VenceUnDia() {
     const getdata = async () => {
         try {
             const dia = formatfecha(new Date());
-            console.log(dia)
             const res = await obtenerundia(dia).then(res => { return res.data });
             setPVencer(res)
         } catch (error) {
@@ -20,7 +19,7 @@ function VenceUnDia() {
 
     const formatfecha = (fecha) => {
         const hoy = new Date(fecha);
-        return hoy.getFullYear() + "-" + String(hoy.getMonth()).padStart(2, "0") + "-" + String(hoy.getDate() + 1).padStart(2, "0");
+        return hoy.getFullYear() + "-" + String(hoy.getMonth()+1).padStart(2, "0") + "-" + String(hoy.getDate() + 1).padStart(2, "0");
     }
     return (
         <div className="p-4 sm:p-6 bg-gray-50">

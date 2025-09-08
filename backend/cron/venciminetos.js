@@ -3,7 +3,8 @@ const contratos = require('../models/contratos');
 const departamentos = require('../models/departamentos');
 const { where, Op } = require('sequelize');
 
-const tarea = schedule.scheduleJob(' 59 59 23 * *', async () => {
+schedule.scheduleJob('0 35 16 * * *', async () => {
+    console.log('cron')
     const fecha = new Date();
     const diaanterior = new Date();
     diaanterior.setDate(diaanterior.getDate() - 1);
@@ -12,8 +13,9 @@ const tarea = schedule.scheduleJob(' 59 59 23 * *', async () => {
     const fechaformateada = formatFechaHoraLocal(fecha);
     const dep = await obtenerdep(fechaformateada);
 
-    await aumentarInteres(formdiaant);
-    await aumentarDeuda(dep);
+    //await aumentarInteres(formdiaant);
+    //await aumentarDeuda(dep);
+    await terminarContrato(formatFechaHoraLocal(fecha))
 });
 
 const formatFechaHoraLocal = (fecha) => {
@@ -101,4 +103,20 @@ const obenterretaatrasada = async (fecha) => {
     } catch (error) {
         return [];
     }
+}
+
+const terminarContrato = async (fecha) =>
+{
+    fecha.setDate
+    const contratosvencidos = await contratos.findAll({where:{fechaTermino:fecha}});
+    contratosvencidos.map(async (item)=>{
+        try{
+            await contratos.update({estatus:0},{where:{idContrato:item.idContrato}})
+            await departamentos.update({estatus:1},{where:{numDepartamento :item.numDepartamento}});
+        }catch(error)
+        {
+
+        }
+    })
+
 }
