@@ -29,4 +29,5 @@ export const crearContrato = (formData) =>
 export const listarContratos = () => API.get('api/contratos/listar');
 export const eliminarContrato = (idContrato) => API.delete(`api/contratos/${idContrato}`);
 export const listacontratosxpersona = (nombre,apellidoP,apellidoM) =>API.get('api/contratos/contratoxpersona',{params: { nombre,apellidoP,apellidoM } })
-export const actualizargeneral = (data) =>API.post('api/contratos/actualizargeneral',data)
+export const  actualizargeneral = (data) =>API.post('api/contratos/actualizargeneral',data)
+export const actualizarobservaciones = (data) => API.post('api/contratos/actualizarobservaciones',data);

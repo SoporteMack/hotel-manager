@@ -35,16 +35,16 @@ const contratos = sequelize.define('contratos', {
     allowNull: false,
     defaultValue: true
   },
-  deposito:{
-    type:DataTypes.DECIMAL,
-    defaultValue:0
+  deposito: {
+    type: DataTypes.DECIMAL,
+    defaultValue: 0
   },
-  deuda:{
-    type:DataTypes.DECIMAL,
-    defaultValue:0
+  deuda: {
+    type: DataTypes.DECIMAL,
+    defaultValue: 0
   },
-  fechaPago:{
-    type:DataTypes.DATEONLY,
+  fechaPago: {
+    type: DataTypes.DATEONLY,
   },
   fechaInicio: {
     type: DataTypes.DATEONLY,
@@ -67,7 +67,7 @@ const contratos = sequelize.define('contratos', {
     validate: {
       notEmpty: { msg: "El INE no debe de estar vacío" }
     }
-  },INEA: {
+  }, INEA: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
@@ -80,17 +80,21 @@ const contratos = sequelize.define('contratos', {
   },
   tarjetaD: {
     type: DataTypes.STRING,
-    allowNull:true
-  }, 
+    allowNull: true
+  },
   tarjetaA: {
     type: DataTypes.STRING,
-    allowNull:true
+    allowNull: true
   },
   docContrato: {
     type: DataTypes.STRING,
     validate: {
       notEmpty: { msg: "El contrato no debe de estar vacío" }
     }
+  },
+  observaciones: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
   timestamps: false
@@ -100,13 +104,13 @@ contratos.beforeCreate((contrato, options) => {
   if (contrato.fechaInicio) {
     const inicio = new Date(contrato.fechaInicio);
     const hoy = new Date();
-    const band = inicio.getDate()<hoy.getDate();
+    const band = inicio.getDate() < hoy.getDate();
     const anio = inicio.getFullYear();
-    const mes = band?hoy.getMonth() + 1:inicio.getMonth() +1; // siguiente mes
-    const dia = inicio.getDate() +1;
+    const mes = band ? hoy.getMonth() + 1 : inicio.getMonth() + 1; // siguiente mes
+    const dia = inicio.getDate() + 1;
 
     const fechaProxima = new Date(anio, mes, dia); // mismo día, próximo mes
-    console.log("a",fechaProxima)
+    console.log("a", fechaProxima)
     contrato.fechaPago = fechaProxima.toISOString().slice(0, 10); // YYYY-MM-DD
   }
 });
@@ -131,5 +135,6 @@ contratos.belongsTo(departamento, {
   foreignKey: 'numDepartamento',
   as: 'departamento'
 });
+
 
 module.exports = contratos;

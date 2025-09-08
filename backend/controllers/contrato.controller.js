@@ -565,3 +565,14 @@ exports.nombreDep = async (req, res) => {
     res.status(500).json(error);
   }
 }
+
+exports.editarObservaciones = async (req,res) =>
+{
+  try {
+    const data =  req.body;
+    await contratos.update({observaciones:data.observaciones},{where:{idContrato:data.idContrato}})
+    res.status(200).json({status:true,msg:"se atulizaron correctamnete las observaciones "})
+  } catch (error) {
+    res.status(500).json({statu:false,msg:"error al acutlizar observaciones"})
+  }
+}
