@@ -4,6 +4,7 @@ const departamentos = require('../models/departamentos');
 const personas = require('../models/personas');
 const pagos = require('../models/pagos');
 const Configuracion = require('../models/configuracion')
+const { Departamentos, Detalles } = require('../models');
 
 const path = require('path');
 const fs = require('fs');
@@ -384,8 +385,20 @@ const generarContrato = async (idContrato) => {
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
   const nombre = `${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}_${contratodb.numDepartamento}`.replace(/\s+/g, "_");
   const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
+  const detalles =[];
+  const detallesdb = await Departamentos.findByPk(contratodb.departamento.numDepartamento,{
+    include:Detalles,
+    through: { attributes: [] }
+  }).then(res => {return res.detalles})
+
+  await detallesdb.map((item)=>
+  {
+    detalles.push(item.descripcion)
+  })
   try {
-    const datos = {
+
+    var datos = {};
+    const datosS = {
       nombre: String(nom).toUpperCase(),
       direccion: "C. 1 Nte 222, Centro de la Ciudad, 75700 Tehuacán, Pue.",
       diai: String(fechai.getDate()).padStart(2, '0'),
@@ -393,7 +406,6 @@ const generarContrato = async (idContrato) => {
       anioi: fechai.getFullYear(),
       diaf: String(fechaf.getDate()).padStart(2, '0'),
       mesf: String(fechaf.getMonth()).padStart(2, '0'),
-      opciones: ["Baño privado", "Closet", "Base para Colchon"],
       aniof: fechaf.getFullYear(),
       monto: contratodb.departamento.costo,
       montoalfa: montoalfa,
@@ -406,7 +418,14 @@ const generarContrato = async (idContrato) => {
       aniofirma: String(fechai.getFullYear()),
       deposito: contratodb.deposito
     }
-    console.log('--------------------------------',datos.opciones)
+    if (!detalles || detalles.length === 0) {
+      datos = {...datosS}
+    }
+    else{
+      datos = {...datosS,opciones:detalles}
+    }
+    console.log(datos)
+
     const outputPdfPath = path.resolve(__dirname, '../uploads/' + nombre, 'contrato_final.pdf');
     const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
     const zip = new PizZip(contenido);
@@ -484,7 +503,7 @@ const findContrato = async (idContrato) => {
       {
         model: departamentos,
         as: 'departamento',
-        attributes: ['costo']
+        attributes: ['numDepartamento','costo']
       }
     ],
     raw: true,
