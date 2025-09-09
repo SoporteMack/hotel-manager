@@ -14,6 +14,7 @@ const puppeteer = require('puppeteer');
 const { buscarRentasVencidas } = require('./contrato.controller');
 const Configuracion = require('../models/configuracion');
 const {NumerosALetras} = require('numero-a-letras');
+const { Departamentos, Detalles } = require('../models');
 
 
 exports.tarjeta = async (req, res) => {
@@ -543,7 +544,7 @@ exports.solodescargacontrato = async (req,res) =>{
     const pathdoc = __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf';
     //return res.status(200).json({contratodb,"path":pathdoc,nombre})
     // Opcional: enviar por WhatsApp
-    await enviarContrato(pathdoc, contratodb.persona.telefono);
+    //await enviarContrato(pathdoc, contratodb.persona.telefono);
 
     // Enviar PDF al cliente
     res.download(pathdoc, nombre+"contrato_final.pdf", (err) => {
@@ -560,37 +561,55 @@ exports.solodescargacontrato = async (req,res) =>{
     res.status(500).send("Error interno del servidor");
   }
 }
-const generarContrato = async (idContrato) => { 
+const generarContrato = async (idContrato) => {
   const contratodb = await findContrato(idContrato);
   const fechai = new Date(contratodb.fechaInicio);
   const fechaf = new Date(contratodb.fechaTermino);
   const config = await datosBanco();
   const montoalfa = NumerosALetras(contratodb.departamento.costo)
-  const nombre =`${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}_${contratodb.numDepartamento}`.replace(/\s+/g, "_");
+  const nombre = `${contratodb.idPersona}_${contratodb.persona.nombrePersona}_${contratodb.persona.apellidoPaterno}_${contratodb.persona.apellidoMaterno}_${contratodb.numDepartamento}`.replace(/\s+/g, "_");
   const nom = `${contratodb.persona.nombrePersona} ${contratodb.persona.apellidoPaterno} ${contratodb.persona.apellidoMaterno}`
+  const detalles = [];
+  const detallesdb = await Departamentos.findByPk(contratodb.departamento.numDepartamento, {
+    include: Detalles,
+    through: { attributes: [] }
+  }).then(res => { return res.detalles })
+
+  await detallesdb.map((item) => {
+    detalles.push(item.descripcion)
+  })
   try {
-    const datos = {
+
+    var datos = {};
+    const datosS = {
       nombre: String(nom).toUpperCase(),
       direccion: "C. 1 Nte 222, Centro de la Ciudad, 75700 Tehuacán, Pue.",
-      diai: String(fechai.getDate()).padStart(2,'0'),
-      mesi: String(fechai.getMonth()).padStart(2,'0'),
+      diai: String(fechai.getDate()).padStart(2, '0'),
+      mesi: String(fechai.getMonth()).padStart(2, '0'),
       anioi: fechai.getFullYear(),
-      diaf: String(fechaf.getDate()).padStart(2,'0'),
-      mesf: String(fechaf.getMonth()).padStart(2,'0'),
+      diaf: String(fechaf.getDate()).padStart(2, '0'),
+      mesf: String(fechaf.getMonth()).padStart(2, '0'),
       aniof: fechaf.getFullYear(),
       monto: contratodb.departamento.costo,
-      montoalfa:montoalfa,
+      montoalfa: montoalfa,
       banco: config.banco,
       titular: config.titular,
       clave: config.numCuenta,
-      ciudadfirma:'TEHUACAN',
-      diafirma: String(fechai.getDate()).padStart(2,'0'),
+      ciudadfirma: 'TEHUACAN',
+      diafirma: String(fechai.getDate()).padStart(2, '0'),
       mesfirma: String(new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(fechai)).toUpperCase(),
-      aniofirma:String(fechai.getFullYear()),
-      deposito:contratodb.deposito,
-      opciones:["Baño privado","Closet","Base para Colchon", "Colchon"]
+      aniofirma: String(fechai.getFullYear()),
+      deposito: contratodb.deposito
     }
-    const outputPdfPath = path.resolve(__dirname, '../uploads/'+nombre, 'contrato_final.pdf');
+    if (!detalles || detalles.length === 0) {
+      datos = { ...datosS }
+    }
+    else {
+      datos = { ...datosS, opciones: detalles }
+    }
+    console.log(datos)
+
+    const outputPdfPath = path.resolve(__dirname, '../uploads/' + nombre, 'contrato_final.pdf');
     const contenido = fs.readFileSync(path.resolve(__dirname, '../uploads/templates/test.docx'), 'binary');
     const zip = new PizZip(contenido);
     const options = {
@@ -598,6 +617,8 @@ const generarContrato = async (idContrato) => {
         start: "{",
         end: "}",
       },
+      paragraphLoop: true,
+      linebreaks: true,
     };
     const doc = new Docxtemplater(zip, options);
 
@@ -625,13 +646,13 @@ const generarContrato = async (idContrato) => {
   </div>
 `;
     // Lanzar Puppeteer para generar PDF desde HTML
-    const browser = await puppeteer.launch({  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']});
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'] });
     const page = await browser.newPage();
 
-    await page.setContent(html, { waitUntil: 'networkidle0',timeout:0});
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 0 });
 
     await page.pdf({
-      path: __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf',
+      path: __dirname + '/../uploads/' + nombre + '/' + 'contrato_final.pdf',
       format: 'A4',
       printBackground: true,
       margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' },
@@ -792,8 +813,8 @@ const enviarContrato = async (rutaArchivo, telefono) => {
 }
 
 const findContrato = async (idContrato) => {
-  return  await contratos.findOne({
-    attributes: ["idContrato","fechaInicio","fechaTermino","deposito","idPersona","numDepartamento"],
+  return await contratos.findOne({
+    attributes: ["idContrato", "fechaInicio", "fechaTermino", "deposito", "idPersona", "numDepartamento"],
     where: { idContrato: idContrato },
     include: [
       {
@@ -804,14 +825,15 @@ const findContrato = async (idContrato) => {
       },
       {
         model: departamentos,
-        as:'departamento',
-        attributes:['costo']
+        as: 'departamento',
+        attributes: ['numDepartamento', 'costo']
       }
     ],
     raw: true,
     nest: true
   });
 }
+
 
 const datosBanco = async  () =>
 {

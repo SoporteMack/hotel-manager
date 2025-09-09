@@ -1,51 +1,120 @@
+// TablaContratos.jsx
 import { useState } from "react";
-import { useIsMobile } from '../../hooks/useIsMobile';
-import { ItemTablaContrato } from './itemtablecontratos';
+import { useAuth } from "../../context/authContext";
+import ModalAgregarDocs from "./modalAgregarDocs";
+import ModalObservaciones from "./modalObservaciones";
+import { ItemTablaContrato } from "./itemtablecontratos";
+import { User, Building2, Activity, FileText, Settings } from 'lucide-react'
 
-function TableContratos({ items, onEditar, setLoading, setIsOpen, setContrato, listar }) {
-  const isMobile = useIsMobile();
-  const [expandedIds, setExpandedIds] = useState([]);
+function TablaContratos({ items, setLoading, setIsOpen, setContrato, listar }) {
+  const { user } = useAuth();
+  const [modalAddDoc, setModalAddDoc] = useState(false);
+  const [openObservaciones, setOpenObservaciones] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  const toggleItem = (id) => {
-    setExpandedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+  const handleEditar = (item) => {
+    setContrato(item);
+    setIsOpen(true);
+  };
+
+  const handleAgregarDoc = (item) => {
+    setSelectedItem(item);
+    setModalAddDoc(true);
+  };
+
+  const handleVerObservaciones = (item) => {
+    setSelectedItem(item);
+    setOpenObservaciones(true);
+  };
+
+  const handleCloseModalAddDoc = () => {
+    setModalAddDoc(false);
+    setSelectedItem(null);
+  };
+
+  const handleCloseModalObservaciones = () => {
+    setOpenObservaciones(false);
+    setSelectedItem(null);
   };
 
   return (
-    <div className="w-full space-y-2">
-      {items.map((item) => (
-        <div key={item.idContrato} className="border rounded-lg overflow-hidden shadow-sm">
-          {/* Header toggle */}
-          <div
-            className="flex justify-between items-center cursor-pointer px-4 py-3 bg-gray-100 hover:bg-gray-200"
-            onClick={() => toggleItem(item.idContrato)}
-          >
-            <div>
-              <span className="font-medium">{item.persona.nombrePersona} {item.persona.apellidoPaterno}</span>
-              <span className="ml-2 text-gray-600">{item.departamento?.descripcion}</span>
-            </div>
-            <div className="text-gray-500">{expandedIds.includes(item.idContrato) ? "▲" : "▼"}</div>
-          </div>
+    <div className="w-full">
+      {/* Vista Desktop - Tabla tradicional */}
+      <div className="hidden lg:block overflow-x-auto">
+        <table className="w-full table-auto border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+        <thead className="border-b border-gray-100">
+            <tr>
+              <th className="px-8 py-5 text-left font-medium text-gray-900 text-sm">
+                Inquilino
+              </th>
+              <th className="px-8 py-5 text-left font-medium text-gray-900 text-sm">
+                Departamento
+              </th>
+              <th className="px-8 py-5 text-center font-medium text-gray-900 text-sm">
+                Estado
+              </th>
+              <th className="px-8 py-5 text-center font-medium text-gray-900 text-sm">
+                Documentos
+              </th>
+              <th className="px-8 py-5 text-center font-medium text-gray-900 text-sm">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {items.map((item) => (
+              <ItemTablaContrato
+                key={item.idContrato}
+                item={item}
+                setLoading={setLoading}
+                user={user}
+                onEditar={() => handleEditar(item)}
+                onAgregarDoc={() => handleAgregarDoc(item)}
+                onVerObservaciones={() => handleVerObservaciones(item)}
+                viewMode="desktop"
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-          {/* Detalles */}
-          {expandedIds.includes(item.idContrato) && (
-            <div className="p-4 bg-white">
-              
-                <ItemTablaContrato
-                  item={item}
-                  onEditar={onEditar}
-                  setLoading={setLoading}
-                  setIsOpen={setIsOpen}
-                  setContrato={setContrato}
-                  listar={listar}
-                />
-            </div>
-          )}
-        </div>
-      ))}
+      {/* Vista Mobile/Tablet - Cards */}
+      <div className="lg:hidden space-y-4">
+        {items.map((item) => (
+          <ItemTablaContrato
+            key={item.idContrato}
+            item={item}
+            setLoading={setLoading}
+            user={user}
+            onEditar={() => handleEditar(item)}
+            onAgregarDoc={() => handleAgregarDoc(item)}
+            onVerObservaciones={() => handleVerObservaciones(item)}
+            viewMode="mobile"
+          />
+        ))}
+      </div>
+
+      {/* Modales */}
+      {selectedItem && (
+        <ModalAgregarDocs
+          isOpen={modalAddDoc}
+          setIsOpen={handleCloseModalAddDoc}
+          item={selectedItem}
+          listar={listar}
+        />
+      )}
+      {selectedItem && (
+        <ModalObservaciones
+          isOpen={openObservaciones}
+          setIsOpen={handleCloseModalObservaciones}
+          observaciones={selectedItem.observaciones}
+          idContrato={selectedItem.idContrato}
+          setLoading={setLoading}
+          listar={listar}
+        />
+      )}
     </div>
   );
 }
 
-export default TableContratos;
+export default TablaContratos;
