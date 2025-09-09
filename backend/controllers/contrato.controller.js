@@ -314,23 +314,30 @@ exports.buscarRentasVencidas = async () => {
     const hoy = new Date();
     // Normalizar a 00:00:00 para comparar solo fecha
     hoy.setHours(0, 0, 0, 0);
+
+    // Crear fecha de una semana (7 días) hacia adelante
+    const unaSemana = new Date(hoy);
+    unaSemana.setDate(hoy.getDate() + 7);
+
     const rentasv = await contratos.findAll({
       attributes: ["idContrato", "deuda"],
-      where: {fechaTermino: { [Op.gte]: hoy }},
+      where: {
+        fechaTermino: {
+          [Op.between]: [hoy, unaSemana]}},
       include: [
-        {
-          model: personas,
-          as: "persona",
-          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
-        },
-        {
-          model: departamentos,
-          as: "departamento",
-          attributes: ["descripcion"]
-        }
-      ],
-      raw: true
-    });
+            {
+              model: personas,
+              as: "persona",
+              attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
+            },
+            {
+              model: departamentos,
+              as: "departamento",
+              attributes: ["descripcion"]
+            }
+          ],
+          raw: true
+        });
 
     // Usar Promise.all para manejar las operaciones asíncronas dentro del map
     const rentasConPagos = await Promise.all(rentasv.map(async (rentav) => {
