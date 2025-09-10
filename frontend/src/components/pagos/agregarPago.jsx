@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef,useEffect } from "react";
 import ModalPago from "./modalPagos";
 import { listacontratosxpersona } from "../../api/contratos";
 import { Notyf } from "notyf"; Notyf
 import { pago as realizarPago } from "../../api/pagos";
+import { useAuth } from "../../context/authContext";
 
 function AgregarPagos() {
     const notyf = useRef(new Notyf({
@@ -20,6 +21,8 @@ function AgregarPagos() {
     const [inquilinos, setInquilinos] = useState([]);
     const [data, setData] = useState(null);
     const [pago, setPago] = useState(0);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const {user} = useAuth();
     const handlebuscar = async (e) => {
         e.preventDefault();
         setData(null);
@@ -46,7 +49,11 @@ function AgregarPagos() {
             setIsLoading(false);
         }
     }
-
+    useEffect(() => {
+        console.log(user?.rol === "admin")
+        if (user?.rol === "admin")
+            setIsAdmin(true)
+    }, [])
     const onClose = () => {
         setIsOpen(false);
     }
@@ -179,7 +186,7 @@ function AgregarPagos() {
             )}
 
             {/* Modal de resultados */}
-            <ModalPago onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} inquilinos={inquilinos} setData={setData} />
+            <ModalPago onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} inquilinos={inquilinos} setData={setData} setPago={setPago} />
             <section className='flex-1 flex flex-col  bg-gray-200 w-full mt-3 rounded-xl'>
                 {
                     data ? (
@@ -239,13 +246,14 @@ function AgregarPagos() {
                                 >
                                     Pago:
                                 </label>
+                                {console.log(isAdmin)}
                                 <input
                                     id="pago"
                                     type="number"
                                     className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
                                     value={pago}
                                     onChange={(e) => { setPago(e.target.value) }}
-
+                                    disabled={!isAdmin}
                                 />
                             </div>
                             <div className="w-full p-2 flex justify-end">

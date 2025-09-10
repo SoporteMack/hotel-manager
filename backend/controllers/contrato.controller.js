@@ -253,7 +253,7 @@ exports.contratoxnombre = async (req, res) => {
       {
         model: departamentos,
         as: "departamento",
-        attributes: ["descripcion"]
+        attributes: ["costo","descripcion"]
       }
       ]
     })

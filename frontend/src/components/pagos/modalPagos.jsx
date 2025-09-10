@@ -1,9 +1,10 @@
 import { Description, Dialog, DialogPanel, DialogTitle, DialogBackdrop } from '@headlessui/react'
 
-function ModalPago({ onClose, isOpen, setIsOpen, inquilinos,setData}) {
+function ModalPago({ onClose, isOpen, setIsOpen, inquilinos,setData,setPago}) {
   const handledata =(data)=>
   {
     setData(data);
+    setPago(data.departamento.costo);
     setIsOpen(false);
   }
   return (

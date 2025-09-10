@@ -9,6 +9,7 @@ function TarjetaDepartamento({ numDepartamento, descripcion, costo, estatus, abr
         if (!estatus)
             getnombre();
     }, [])
+    
     const getnombre = async () => {
         try {
             const res = await nombredep(numDepartamento).then(res => { return res.data });
@@ -24,7 +25,9 @@ function TarjetaDepartamento({ numDepartamento, descripcion, costo, estatus, abr
         >
             <div>
                 <h2 className="text-lg font-medium text-gray-900">Departamento {descripcion}</h2>
-                {user?.rol === "admin" || estatus && (<p className="text-gray-600">Costo: ${Number(costo).toLocaleString()}</p>)}
+                {(user?.rol === "admin" || (user?.rol === "ayudante" && estatus)) && (
+                    <p className="text-gray-600">Costo: ${Number(costo).toLocaleString()}</p>
+                )}
                 {!estatus && (<p className="text-gray-600">Nombre: {nombre}</p>)}
                 <span
                     className={`inline-block mt-2 px-2 py-1 text-xs rounded-full ${estatus ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"
