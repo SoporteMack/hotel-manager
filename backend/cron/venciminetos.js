@@ -13,8 +13,8 @@ schedule.scheduleJob('0 35 16 * * *', async () => {
     const fechaformateada = formatFechaHoraLocal(fecha);
     const dep = await obtenerdep(fechaformateada);
 
-    //await aumentarInteres(formdiaant);
-    //await aumentarDeuda(dep);
+    await aumentarInteres(formdiaant);
+    await aumentarDeuda(dep);
     await terminarContrato(formatFechaHoraLocal(fecha))
 });
 

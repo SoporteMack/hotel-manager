@@ -4,7 +4,6 @@ import { useAuth } from "../../context/authContext";
 import ModalAgregarDocs from "./modalAgregarDocs";
 import ModalObservaciones from "./modalObservaciones";
 import { ItemTablaContrato } from "./itemtablecontratos";
-import { User, Building2, Activity, FileText, Settings } from 'lucide-react'
 
 function TablaContratos({ items, setLoading, setIsOpen, setContrato, listar }) {
   const { user } = useAuth();

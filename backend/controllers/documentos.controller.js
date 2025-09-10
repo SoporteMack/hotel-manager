@@ -124,7 +124,7 @@ exports.nota = async (folio) => {
         direccion: '4 Poniente 1414, Puebla',
       },
       productos: [
-        { descripcion: `Abono renta ${dato['contrato.departamento.descripcion']}`, cantidad: 1, precio: dato.monto },
+        { descripcion: `ABONO RENTA ${dato['contrato.departamento.descripcion']}`, cantidad: 1, precio: dato.monto },
       ],
     };
 
@@ -142,7 +142,7 @@ exports.nota = async (folio) => {
       .text('Nota de Servicio', { align: 'right' })
       .fontSize(10)
       .text(`Folio: ${nota.folio}`, { align: 'right' })
-      .text(`Fecha: ${nota.fecha}`, { align: 'right' });
+      .text(`Fecha de pago: ${nota.fecha}`, { align: 'right' });
 
     doc.moveDown();
 
