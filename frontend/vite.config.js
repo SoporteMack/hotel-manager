@@ -12,7 +12,7 @@ export default defineConfig({
       '.ngrok-free.app'  // Permite cualquier subdominio de ngrok
     ],
     host: '0.0.0.0', 
-    /*https: {
+    /*cd https: {
       key: fs.readFileSync('localhost+2-key.pem'),
       cert: fs.readFileSync('localhost+2.pem')
     },*/
