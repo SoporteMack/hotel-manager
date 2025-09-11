@@ -38,4 +38,4 @@ baileys_auth/
 uploads/
 !uploads/templates/
 !uploads/templates/**
-!uploads/reporte diario.pdf
+backend/uploads/reporte diario.pdf
