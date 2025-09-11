@@ -11,4 +11,5 @@ routes.use('/pagos',verificarToken,require('./pagos'));
 routes.use('/documentos',require('./documentos'));
 routes.use('/config',require('./configuracion'));
 routes.use('/detalles',require('./detalle'));
+routes.use('/pension',verificarToken,require('./pension'));
 module.exports = routes;
