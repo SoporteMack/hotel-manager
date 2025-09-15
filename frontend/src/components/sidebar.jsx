@@ -181,7 +181,7 @@ function Sidebar({ isOpen, onClose }) {
 
             {/* Links de RENTAS */}
             <NavLink
-              to="/pension/agregarpersona"
+              to="/pension/personas"
               onClick={onClose}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors duration-200 ${
@@ -193,7 +193,22 @@ function Sidebar({ isOpen, onClose }) {
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                 <polyline points="9 22 9 12 15 12 15 22" />
               </svg>
-              <span className="text-sm">Inicio</span>
+              <span className="text-sm">Personas</span>
+            </NavLink>
+            <NavLink
+              to="/pension/tarifas"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2 rounded-xl transition-colors duration-200 ${
+                  isActive ? 'bg-item-sidebar-active text-black' : 'hover:bg-gray-100 text-gray-600'
+                }`
+              }
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span className="text-sm">Personas</span>
             </NavLink>
 
           

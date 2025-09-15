@@ -13,6 +13,7 @@ import EditarContratos from "./components/contratos/editarContratos";
 import Configuracion from "./components/config/config";
 import RoleRoute from "./RoleRoute";
 import AgregarPersona from "./components/personaP/agregar";
+import Tarifas from "./components/tarifas/tarifas";
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -64,7 +65,8 @@ function App() {
           {/* Admin e inquilino */}
           <Route path="pagos" element={<RoleRoute allowedRoles={["admin"]}><Pagos /></RoleRoute>} />
           <Route path="agregarpago" element={<RoleRoute allowedRoles={["admin", "ayudante"]}><AgregarPagos /></RoleRoute>} />
-          <Route path="pension/agregarpersona" element={<RoleRoute allowedRoles={["admin","ayudante"]}><AgregarPersona></AgregarPersona></RoleRoute>}></Route>
+          <Route path="pension/personas" element={<RoleRoute allowedRoles={["admin","ayudante"]}><AgregarPersona></AgregarPersona></RoleRoute>}></Route>
+          <Route path="pension/tarifas" element={<RoleRoute allowedRoles={["admin","ayudante"]}><Tarifas></Tarifas></RoleRoute>}></Route>
         </Route>
 
         {/* 404 */}
