@@ -1,13 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import Camara from "../contratos/camara";
 
-function ModalPersonaPension({ visible, onClose, onGuardar, item }) {
+function ModalPersonaPension({ onClose, onGuardar, item }) {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [telefono, setTelefono] = useState("");
   const [mostrarCamaraPara, setMostrarCamaraPara] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [docs, setDocs] = useState({});
+  useEffect(() => {
+    if (item) {
+      setNombre(item.nombre || "");
+      setApellido(item.apellido || "");
+      setTelefono(item.telefono || "");
+    }
+  }, [item]);
 
   const handleFileChange = (e, tipo) => {
     const file = e.target.files[0];
@@ -40,12 +47,18 @@ function ModalPersonaPension({ visible, onClose, onGuardar, item }) {
     formData.append("nombre", nombre);
     formData.append("apellido", apellido);
     formData.append("telefono", telefono);
+    if (item)
+      formData.append("idPersona", item.idPersona);
 
     Object.entries(docs).forEach(([key, file]) => {
       if (file) formData.append(key, file);
     });
 
     onGuardar(formData);
+    setNombre("");
+    setApellido("");
+    setTelefono("");
+    setDocs({})
   };
 
   const camposDocumentos = [
@@ -53,7 +66,6 @@ function ModalPersonaPension({ visible, onClose, onGuardar, item }) {
     { nombre: "ineA", label: "INE parte trasera" },
   ];
 
-  if (!visible) return null;
 
   return (
     <>
@@ -103,7 +115,7 @@ function ModalPersonaPension({ visible, onClose, onGuardar, item }) {
                   </label>
                   <input
                     type="text"
-                    value={nombre}
+                    defaultValue={nombre}
                     onChange={(e) => setNombre(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm 
                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -118,7 +130,7 @@ function ModalPersonaPension({ visible, onClose, onGuardar, item }) {
                   </label>
                   <input
                     type="text"
-                    value={apellido}
+                    defaultValue={apellido}
                     onChange={(e) => setApellido(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm 
                                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -134,65 +146,17 @@ function ModalPersonaPension({ visible, onClose, onGuardar, item }) {
                   <input
                     type="tel"
                     value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
+                    onChange={(e) => {
+                      // Permite solo números y máximo 10 dígitos (puedes cambiarlo)
+                      const valor = e.target.value.replace(/[^0-9]/g, "");
+                      setTelefono(valor);
+                    }}
+                    maxLength={10} // limite de dígitos (ej: 10 para México)
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm 
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Número de teléfono"
                   />
-                </div>
-              </div>
 
-              {/* Documentos */}
-              <div className="border-t border-gray-200 pt-5">
-                <h3 className="text-base font-medium text-gray-900 mb-4">
-                  Documentos de Identificación
-                </h3>
-                <div className="space-y-4">
-                  {camposDocumentos.map((campo) => (
-                    <div
-                      key={campo.nombre}
-                      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                    >
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {campo.label}
-                      </label>
-
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        <input
-                          type="file"
-                          accept=".png,.jpg,.jpeg"
-                          onChange={(e) => handleFileChange(e, campo.nombre)}
-                          className="w-full text-xs sm:text-sm file:mr-2 file:py-1.5 file:px-3 
-                                     file:rounded-md file:border-0 file:text-xs file:font-medium
-                                     file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMostrarCamaraPara(campo.nombre);
-                            setMostrarModal(true);
-                          }}
-                          className="flex items-center justify-center gap-2 px-3 py-2 
-                                     bg-blue-600 text-white rounded-lg text-xs sm:text-sm font-medium
-                                     hover:bg-blue-700 transition-colors"
-                        >
-                          📷 Cámara
-                        </button>
-                      </div>
-
-                      {/* Preview */}
-                      {docs[campo.nombre] && (
-                        <div className="mt-3 border rounded-lg overflow-hidden bg-white">
-                          <img
-                            src={URL.createObjectURL(docs[campo.nombre])}
-                            alt={campo.label}
-                            className="w-full h-32 object-contain bg-gray-50"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
                 </div>
               </div>
 
@@ -218,38 +182,6 @@ function ModalPersonaPension({ visible, onClose, onGuardar, item }) {
           </div>
         </div>
       </div>
-
-      {/* Modal cámara */}
-      {mostrarModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-2">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-hidden">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900">
-                📷 Capturar {camposDocumentos.find((c) => c.nombre === mostrarCamaraPara)?.label}
-              </h3>
-              <button
-                onClick={() => setMostrarModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full"
-              >
-                ✖
-              </button>
-            </div>
-
-            <div className="p-2 sm:p-4 bg-gray-900">
-              <Camara onCapturar={handleCaptura} />
-            </div>
-
-            <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 flex justify-center">
-              <button
-                onClick={() => setMostrarModal(false)}
-                className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg"
-              >
-                Cancelar captura
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

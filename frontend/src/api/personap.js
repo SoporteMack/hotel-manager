@@ -13,6 +13,18 @@ export const agregarPersonaPension = (formData) =>
             'Content-Type': 'multipart/form-data'
         }
     });
-export const listaPersonasPension = () => API.get('api/pension/personas/listar')
-export const editarPersonaPension = () =>{}
-    
+export const listaPersonasPension = () => API.get('api/pension/personas/listar');
+export const editarPersonaPension = (data) => API.post('api/pension/personas/actualizar', data);
+export const agregarcom = (formData) =>
+    API.post('api/pension/personas/actualizarcom', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+export const agregarine = (formData) =>
+    API.post('api/pension/personas/actualizarine', formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });

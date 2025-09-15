@@ -1,90 +1,283 @@
 const PersonaP = require('../models/personasP');
-const  fs =require("fs");
-const  path = require('path');
-const  PDFDocument = require("pdfkit");
+const fs = require("fs");
+const path = require('path');
+const PDFDocument = require("pdfkit");
 exports.listar = async (req, res) => {
-    try {
-        const response = await PersonaP.findAll();
-        res.status(200).json(response);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json(error)
-    }
+  try {
+    const response = await PersonaP.findAll();
+    res.status(200).json(response);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error)
+  }
 }
 
 exports.crear = async (req, res) => {
-    try {
-      const data = req.body;
-      const files = req.files; // Deben venir como array: [img1, img2]
-  
-      // 1. Buscar persona en DB
-      const persona = await PersonaP.findOne({
-        attributes: ["nombre", "apellido"],
-        where: { idPersona: data.idPersona }
-      });
-  
-      if (!persona) {
-        return res.status(404).json({ message: "Persona no encontrada" });
-      }
-  
-      // 2. Nombre y carpeta donde guardar
-      const nombreCarpeta = `${data.idPersona}_${persona.nombre}_${persona.apellido}`.replace(/\s+/g, "_");
-      const carpeta = path.join("uploads", "Pensiones", nombreCarpeta);
-  
-      if (!fs.existsSync(carpeta)) {
-        fs.mkdirSync(carpeta, { recursive: true });
-      }
-  
-      // 3. Nombre del archivo PDF
-      const nombrePDF = `${nombreCarpeta}.pdf`;
-      const rutaPDF = path.join(carpeta, nombrePDF);
-  
-      // 4. Crear PDF con PDFKit
-      const doc = new PDFDocument({ autoFirstPage: false });
-      const stream = fs.createWriteStream(rutaPDF);
-      doc.pipe(stream);
-  
-      // --- Página 1: datos de la persona ---
-      doc.addPage()
-        .fontSize(16).text("Datos de la Persona", { align: "center" })
-        .moveDown()
-        .fontSize(12)
-        .text(`ID: ${data.idPersona}`)
-        .text(`Nombre: ${persona.nombre} ${persona.apellido}`)
-        .moveDown();
-  
-      // --- Insertar imágenes si existen ---
-      if (files && files.length > 0) {
-        files.forEach((file, index) => {
-          try {
-            doc.addPage()
-              .fontSize(14)
-              .text(`Imagen ${index + 1}`, { align: "center" })
-              .moveDown();
-  
-            doc.image(file.path, {
-              fit: [500, 500],
-              align: "center",
-              valign: "center"
-            });
-          } catch (e) {
-            console.error("Error agregando imagen:", e);
-          }
-        });
-      }
-  
-      doc.end();
-  
-      // 5. Responder cuando termine
-      stream.on("finish", () => {
-        res.json({
-          message: "PDF creado correctamente",
-          archivo: rutaPDF
-        });
-      });
-  
-    } catch (error) {
-      console.error("Error en crear:", error);
-      res.status(500).json({ message: "Error al crear PDF", error: error.message });
+  try {
+    const data = req.body;
+    const files = req.files; // Deben venir como array: [img1, img2]
+    console.log(data)
+    // 1. Buscar persona en DB
+    const persona = await PersonaP.create(data);
+
+    if (!persona) {
+      return res.status(404).json({ message: "Persona no encontrada" });
     }
-  };
+
+    // 2. Nombre y carpeta donde guardar
+    const nombreCarpeta = `${persona.idPersona}_${persona.nombre}_${persona.apellido}`.replace(/\s+/g, "_");
+    const carpeta = path.join("uploads", "Pensiones", nombreCarpeta);
+
+    if (!fs.existsSync(carpeta)) {
+      fs.mkdirSync(carpeta, { recursive: true });
+    }
+
+    // 3. Nombre del archivo PDF
+    const nombrePDF = `${nombreCarpeta}.pdf`;
+    const rutaPDF = path.join(carpeta, nombrePDF);
+
+    // 4. Crear PDF con PDFKit
+    const doc = new PDFDocument({ autoFirstPage: false });
+    const stream = fs.createWriteStream(rutaPDF);
+    doc.pipe(stream);
+    if (files) {
+      // Asumiendo que recibes ineD (delantera) y ineA (trasera)
+      const ineD = files.ineD?.[0];
+      const ineA = files.ineA?.[0];
+
+      if (ineD && ineA) {
+        try {
+          doc.addPage();
+
+          // Imagen frontal (izquierda)
+          doc.image(ineD.buffer, 70, 150, {
+            fit: [220, 140], // ancho x alto
+            align: "center",
+            valign: "center",
+          });
+
+          // Imagen trasera (derecha)
+          doc.image(ineA.buffer, 320, 150, {
+            fit: [220, 140],
+            align: "center",
+            valign: "center",
+          });
+
+        } catch (e) {
+          console.error("Error agregando imágenes:", e);
+        }
+      }
+    }
+
+    doc.end();
+    persona.update({ INE: rutaPDF });
+    // 5. Responder cuando termine
+    stream.on("finish", () => {
+      res.json({
+        message: "PDF creado correctamente",
+        archivo: rutaPDF
+      });
+    });
+
+  } catch (error) {
+    console.error("Error en crear:", error);
+    res.status(500).json({ message: "Error al crear PDF", error: error.message });
+  }
+};
+
+exports.actualizar = async (req, res) => {
+  const data = req.body;
+  try {
+    await PersonaP.update(
+      {
+        nombre: data.nombre,
+        apellido: data.apellido,
+        telefono: data.telefono,
+      },
+      {
+        where: { idPersona: data.idPersona },
+      }
+    );
+    res.status(200).json("persona actualizado correctamente");
+  } catch (error) {
+    console.log(error)
+    res.status(500).json("erro al actualizar persona");
+  }
+}
+
+exports.subircom = async (req, res) => {
+  try {
+    const data = req.body;
+    const files = req.files;
+    console.log(files);
+
+    const persona = await PersonaP.findByPk(data.idPersona);
+    if (!persona) {
+      return res.status(404).json({ message: "Persona no encontrada" });
+    }
+
+    // Carpeta destino
+    const nombreCarpeta = `${persona.idPersona}_${persona.nombre}_${persona.apellido}`.replace(/\s+/g, "_");
+    const carpeta = path.join("uploads", "Pensiones", nombreCarpeta);
+
+    if (!fs.existsSync(carpeta)) {
+      fs.mkdirSync(carpeta, { recursive: true });
+    }
+
+    // Nombre del archivo PDF
+    const nombrePDF = `${nombreCarpeta}_com.pdf`;
+    const rutaPDF = path.join(carpeta, nombrePDF);
+
+    // Crear PDF con PDFKit
+    const doc = new PDFDocument({ autoFirstPage: false });
+    const stream = fs.createWriteStream(rutaPDF);
+    doc.pipe(stream);
+
+    if (files) {
+      const comprobante = files.comprobatededomicilio?.[0];
+
+      if (comprobante) {
+        try {
+          doc.addPage();
+
+          // Usa el buffer directamente
+          doc.image(comprobante.buffer, 0, 0, {
+            fit: [doc.page.width, doc.page.height],
+            align: "center",
+            valign: "center",
+          });
+        } catch (e) {
+          console.error("Error agregando comprobante:", e);
+        }
+      }
+    }
+
+    doc.end();
+
+    await persona.update({ comprobanteDeDomicilio: rutaPDF });
+    await persona.save();
+
+    stream.on("finish", () => {
+      res.json({
+        message: "PDF creado correctamente",
+        archivo: rutaPDF,
+      });
+    });
+  } catch (error) {
+    console.error("Error en crear:", error);
+    res.status(500).json({ message: "Error al crear PDF", error: error.message });
+  }
+};
+
+exports.subirine = async (req,res) =>{
+  try {
+    const data = req.body;
+    const files = req.files; // Deben venir como array: [img1, img2]
+    console.log(data)
+    // 1. Buscar persona en DB
+    const persona = await PersonaP.findByPk(data.idPersona);
+
+    if (!persona) {
+      return res.status(404).json({ message: "Persona no encontrada" });
+    }
+
+    // 2. Nombre y carpeta donde guardar
+    const nombreCarpeta = `${persona.idPersona}_${persona.nombre}_${persona.apellido}`.replace(/\s+/g, "_");
+    const carpeta = path.join("uploads", "Pensiones", nombreCarpeta);
+
+    if (!fs.existsSync(carpeta)) {
+      fs.mkdirSync(carpeta, { recursive: true });
+    }
+
+    // 3. Nombre del archivo PDF
+    const nombrePDF = `${nombreCarpeta}.pdf`;
+    const rutaPDF = path.join(carpeta, nombrePDF);
+
+    // 4. Crear PDF con PDFKit
+    const doc = new PDFDocument({ autoFirstPage: false });
+    const stream = fs.createWriteStream(rutaPDF);
+    doc.pipe(stream);
+    if (files) {
+      // Asumiendo que recibes ineD (delantera) y ineA (trasera)
+      const ineD = files.ineD?.[0];
+      const ineA = files.ineA?.[0];
+
+      if (ineD && ineA) {
+        try {
+          doc.addPage();
+
+          // Imagen frontal (izquierda)
+          doc.image(ineD.buffer, 70, 150, {
+            fit: [220, 140], // ancho x alto
+            align: "center",
+            valign: "center",
+          });
+
+          // Imagen trasera (derecha)
+          doc.image(ineA.buffer, 320, 150, {
+            fit: [220, 140],
+            align: "center",
+            valign: "center",
+          });
+
+        } catch (e) {
+          console.error("Error agregando imágenes:", e);
+        }
+      }
+    }
+
+    doc.end();
+    persona.update({ INE: rutaPDF });
+    // 5. Responder cuando termine
+    stream.on("finish", () => {
+      res.json({
+        message: "PDF creado correctamente",
+        archivo: rutaPDF
+      });
+    });
+
+  } catch (error) {
+    console.error("Error en crear:", error);
+    res.status(500).json({ message: "Error al crear PDF", error: error.message });
+  }
+}
+
+exports.descargarine = async (req,res)=>
+{
+  try{
+    const {url} = req.body;
+     const pathdoc = __dirname + '/../'+url;
+    console.log(pathdoc)
+    // Enviar PDF al cliente
+    res.download(pathdoc, "ine.pdf", (err) => {
+      if (err) {
+        console.error("Error al enviar el PDF:", err);
+        return res.status(500).send("No se pudo enviar el PDF");
+      }
+    });
+  }catch(error)
+  {
+    console.log(error);
+    res.status(500).json(error);
+  }
+}
+
+exports.descargarcom = async (req,res)=>
+  {
+    try{
+      const {url} = req.body;
+       const pathdoc = __dirname + '/../'+url;
+      console.log(pathdoc)
+      // Enviar PDF al cliente
+      res.download(pathdoc, "comprobante.pdf", (err) => {
+        if (err) {
+          console.error("Error al enviar el PDF:", err);
+          return res.status(500).send("No se pudo enviar el PDF");
+        }
+      });
+    }catch(error)
+    {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
