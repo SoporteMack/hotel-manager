@@ -2,7 +2,9 @@ import { Paperclip, FileDown, Edit3 } from "lucide-react";
 import ModalAgregarDocs from "./modalAgregarDocs";
 import { useState } from "react";
 import axios from "axios";
+import { useAuth } from "../../context/authContext";
 function TablaPersonasPension({ items, onEditar, listar }) {
+  const {user} = useAuth();
   const [persona, setPersona] = useState();
   const [isOpen, setIsOpen] = useState(false);
   const onAgregarDoc = (persona) => {
@@ -69,14 +71,14 @@ function TablaPersonasPension({ items, onEditar, listar }) {
 
               <td className="px-4 py-2 text-center space-y-2 sm:space-y-0 sm:space-x-2 flex flex-col sm:flex-row justify-center items-center">
                 {/* Botón Editar */}
-                <button
+                {user.rol ==="admin"&&(<button
                   onClick={() => onEditar(persona)}
                   className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-lg 
                text-sm font-medium hover:bg-blue-100 transition-colors"
                 >
                   <Edit3 size={14} />
                   <span>Editar</span>
-                </button>
+                </button>)}
 
                 {/* Botón Agregar Documentos (solo si faltan) */}
                 {(!persona.comprobanteDeDomicilio || !persona.INE) && (

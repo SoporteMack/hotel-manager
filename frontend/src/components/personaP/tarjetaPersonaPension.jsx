@@ -1,5 +1,7 @@
+import { useAuth } from "../../context/authContext";
 function TarjetaPersonaPension ({items,onEditar})
 {
+  const {user} = useAuth();
     return (<div className="grid gap-3">
   {items.map((persona) => (
     <div
@@ -13,14 +15,14 @@ function TarjetaPersonaPension ({items,onEditar})
         <span className="text-xs text-gray-500">ID: {persona.idPersona}</span>
       </div>
 
-      <div className="mt-3 flex justify-end">
+      {user.rol ==="admin" &&(<div className="mt-3 flex justify-end">
         <button
           onClick={() => onEditar(persona)}
           className="px-3 py-1 text-sm rounded-lg bg-blue-500 text-white hover:bg-blue-600"
         >
           Editar
         </button>
-      </div>
+      </div>)}
     </div>
   ))}
 </div>)

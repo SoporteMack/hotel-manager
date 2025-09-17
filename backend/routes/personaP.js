@@ -14,5 +14,8 @@ router.post('/actualizarine', verificarToken, upload.fields([
     { name: "ineA", maxCount: 1 }]), personapCotroller.subirine)
 router.post('/descargarine',verificarToken,personapCotroller.descargarine);
 router.post('/descargarcom',verificarToken,personapCotroller.descargarcom);
+router.get('/com',verificarToken,personapCotroller.tienecom);
+
+router.get('/nombre',verificarToken,personapCotroller.nombre);
 
     module.exports = router;

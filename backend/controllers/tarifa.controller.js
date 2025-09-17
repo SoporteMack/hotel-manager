@@ -37,3 +37,12 @@ exports.actualizar = async (req, res) => {
         res.status(500).json(error);
     }
 };
+
+exports.tarifasA = async (req,res)=>{
+    try {
+        const lista = await tarifas.findAll({where:{estado : 1}});
+        res.status(200).json(lista);
+    } catch (error) {
+        res.statu(500).json(error);
+    }
+}

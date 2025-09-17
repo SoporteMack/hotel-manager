@@ -1,6 +1,10 @@
 const express = require('express');
 const { verificarToken } = require('../middlewares/auth');
+const { listarPensiones,crearPension, actualizarPension } = require('../controllers/pensiones.controller');
 const router = express.Router();
 router.use('/personas',verificarToken,require('./personaP'));
 router.use('/tarifas',verificarToken,require('./tarifa'));
+router.get('/listar',verificarToken,listarPensiones);
+router.post('/crear',verificarToken,crearPension);
+router.post('/actualizar',verificarToken,actualizarPension);
 module.exports = router;

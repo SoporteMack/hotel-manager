@@ -169,7 +169,7 @@ exports.subircom = async (req, res) => {
   }
 };
 
-exports.subirine = async (req,res) =>{
+exports.subirine = async (req, res) => {
   try {
     const data = req.body;
     const files = req.files; // Deben venir como array: [img1, img2]
@@ -242,11 +242,10 @@ exports.subirine = async (req,res) =>{
   }
 }
 
-exports.descargarine = async (req,res)=>
-{
-  try{
-    const {url} = req.body;
-     const pathdoc = __dirname + '/../'+url;
+exports.descargarine = async (req, res) => {
+  try {
+    const { url } = req.body;
+    const pathdoc = __dirname + '/../' + url;
     console.log(pathdoc)
     // Enviar PDF al cliente
     res.download(pathdoc, "ine.pdf", (err) => {
@@ -255,29 +254,57 @@ exports.descargarine = async (req,res)=>
         return res.status(500).send("No se pudo enviar el PDF");
       }
     });
-  }catch(error)
-  {
+  } catch (error) {
     console.log(error);
     res.status(500).json(error);
   }
 }
 
-exports.descargarcom = async (req,res)=>
-  {
-    try{
-      const {url} = req.body;
-       const pathdoc = __dirname + '/../'+url;
-      console.log(pathdoc)
-      // Enviar PDF al cliente
-      res.download(pathdoc, "comprobante.pdf", (err) => {
-        if (err) {
-          console.error("Error al enviar el PDF:", err);
-          return res.status(500).send("No se pudo enviar el PDF");
-        }
-      });
-    }catch(error)
-    {
-      console.log(error);
-      res.status(500).json(error);
-    }
+exports.descargarcom = async (req, res) => {
+  try {
+    const { url } = req.body;
+    const pathdoc = __dirname + '/../' + url;
+    console.log(pathdoc)
+    // Enviar PDF al cliente
+    res.download(pathdoc, "comprobante.pdf", (err) => {
+      if (err) {
+        console.error("Error al enviar el PDF:", err);
+        return res.status(500).send("No se pudo enviar el PDF");
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error);
   }
+}
+
+exports.tienecom = async (req, res) => {
+  try {
+
+    const idPersona = req.query.idPersona;
+    console.log(idPersona)
+    var band = false;
+    const persona = await PersonaP.findByPk(idPersona);
+    if (persona.comprobanteDeDomicilio)
+      band = true
+    return res.status(200).json({ com: band });
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ com: false });
+  }
+}
+exports.nombre = async (req,res) =>
+{
+  try {
+    const idPersona = req.query.idPersona;
+    const persona = await PersonaP.findByPk(idPersona);
+    var nombre = "sin Nombre";
+    if(persona)
+    {
+      nombre = persona.nombre + " " + persona.apellido;
+    }
+    return res.status(200).json({nombre:nombre});
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+}
