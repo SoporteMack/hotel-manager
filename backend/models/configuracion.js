@@ -87,6 +87,31 @@ const Configuracion = sequelize.define('configuraciones', {
             notEmpty: { msg: 'El mensaje no puede estar vacío' }
         }
     },
+    bienvenidaP:{
+        type: DataTypes.TEXT(50),
+        allowNull: false,
+        validate: {
+            notNull: { msg: 'La bienvenida es obligatorio' },
+            notEmpty: { msg: 'La bienvenida no puede estar vacío' }
+        }
+    },
+    envioNotasP:{
+        type: DataTypes.TEXT(50),
+        allowNull: false,
+        validate: {
+            notNull: { msg: 'El mensaje es obligatorio' },
+            notEmpty: { msg: 'El mensaje no puede estar vacío' }
+        }
+    },
+    vencimiento3DiasP:{
+        type: DataTypes.TEXT(50),
+        allowNull: false,
+        validate: {
+            notNull: { msg: 'El mensaje es obligatorio' },
+            notEmpty: { msg: 'El mensaje no puede estar vacío' }
+        }
+    },
+    
 }, {
     timestamps: false,
     freezeTableName: true,

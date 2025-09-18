@@ -203,7 +203,7 @@ async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
 const enviarNota = async (telefono, rutaArchivo) => {
     const sock = getSock();
     const res = await configuracion.findOne();
-    const msj = res.envioNotas;
+    const msj = res.envioNotasP;
     const fecha = new Date();
     const formatoFecha = fecha.toLocaleDateString('es-MX', {
         timeZone: 'America/Mexico_City',

@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Loader from "../items/loader";
 import { listarxfecha } from "../../api/pagosp";
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 export default function TablaPagos() {
+  const isMobile = useIsMobile();
   const [busqueda, setBusqueda] = useState("");
   const [pagos, setPagos] = useState([])
   const [fechaInicio, setFechaInicio] = useState("");
@@ -160,12 +162,12 @@ export default function TablaPagos() {
       </div>
 
       {/* Tabla responsiva */}
+     {!isMobile?( 
       <div className="overflow-x-auto rounded-lg shadow-md">
         <table className="min-w-full border border-gray-200 text-sm">
           <thead className="bg-gray-100">
             <tr>
-              <th className="px-3 py-2 text-left font-semibold text-gray-700">ID Pago</th>
-              <th className="px-3 py-2 text-left font-semibold text-gray-700">ID Cobro</th>
+              <th className="px-3 py-2 text-left font-semibold text-gray-700">Folio</th>
               <th className="px-3 py-2 text-left font-semibold text-gray-700">Monto</th>
               <th className="px-3 py-2 text-left font-semibold text-gray-700">Fecha Pago</th>
               <th className="px-3 py-2 text-left font-semibold text-gray-700">Vencimiento</th>
@@ -177,8 +179,7 @@ export default function TablaPagos() {
             {pagosFiltrados.map((pago) => (
               <tr key={pago.idPago} className="border-t hover:bg-gray-50">
                 {console.log(pago)}
-                <td className="px-3 py-2">{pago.idPago}</td>
-                <td className="px-3 py-2">{pago.idCobro}</td>
+                <td className="px-3 py-2">#{pago.idPago}</td>
                 <td className="px-3 py-2">${parseFloat(pago.montoPagado).toFixed(2)}</td>
                 <td className="px-3 py-2">
                   {new Date(pago.fechaPago).toLocaleDateString("es-MX")}
@@ -190,10 +191,8 @@ export default function TablaPagos() {
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Vista alternativa para móviles */}
-      <div className="grid gap-3 mt-4 sm:hidden">
+      </div>):( 
+      <div className="grid gap-3 mt-4">
         {pagosFiltrados.map((pago) => (
           <div key={pago.idPago} className="border rounded-lg p-3 shadow-sm bg-white">
             <p className="text-sm"><span className="font-semibold">ID Pago:</span> {pago.idPago}</p>
@@ -203,7 +202,7 @@ export default function TablaPagos() {
             <p className="text-sm"><span className="font-semibold">Alumno:</span> {pago.nombre} {pago.apellido}</p>
           </div>
         ))}
-      </div>
+      </div>)}
     </div>
   );
 }

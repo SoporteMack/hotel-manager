@@ -159,22 +159,6 @@ function Sidebar({ isOpen, onClose }) {
                     </svg>
                     <span className="text-sm">Lista de Pagos</span>
                   </NavLink>
-                  <NavLink
-                    to="/config"
-                    onClick={onClose}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 ${isActive
-                        ? "bg-blue-100 text-blue-700 font-medium"
-                        : "hover:bg-gray-100 text-gray-600"
-                      }`
-                    }
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="3" />
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .69.28 1.35.77 1.82.49.47 1.13.74 1.82.74z" />
-                    </svg>
-                    <span className="text-sm">Configuración</span>
-                  </NavLink>
                 </>
               )}
 
@@ -219,6 +203,22 @@ function Sidebar({ isOpen, onClose }) {
             </svg>
             <span>Cerrar sesión</span>
           </button>
+          <NavLink
+            to="/config"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors duration-200 ${isActive
+                ? "bg-blue-100 text-blue-700 font-medium"
+                : "hover:bg-gray-100 text-gray-600"
+              }`
+            }
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .69.28 1.35.77 1.82.49.47 1.13.74 1.82.74z" />
+            </svg>
+            <span className="text-sm">Configuración</span>
+          </NavLink>
         </div>
 
       </div>

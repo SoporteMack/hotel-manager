@@ -3,7 +3,7 @@ import { Notyf } from "notyf";
 import { config as lconfig, actualizarConfiguracion } from "../../api/config";
 import "notyf/notyf.min.css";
 
-export default function ConfiguracionMensajes({setLoadingL}) {
+export default function ConfiguracionMensajes({ setLoadingL }) {
     const notyf = useRef(new Notyf({
         duration: 7000,
         dismissible: true,
@@ -16,7 +16,10 @@ export default function ConfiguracionMensajes({setLoadingL}) {
         envioNotas: "",
         envioContrato: "",
         vencimiento3Dias: "",
-        vencimiento1Dia: ""
+        vencimiento1Dia: "",
+        bienvenidaP: "",
+        envioNotasP: "",
+        vencimiento3DiasP: "",
     });
 
     const [loading, setLoading] = useState(false);
@@ -34,7 +37,10 @@ export default function ConfiguracionMensajes({setLoadingL}) {
                     envioNotas: res.envioNotas ?? "",
                     envioContrato: res.envioContrato ?? "",
                     vencimiento3Dias: res.vencimiento3Dias ?? "",
-                    vencimiento1Dia: res.vencimiento1Dia ?? ""
+                    vencimiento1Dia: res.vencimiento1Dia ?? "",
+                    bienvenidaP: res.bienvenidaP ?? "",
+                    envioNotasP: res.envioNotasP ?? "",
+                    vencimiento3DiasP: res.vencimiento3DiasP ?? "",
                 });
             } catch (error) {
                 notyf.current.error("Error al cargar mensajes");
@@ -81,7 +87,10 @@ export default function ConfiguracionMensajes({setLoadingL}) {
         { label: "Mensaje de Envío de Notas", name: "envioNotas", icon: "📝" },
         { label: "Mensaje de Envío de Contrato", name: "envioContrato", icon: "📄" },
         { label: "Vencimiento (3 días antes)", name: "vencimiento3Dias", icon: "⏳" },
-        { label: "Vencimiento (1 día antes)", name: "vencimiento1Dia", icon: "⚠️" }
+        { label: "Vencimiento (1 día antes)", name: "vencimiento1Dia", icon: "⚠️" },
+        { label: "Mensaje de Bienvenida pension", name: "bienvenidaP", icon: "👋" },
+        { label: "Mensaje de Envío de Notas pension", name: "envioNotasP", icon: "📝" },
+        { label: "Vencimiento (3 días antes) pension", name: "vencimiento3DiasP", icon: "⏳" },
     ];
 
     return (

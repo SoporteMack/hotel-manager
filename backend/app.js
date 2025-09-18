@@ -28,6 +28,7 @@ app.use(cookieParser());
   require('./cron/reporteDiario'); 
   require('./cron/notificaciones');
 
+
   app.use('/api', require('./routes/api'));
 
   sequelize.sync().then(() => {

@@ -73,12 +73,7 @@ function TarjetaPersonaPension({ items, onEditar, listar }) {
         </div>
 
         {user.rol === "admin" && (<div className="mt-3 flex justify-end">
-          <button
-            onClick={() => onEditar(persona)}
-            className="px-3 py-1 text-sm rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-          >
-            Editar
-          </button>
+          
            {/* Botón Editar */}
            {user.rol ==="admin"&&(<button
                   onClick={() => onEditar(persona)}

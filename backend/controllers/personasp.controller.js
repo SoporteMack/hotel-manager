@@ -2,6 +2,8 @@ const PersonaP = require('../models/personasP');
 const fs = require("fs");
 const path = require('path');
 const PDFDocument = require("pdfkit");
+const { getSock } = require('../utils/baileys');
+const Configuracion = require("../models/configuracion");
 exports.listar = async (req, res) => {
   try {
     const response = await PersonaP.findAll();
@@ -71,6 +73,7 @@ exports.crear = async (req, res) => {
 
     doc.end();
     persona.update({ INE: rutaPDF });
+    await mensajeBienvenida(persona.telefono,persona.nombre + ' ' + persona.apellido);
     // 5. Responder cuando termine
     stream.on("finish", () => {
       res.json({
@@ -78,7 +81,7 @@ exports.crear = async (req, res) => {
         archivo: rutaPDF
       });
     });
-
+    res.status(200).json("creado")
   } catch (error) {
     console.error("Error en crear:", error);
     res.status(500).json({ message: "Error al crear PDF", error: error.message });
@@ -308,3 +311,36 @@ exports.nombre = async (req,res) =>
     return res.status(500).json(error);
   }
 }
+
+const mensajeBienvenida = async (telefono,nombre) => {
+  const sock = getSock(); 
+  const res = await Configuracion.findOne();
+  const msj = res?.bienvenidaP ?? "¡Bienvenido!";
+
+  if (!sock) {
+    console.log(' Sock aún no está listo');
+    return;
+  }
+
+  const numero = '521' + telefono; // México (52) + 1
+
+  try {
+    // Verificar si el número existe en WhatsApp
+    const [result] = await sock.onWhatsApp(numero + "@s.whatsapp.net");
+    if (!result || !result.exists) {
+      console.log(`El número ${telefono} no está en WhatsApp`);
+      return;
+    }
+
+    // Enviar mensaje si existe
+    await sock.sendMessage(result.jid, { text: nombre+'\n\n' +msj });
+    console.log(`Mensaje enviado a ${telefono}`);
+  } catch (error) {
+    console.log("Error al enviar mensaje:", error);
+  }finally{
+    const numeroadmin = '521' + res.telefono;
+    const [resulta] = await sock.onWhatsApp(numeroadmin + "@s.whatsapp.net");
+    await sock.sendMessage(resulta.jid, { text: 'Se agrego persona para pensión \n\n'+nombre });
+  }
+};
+

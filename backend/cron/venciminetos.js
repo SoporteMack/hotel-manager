@@ -3,8 +3,7 @@ const contratos = require('../models/contratos');
 const departamentos = require('../models/departamentos');
 const { where, Op } = require('sequelize');
 
-schedule.scheduleJob('0 35 16 * * *', async () => {
-    console.log('cron')
+schedule.scheduleJob('59 59 23 * * *', async () => {
     const fecha = new Date();
     const diaanterior = new Date();
     diaanterior.setDate(diaanterior.getDate() - 1);
