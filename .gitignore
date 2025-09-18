@@ -36,6 +36,6 @@ Thumbs.db
 
 baileys_auth/
 uploads/
+# Exceptuar templates
 !uploads/templates/
 !uploads/templates/**
-backend/uploads/reporte diario.pdf
