@@ -3,7 +3,7 @@ import { tarifas } from "../../api/tarifas";
 import { useAuth } from "../../context/authContext";
 import { nombre } from "../../api/pensiones"; // Tu API
 
-export default function TarjetaPension({ pension, abrirModalEditar }) {
+export default function TarjetaPension({ pension, abrirModalEditar, setMPago, setItem,setNombre}) {
   const [tarifasDisponibles, setTarifasDisponibles] = useState([]);
   const [nombreP, setNombreP] = useState("")
   const { user } = useAuth();
@@ -25,6 +25,12 @@ export default function TarjetaPension({ pension, abrirModalEditar }) {
   const getNombre = async (idPersona) => {
     const res = await nombre(idPersona).then(res => { return res.data.nombre });
     setNombreP(res)
+  }
+  const handleAbrirModal = (item,nombre)=>
+  {
+    setNombre(nombre);
+    setItem(item)
+    setMPago(true)
   }
 
   const bordeColor = pension.estado ? "border-green-500" : "border-red-500";
@@ -65,14 +71,27 @@ export default function TarjetaPension({ pension, abrirModalEditar }) {
         </div>
 
         {/* Botón solo contorno según estado */}
-        {user.rol === "admin" && (
-          <button
-            onClick={() => abrirModalEditar(pension)}
-            className={`px-4 py-2 text-sm font-medium rounded-md border ${botonColor} transition`}
-          >
-            Editar
-          </button>
-        )}
+        <div className="flex flex-col gap-2">
+          {user.rol === "admin" && (
+            <button
+              onClick={() => abrirModalEditar(pension)}
+              className={`px-4 py-2 text-sm font-medium rounded-md border ${botonColor} transition`}
+            >
+              Editar
+            </button>
+          )}
+
+          {pension.estado && (
+            <button
+              onClick={()=>handleAbrirModal(pension,nombreP)}
+              className={`px-4 py-2 text-sm font-medium rounded-md border ${botonColor} transition`}
+            >
+              Agregar Pago
+            </button>)
+
+          }
+        </div>
+
       </div>
 
       {/* Tarifas como chips */}

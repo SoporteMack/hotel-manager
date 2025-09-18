@@ -1,6 +1,6 @@
 // controllers/pensionesController.js
 const sequelize = require('../config/database');
-const { Pensiones, PensionesTarifa, Tarifas } = require('../models/assosiation');
+const { Pensiones, PensionesTarifa, Tarifas, Cobro } = require('../models/assosiation');
 
 exports.listarPensiones = async (req, res) => {
   try {
@@ -39,7 +39,7 @@ exports.crearPension = async (req, res) => {
       }));
       await PensionesTarifa.bulkCreate(registros, { transaction: t });
     }
-
+    this.crearCobro(nuevaPension.idPension,fechaInicio,precioAcordado,tipoPension  );
     await t.commit();
 
     // Devolver pensión con tarifas asociadas
@@ -54,7 +54,39 @@ exports.crearPension = async (req, res) => {
     res.status(500).json({ error: 'Error al crear pensión' });
   }
 };
+exports.crearCobro  =async (idPension,fecha,monto,tipoPension) =>{
+  const date = new Date(fecha); // fecha inicial
+  let vencimiento = new Date(date); // clonar para no modificar la original
+  
+  if (tipoPension === "MENSUAL") {
+    vencimiento.setMonth(vencimiento.getMonth() + 1); // sumar un mes
+  } else if (tipoPension === "QUINCENAL") {
+    vencimiento.setDate(vencimiento.getDate() + 15); // sumar 15 días
+  } else if (tipoPension === "SEMANAL") {
+    vencimiento.setDate(vencimiento.getDate() + 7); // sumar 7 días
+  }
+  
+  // Formatear a YYYY-MM-DD
+  const year = vencimiento.getFullYear();
+  const month = String(vencimiento.getMonth() + 1).padStart(2, '0'); // meses de 0-11
+  const day = String(vencimiento.getDate()).padStart(2, '0');
+  
+  const vencimientoFormatted = `${year}-${month}-${day}`;
+  const data = {
+    idPension:idPension,
+    periodo:fecha,
+    monto:monto,
+    fechaVencimiento:vencimientoFormatted,
+    estado:0
 
+  }
+try {
+  console.log(data)
+  await Cobro.create(data);
+} catch (error) {
+  console.log(error)
+}
+}
 // Actualizar pensión y tarifas
 exports.actualizarPension = async (req, res) => {
   const t = await sequelize.transaction();
@@ -71,7 +103,7 @@ exports.actualizarPension = async (req, res) => {
       const registros = tarifas.map(tarifa => ({ idPension, idTarifa: tarifa.idTarifa, cantidad: tarifa.cantidad }));
       await PensionesTarifa.bulkCreate(registros, { transaction: t });
     }
-
+    this.actualizarCobro(idPension,fechaInicio,precioAcordado,tipoPension);
     await t.commit();
 
 
@@ -80,6 +112,54 @@ exports.actualizarPension = async (req, res) => {
     await t.rollback();
     console.error(error);
     res.status(500).json({ error: 'Error al actualizar pensión' });
+  }
+};
+
+
+exports.actualizarCobro = async (idPension, fecha, monto, tipoPension) => {
+  // Calcular fecha de vencimiento
+  const date = new Date(fecha);
+  let vencimiento = new Date(date);
+
+  if (tipoPension === "MENSUAL") {
+    vencimiento.setMonth(vencimiento.getMonth() + 1);
+  } else if (tipoPension === "QUINCENAL") {
+    vencimiento.setDate(vencimiento.getDate() + 15);
+  } else if (tipoPension === "SEMANAL") {
+    vencimiento.setDate(vencimiento.getDate() + 7);
+  }
+
+  // Formatear a YYYY-MM-DD
+  const year = vencimiento.getFullYear();
+  const month = String(vencimiento.getMonth() + 1).padStart(2, '0');
+  const day = String(vencimiento.getDate()).padStart(2, '0');
+  const vencimientoFormatted = `${year}-${month}-${day}`;
+
+  try {
+    // Buscar el último cobro de esta pensión
+    const ultimoCobro = await Cobro.findOne({
+      where: { idPension },
+      order: [['idCobro', 'DESC']]
+    });
+
+    // Si existe y su estado es 0 (pendiente), eliminarlo
+    if (ultimoCobro && !ultimoCobro.estado) {
+      await ultimoCobro.destroy();
+    }
+
+    // Crear el nuevo cobro
+    const nuevoCobro = await Cobro.create({
+      idPension,
+      periodo: fecha,
+      monto:monto,
+      fechaVencimiento: vencimientoFormatted,
+      estado: 0
+    });
+
+    return nuevoCobro;
+  } catch (error) {
+    console.error('Error al actualizar cobro:', error);
+    throw error;
   }
 };
 

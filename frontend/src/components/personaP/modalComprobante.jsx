@@ -2,11 +2,13 @@ import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from "@headlessui/re
 import ModalCamara from "./modalCamara";
 import { useState, useEffect } from "react";
 import { agregarcom } from "../../api/personap";
+import Loader from "../items/loader";
 
 export default function ModalComprobante({ isOpen, setIsOpen, item,onClose,listar}) {
   const [mostrarCamara, setMostrarCamara] = useState(false);
   const [docs, setDocs] = useState({ comprobanteDeDomicilio: null });
   const [idPersona, setIdPersona] = useState(null);
+  const [isLoagind,setIsLoading] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -39,6 +41,8 @@ export default function ModalComprobante({ isOpen, setIsOpen, item,onClose,lista
 
   const handleGuardar = async () => {
     if (!docs.comprobanteDeDomicilio) return alert("Debes seleccionar un archivo o tomar una foto.");
+    setIsLoading(true);
+    setIsOpen(false);
     try {
       const formData = new FormData();
       formData.append("idPersona", idPersona);
@@ -50,11 +54,12 @@ export default function ModalComprobante({ isOpen, setIsOpen, item,onClose,lista
       onClose();
     } catch (error) {
       console.error(error);
-    }
+    }finally{setIsLoading(false);}
   };
 
   return (
     <>
+   {isLoagind && ( <Loader msg={"Guardando"}/>)}
       <Dialog open={isOpen && !mostrarCamara} onClose={() => setIsOpen(false)} className="relative z-50 w-full h-full">
         <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
         <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-6">

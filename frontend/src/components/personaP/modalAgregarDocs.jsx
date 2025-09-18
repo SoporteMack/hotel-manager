@@ -12,6 +12,7 @@ export default function ModalAgregarDocs({ isOpen, setIsOpen, item,listar}) {
   }
   return (
     <>
+    
       {/* Modal principal */}
       <Dialog open={isOpen && !comprobante} onClose={() => setIsOpen(false)} className="relative z-50 w-full h-full" as="div">
         <DialogBackdrop className="fixed inset-0 bg-black/30" />
@@ -29,7 +30,7 @@ export default function ModalAgregarDocs({ isOpen, setIsOpen, item,listar}) {
                 Comprobante de domicilio
               </button>)}
               {!item.INE &&(<button
-                onClick={() => setTarjetaE(true)}
+                onClick={() => {setTarjetaE(true); setIsOpen(false)}}
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
               >
                 <IdCard size={18} />

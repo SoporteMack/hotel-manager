@@ -3,10 +3,12 @@ import ModalAgregarDocs from "./modalAgregarDocs";
 import { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../../context/authContext";
+import Loader from "../items/loader";
 function TablaPersonasPension({ items, onEditar, listar }) {
   const {user} = useAuth();
   const [persona, setPersona] = useState();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoagind,setIsLoading] = useState(false);
   const onAgregarDoc = (persona) => {
     setPersona(persona)
     setIsOpen(true)
@@ -15,6 +17,7 @@ function TablaPersonasPension({ items, onEditar, listar }) {
     const data = { url: ine }
     const apiUrl = import.meta.env.VITE_API_URL;
     const ruta = apiUrl + '/api/pension/personas/descargarine'
+    setIsLoading(true)
     try {
       const response = await axios.post(ruta, data, { responseType: "blob" });
       const file = new Blob([response.data], { type: "application/pdf" });
@@ -29,12 +32,14 @@ function TablaPersonasPension({ items, onEditar, listar }) {
     } catch (error) {
       console.error("Error al descargar tarjeta:", error);
     } finally {
+      setIsLoading(false)
     }
   }
   const handleDescargarCom = async (com) => {
     const data = { url: com }
     const apiUrl = import.meta.env.VITE_API_URL;
     const ruta = apiUrl + '/api/pension/personas/descargarcom'
+    setIsLoading(true)
     try {
       const response = await axios.post(ruta, data, { responseType: "blob" });
       const file = new Blob([response.data], { type: "application/pdf" });
@@ -49,10 +54,12 @@ function TablaPersonasPension({ items, onEditar, listar }) {
     } catch (error) {
       console.error("Error al descargar tarjeta:", error);
     } finally {
+      setIsLoading(false)
     }
   }
   return (
     <div className="overflow-x-auto border border-gray-200 rounded-lg">
+      {isLoagind && ( <Loader msg={"Guardando"}/>)}
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

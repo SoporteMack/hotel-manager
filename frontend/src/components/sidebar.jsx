@@ -6,66 +6,102 @@ function Sidebar({ isOpen, onClose }) {
   const handleLogout = () => logout();
 
   const rentaLinks = [
-    { to: "/inicio", label: "Inicio", icon: (
+    {
+      to: "/inicio", label: "Inicio", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
           <polyline points="9 22 9 12 15 12 15 22" />
         </svg>
-      ) },
-    { to: "/departamentos", label: "Departamentos", icon: (
+      )
+    },
+    {
+      to: "/departamentos", label: "Departamentos", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           <path d="M9 3v18M15 3v18" />
           <path d="M3 9h18M3 15h18" />
         </svg>
-      ) },
-    { to: "/inquilinos", label: "Inquilinos", icon: (
+      )
+    },
+    {
+      to: "/inquilinos", label: "Inquilinos", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <circle cx="12" cy="7" r="4" />
           <path d="M6 21v-2a4 4 0 0 1 8 0v2M18 21v-2a4 4 0 0 0-8 0v2" />
         </svg>
-      ) },
-    { to: "/crearcontrato", label: "Crear Contrato", icon: (
+      )
+    },
+    {
+      to: "/crearcontrato", label: "Crear Contrato", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" viewBox="0 0 24 24">
           <path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V8z" />
           <path d="M14 2v6h6" />
           <path d="M16 13v6M13 16h6" />
         </svg>
-      ) },
-    { to: "/contratos", label: "Contratos", icon: (
+      )
+    },
+    {
+      to: "/contratos", label: "Contratos", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" viewBox="0 0 24 24">
           <path d="M3 7h18v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
           <path d="M16 3v4H8V3" />
         </svg>
-      ) },
-    { to: "/agregarpago", label: "Agregar Pago", icon: (
+      )
+    },
+    {
+      to: "/agregarpago", label: "Agregar Pago", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" viewBox="0 0 24 24">
           <rect x="2" y="6" width="20" height="12" rx="2" ry="2" />
           <circle cx="12" cy="12" r="2" />
           <path d="M16 8v4M14 10h4" />
         </svg>
-      ) },
+      )
+    },
   ];
 
   const pensionLinks = [
-    { to: "/pension/personas", label: "Personas", icon: (
+    {
+      to: "/pension/personas", label: "Personas", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <circle cx="12" cy="7" r="4" />
           <path d="M6 21v-2a4 4 0 0 1 8 0v2M18 21v-2a4 4 0 0 0-8 0v2" />
         </svg>
-      ) },
-    { to: "/pension/tarifas", label: "Tarifas", icon: (
+      )
+    },
+    {
+      to: "/pension/tarifas", label: "Tarifas", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
           <path d="M3 9h18M9 21V9" />
         </svg>
-      ) },
-    { to: "/pension/pensiones", label: "Pensiones", icon: (
+      )
+    },
+    {
+      to: "/pension/pensiones", label: "Pensiones", icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
           <path d="M12 2L2 7l10 5 10-5-10-5z" />
           <path d="M2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
-      ) },
+      )
+    },
+    {
+      to: "/pension/pagos", // ruta a la vista de pagos
+      label: "Pagos",
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <path d="M4 6h16M4 12h16M4 18h16" /> {/* icono tipo lista */}
+        </svg>
+      ),
+    }
+
   ];
 
   return (
@@ -141,7 +177,7 @@ function Sidebar({ isOpen, onClose }) {
                   </NavLink>
                 </>
               )}
-              
+
             </div>
           </details>
 
@@ -175,20 +211,20 @@ function Sidebar({ isOpen, onClose }) {
             </div>
           </details>
           <button
-                onClick={handleLogout}
-                className="mt-2 flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 text-gray-600 w-full"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M17 16l4-4-4-4M21 12H9M13 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8" />
-                </svg>
-                <span>Cerrar sesión</span>
-              </button>
+            onClick={handleLogout}
+            className="mt-2 flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-100 text-gray-600 w-full"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M17 16l4-4-4-4M21 12H9M13 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8" />
+            </svg>
+            <span>Cerrar sesión</span>
+          </button>
         </div>
-        
+
       </div>
-      
+
     </div>
-    
+
   );
 }
 

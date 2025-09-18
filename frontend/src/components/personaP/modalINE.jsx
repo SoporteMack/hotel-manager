@@ -7,6 +7,7 @@ import {
 import ModalCamara from "./modalCamara";
 import { useState, useEffect } from "react";
 import {agregarine} from '../../api/personap'
+import Loader from "../items/loader";
 
 export default function ModalINE({
   isOpen,
@@ -19,6 +20,7 @@ export default function ModalINE({
   const [mostrarCamaraD, setMostrarCamaraD] = useState(false);
   const [docs, setDocs] = useState({ tarjetaA: null, tarjetaD: null });
   const [idPersona, setIdPersona] = useState(null);
+  const [isLoagind,setIsLoading] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -64,6 +66,8 @@ export default function ModalINE({
   const handleGuardar = async () => {
     if (!docs.tarjetaA || !docs.tarjetaD)
       return alert("Debes subir ambas imágenes (frente y reverso).");
+    setIsLoading(true);
+    setIsOpen(false);
     try {
       const formData = new FormData();
       formData.append("idPersona", idPersona);
@@ -82,11 +86,12 @@ export default function ModalINE({
       onClose();
     } catch (error) {
       console.error(error);
-    }
+    }finally{setIsLoading(false);}
   };
 
   return (
     <>
+    {isLoagind && ( <Loader msg={"Guardando"}/>)}
       <Dialog
         open={isOpen}
         onClose={() => setIsOpen(false)}

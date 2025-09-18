@@ -5,7 +5,7 @@ import Lista from "../items/lista";
 import { useAuth } from "../../context/authContext";
 import TarjetaTarifa from "./tarjetaTarifa";
 import ModalTarifas from "./modalTarifas";
-
+import Loader from "../items/loader";
 function Tarifas() {
     const [listaTarifas, setListaTarifas] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -13,6 +13,7 @@ function Tarifas() {
     const [filtro, setFiltro] = useState("Todos");
     const [buscar, setBuscar] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
+    const [isLoagind, setIsLoading] = useState(false);
     const [modalData, setModalData] = useState(null); // null = crear, objeto = editar
     const { user } = useAuth();
     const notyf = useRef(
@@ -64,6 +65,7 @@ function Tarifas() {
     };
 
     const guardarTarifa = async (data) => {
+        setIsLoading(true)
         try {
             if (modalData) {
                 await actualizar(modalData.idTarifa, data);
@@ -77,6 +79,8 @@ function Tarifas() {
         } catch (err) {
             console.error(err);
             notyf.current.error("Error al guardar la tarifa");
+        } finally {
+            setIsLoading(false)
         }
     };
 
@@ -85,6 +89,7 @@ function Tarifas() {
 
     return (
         <section className="max-w-5xl mx-auto p-6">
+            {isLoagind && ( <Loader msg={"Guardando"}/>)}
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">Tarifas</h1>

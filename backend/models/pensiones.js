@@ -1,6 +1,7 @@
 // models/pensiones.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const { Cobros } = require('./cobros');
 
 const Pensiones = sequelize.define('pensiones', {
   idPension: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

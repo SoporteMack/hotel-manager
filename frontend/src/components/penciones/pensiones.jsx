@@ -6,16 +6,21 @@ import { useAuth } from "../../context/authContext";
 import { actualizarPension, crearPension, pensiones } from "../../api/pensiones"; // Tu API
 import TarjetaPension from "./tarjetaPension";
 import Loader from "../items/loader"
+import ModalPagos from "./modalPagos";
+import { crear } from "../../api/pagosp";
 
 export default function Pensiones() {
   const [listaPensiones, setListaPensiones] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filtro, setFiltro] = useState("Todos");
+  const [filtro, setFiltro] = useState("Activo");
   const [buscar, setBuscar] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
-  const [loadingG,setLoadingG] = useState(false);
+  const [loadingG, setLoadingG] = useState(false);
   const [modalData, setModalData] = useState(null); // null = crear, objeto = editar
-  
+  const [mPagos, setMPagos] = useState(false);
+  const [pension,setPension] = useState({});
+  const [nombre,setNombre] = useState("");
+
   const { user } = useAuth();
   const notyf = useRef(new Notyf({ duration: 3000, dismissible: true }));
 
@@ -60,10 +65,21 @@ export default function Pensiones() {
       listar(); // refresca la lista
     } catch (err) {
       notyf.current.error("Error al guardar pensión");
-    }finally{setLoadingG(false)}
+    } finally { setLoadingG(false) }
   };
-  
 
+  const handleGuardar = async (data)=>
+  {
+    setLoadingG(true);
+    try{
+       await crear(data);
+      notyf.current.success("Pago Realizado");
+    }catch(error)
+    {
+      console.log
+      notyf.current.error("error al realizar pago");
+    }finally{setLoadingG(false);}
+  }
   // Filtrado simple
   const pensionesFiltradas = useMemo(() => {
     return listaPensiones.filter(p => {
@@ -81,18 +97,18 @@ export default function Pensiones() {
 
   return (
     <section className="max-w-5xl mx-auto p-6">
-      {loadingG && (<Loader msg={"Guardando"}/>)}
+      {loadingG && (<Loader msg={"Guardando"} />)}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Pensiones</h1>
 
-        
-          <button
-            onClick={abrirModalNuevo}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-800 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-200 hover:border-gray-400 transition-colors"
-          >
-            ➕ Agregar Pensión
-          </button>
-        
+
+        <button
+          onClick={abrirModalNuevo}
+          className="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-800 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-200 hover:border-gray-400 transition-colors"
+        >
+          ➕ Agregar Pensión
+        </button>
+
       </div>
 
       <div className="flex gap-2 mb-6">
@@ -120,7 +136,7 @@ export default function Pensiones() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pensionesFiltradas.map((p) => (
             <div key={p.idPension}>
-              <TarjetaPension pension={p} abrirModalEditar={()=>abrirModalEditar(p)}/>
+              <TarjetaPension pension={p} abrirModalEditar={() => abrirModalEditar(p)} setMPago={setMPagos} setItem={setPension} setNombre={setNombre}/>
             </div>
           ))}
         </div>
@@ -132,6 +148,7 @@ export default function Pensiones() {
         onSave={guardarPension}
         initialData={modalData}
       />
+      <ModalPagos isOpen={mPagos} onClose={() => setMPagos(false)} pension={pension} onGuardar={handleGuardar} nombre={nombre}/>
     </section>
   );
 }

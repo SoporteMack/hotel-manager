@@ -122,6 +122,7 @@ function PersonasPension() {
           <TarjetaPersonaPension
             items={filteredItems}
             onEditar={handleEditar}
+            listar={obtenerPersonas}
 
           />
         ) : (

@@ -6,7 +6,7 @@ import { listaPersonasPension } from "../../api/personap";
 import { tienecom } from "../../api/pensiones";
 import { useAuth } from "../../context/authContext";
 
-export default function ModalPension({ isOpen, onClose, onSave, initialData = null }) {
+export default function ModalPension({ isOpen, onClose, onSave, initialData = null}) {
   const [persona, setPersona] = useState();
   const [listaPersonas, setListaPersonas] = useState([]);
   const [llave, setLlave] = useState(false);
@@ -37,6 +37,7 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
 
     if (tarifasDB.length > 0) {
       if (initialData) {
+        setDif(initialData.precioAcordado)
         setFormData(initialData);
         setPersona(initialData.idPersona);
       } else {
@@ -87,7 +88,8 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
     // Actualizar precio proporcional de forma segura
     setFormData(prev => ({
       ...prev,
-      precioAcordado: dif / factor
+      precioAcordado: dif / factor,
+      tipoPension:tipoPension
     }));
 
   }, [tipoPension,formData.precioAcordado]);
