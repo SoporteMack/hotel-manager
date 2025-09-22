@@ -265,7 +265,7 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
                             type="number"
                             placeholder="Cantidad"
                             min={0}
-                            value={formData.tarifas.find(t => t.idTarifa === tarifa.idTarifa)?.cantidad ?? ""}
+                            value={formData.tarifas.find(t => t.idTarifa === tarifa.idTarifa)?.cantidad ?? 0}
                             onChange={(e) => {
                               const value = e.target.value; // mantener string mientras escribe
                               if (/^\d*$/.test(value)) {    // opcional: permitir solo números enteros positivos

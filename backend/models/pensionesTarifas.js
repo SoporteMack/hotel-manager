@@ -5,7 +5,7 @@ const sequelize = require('../config/database');
 const PensionesTarifa = sequelize.define('pensionesTarifa', {
   idPension: { type: DataTypes.INTEGER, primaryKey: true },
   idTarifa: { type: DataTypes.INTEGER, primaryKey: true },
-  cantidad: { type: DataTypes.INTEGER, allowNull: false }
+  cantidad: { type: DataTypes.INTEGER, allowNull: false ,defaultValue:0}
 }, { timestamps: false });
 
 module.exports = PensionesTarifa;

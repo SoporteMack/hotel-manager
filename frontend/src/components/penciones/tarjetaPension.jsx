@@ -101,6 +101,7 @@ export default function TarjetaPension({ pension, abrirModalEditar, setMPago, se
           <div className="flex flex-wrap gap-2">
             {pension.tarifas.map((t) => {
               const tarifaInfo = tarifasDisponibles.find((tar) => tar.idTarifa === t.idTarifa);
+              if(t.cantidad > 0){
               return (
                 <div
                   key={t.idTarifa}
@@ -111,7 +112,7 @@ export default function TarjetaPension({ pension, abrirModalEditar, setMPago, se
                     x{t.cantidad || 0}
                   </span>
                 </div>
-              );
+              );}
             })}
           </div>
         </div>
