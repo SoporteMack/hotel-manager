@@ -6,7 +6,7 @@ import { listaPersonasPension } from "../../api/personap";
 import { tienecom } from "../../api/pensiones";
 import { useAuth } from "../../context/authContext";
 
-export default function ModalPension({ isOpen, onClose, onSave, initialData = null}) {
+export default function ModalPension({ isOpen, onClose, onSave, initialData = null }) {
   const [persona, setPersona] = useState();
   const [listaPersonas, setListaPersonas] = useState([]);
   const [llave, setLlave] = useState(false);
@@ -21,29 +21,28 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
     llave: false,
     tarifas: [] // { idTarifa, cantidad }
   });
-  const [tarifasDB, setTarifaDB] = useState([])
+  const [tarifasDB, setTarifaDB] = useState([]);
   const opTipoPension = [
     { label: "MENSUAL", value: "MENSUAL" },
     { label: "SEMANAL", value: "SEMANAL" },
     { label: "QUINCENAL", value: "QUINCENAL" }
-  ]
+  ];
 
   useEffect(() => {
     listartarifas();
     listarPersonas();
   }, []);
+
   useEffect(() => {
-
-
     if (tarifasDB.length > 0) {
       if (initialData) {
-        setDif(initialData.precioAcordado)
+        setDif(initialData.precioAcordado);
         setFormData(initialData);
         setPersona(initialData.idPersona);
       } else {
         setFormData(prev => ({
           ...prev,
-          tarifas: tarifasDB.map(t => ({ idTarifa: t.idTarifa, cantidad: "" })),
+          tarifas: tarifasDB.map(t => ({ idTarifa: t.idTarifa, cantidad: 0 })), // 👈 cantidad = 0
           fechaInicio: new Date().toISOString().split("T")[0]
         }));
       }
@@ -56,15 +55,13 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
   };
 
   const handleTarifaChange = (idTarifa, value) => {
-    const cantidad = Number(value) || 0; // asegura número válido
+    const cantidad = Number(value) || 0;
 
     setFormData((prev) => {
-      // actualizar cantidades
       const nuevasTarifas = prev.tarifas.map((t) =>
         t.idTarifa === idTarifa ? { ...t, cantidad } : t
       );
 
-      // calcular el precio total acordado
       const nuevoPrecio = nuevasTarifas.reduce((total, t) => {
         const tarifaInfo = tarifasDB.find((tar) => tar.idTarifa === t.idTarifa);
         return total + (tarifaInfo ? tarifaInfo.precio * (t.cantidad || 0) : 0);
@@ -78,23 +75,19 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
       };
     });
   };
+
   useEffect(() => {
     let factor = 1;
     if (tipoPension === "SEMANAL") factor = 4;
     else if (tipoPension === "QUINCENAL") factor = 2;
     else if (tipoPension === "MENSUAL") factor = 1;
 
-
-    // Actualizar precio proporcional de forma segura
     setFormData(prev => ({
       ...prev,
       precioAcordado: dif / factor,
-      tipoPension:tipoPension
+      tipoPension: tipoPension
     }));
-
-  }, [tipoPension,formData.precioAcordado]);
-
-
+  }, [tipoPension, formData.precioAcordado]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -102,6 +95,7 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
     onSave(formData);
     onClose();
   };
+
   const listartarifas = async () => {
     try {
       const res = await tarifaA().then(res => { return res.data });
@@ -109,17 +103,18 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   const listarPersonas = async () => {
-    const res = await listaPersonasPension().then(res => { return res.data })
+    const res = await listaPersonasPension().then(res => { return res.data });
     setListaPersonas(
       res.map((i) => ({
         value: i.idPersona,
         label: `${i.nombre} ${i.apellido}`,
       }))
     );
-  }
+  };
+
   useEffect(() => {
     if (persona) {
       const fetchLlave = async () => {
@@ -135,7 +130,6 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
     const res = await tienecom(idPersona);
     return res.data.com;
   };
-
 
   return (
     <Transition show={isOpen} as={Fragment}>
@@ -155,12 +149,10 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
               <div className="overflow-y-auto max-h-[85vh] pr-2">
                 <form className="space-y-6" onSubmit={handleSubmit}>
 
-                  {/* Título del formulario */}
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-800 text-center">
                     {initialData ? "Editar Pensión" : "Crear Pensión"}
                   </h2>
 
-                  {/* Fecha inicio y Precio acordado */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Persona *</label>
@@ -197,9 +189,7 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
                     </div>
                   </div>
 
-                  {/* Estado */}
                   <div className="flex flex-col sm:flex-row gap-6">
-                    {/* Estado */}
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-medium text-gray-700">Estado:</span>
                       <label htmlFor="estado" className="relative inline-flex items-center cursor-pointer">
@@ -239,8 +229,6 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
                     </div>)}
                   </div>
 
-
-                  {/* Observaciones */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-1">Observaciones</label>
                     <textarea
@@ -252,7 +240,6 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
                     />
                   </div>
 
-                  {/* Tarifas dinámicas */}
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2">Tarifas</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -267,22 +254,19 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
                             min={0}
                             value={formData.tarifas.find(t => t.idTarifa === tarifa.idTarifa)?.cantidad ?? 0}
                             onChange={(e) => {
-                              const value = e.target.value; // mantener string mientras escribe
-                              if (/^\d*$/.test(value)) {    // opcional: permitir solo números enteros positivos
+                              const value = e.target.value;
+                              if (/^\d*$/.test(value)) {
                                 handleTarifaChange(tarifa.idTarifa, value);
                               }
                             }}
                             className="w-20 rounded-md border-gray-300 shadow-sm px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
-
-
                           <span className="text-gray-800 font-medium">{tarifa.descripcion}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Botones */}
                   <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
                     <button
                       type="button"
@@ -301,12 +285,9 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
                 </form>
               </div>
             </DialogPanel>
-
-
           </div>
         </div>
       </Dialog>
-    </Transition >
-
+    </Transition>
   );
 }

@@ -3,10 +3,11 @@ const fs = require('fs');
 require('dotenv').config();
 const path = require('path');
 const { getSock } = require('../utils/baileys');
-const { reportediario } = require('../controllers/documentos.controller');
+const { reportediario, reportePensiones } = require('../controllers/documentos.controller');
 const configuracion = require('../models/configuracion'); // tu modelo Sequelize
 
 const rutaArchivo = path.join(__dirname, '../uploads', 'reporte diario.pdf');
+const rutaArchivoP = path.join(__dirname, '../uploads', 'reporte_pensiones.pdf');
 
 let currentJob = null;
 let lastHora = null;
@@ -77,12 +78,16 @@ async function programarCron() {
       console.log('⏰ Ejecutando cron de reporte diario');
 
       try {
-        if (fs.existsSync(rutaArchivo)) {
+        if (fs.existsSync(rutaArchivo)&&fs.existsSync(rutaArchivoP)) {
           fs.unlinkSync(rutaArchivo);
+          fs.unlinkSync(rutaArchivoP);
           console.log("🗑️ Archivo anterior borrado");
         }
         await reportediario();
         await esperarArchivoListo(rutaArchivo);
+        await reportePensiones();
+        await esperarArchivoListo(rutaArchivoP);
+        
 
         const sock = getSock();
         if (!sock) {
@@ -100,6 +105,13 @@ async function programarCron() {
           document: buffer,
           mimetype: 'application/pdf',
           fileName: 'reporte_diario.pdf',
+          caption: '📄 Aquí está el reporte diario.'
+        });
+        const bufferP = fs.readFileSync(rutaArchivoP);
+        await sock.sendMessage(`521${config.telefono}@s.whatsapp.net`, {
+          document: bufferP,
+          mimetype: 'application/pdf',
+          fileName: 'reporte_diario_pension.pdf',
           caption: '📄 Aquí está el reporte diario.'
         });
 

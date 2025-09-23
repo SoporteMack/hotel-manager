@@ -27,7 +27,7 @@ app.use(cookieParser());
   require('./cron/venciminetos');
   require('./cron/reporteDiario'); 
   require('./cron/notificaciones');
-
+  require('./cron/vencimientosPension')
 
   app.use('/api', require('./routes/api'));
 

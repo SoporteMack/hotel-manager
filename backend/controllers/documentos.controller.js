@@ -13,9 +13,9 @@ const mammoth = require('mammoth'); // para convertir docx a HTML
 const puppeteer = require('puppeteer');
 const { buscarRentasVencidas } = require('./contrato.controller');
 const Configuracion = require('../models/configuracion');
-const {NumerosALetras} = require('numero-a-letras');
+const { NumerosALetras } = require('numero-a-letras');
 const { Departamentos, Detalles } = require('../models');
-
+const { Pensiones, PersonasP, Tarifas, Cobro, Pago, PensionesTarifa } = require('../models/assosiation');
 
 exports.tarjeta = async (req, res) => {
   try {
@@ -482,7 +482,7 @@ exports.reportediario = async () => {
 
 
   } catch (error) {
-    return { estatus: false,error:error};
+    return { estatus: false, error: error };
   }
 
 }
@@ -490,7 +490,7 @@ exports.reportediario = async () => {
 exports.downloadContrato = async (req, res) => {
   try {
     const idContrato = req.query.idContrato; // <-- corregido
-    const telefonoadmin = await Configuracion.findOne().then(res =>{return res.telefono});
+    const telefonoadmin = await Configuracion.findOne().then(res => { return res.telefono });
     if (!idContrato) {
       return res.status(400).send("Falta el idContrato");
     }
@@ -512,7 +512,7 @@ exports.downloadContrato = async (req, res) => {
       }
 
       // Opcional: eliminar archivo temporal después de enviarlo
-      
+
     });
   } catch (error) {
     console.error("Error en downloadContrato:", error);
@@ -520,8 +520,8 @@ exports.downloadContrato = async (req, res) => {
   }
 };
 
-exports.solodescargacontrato = async (req,res) =>{
- 
+exports.solodescargacontrato = async (req, res) => {
+
   try {
     const idContrato = req.query.idContrato; // <-- corregido
     const carpeta = req.query.carpeta;
@@ -530,31 +530,31 @@ exports.solodescargacontrato = async (req,res) =>{
       return res.status(400).send("Falta el idContrato");
     }
     const contratodb = await contratos.findOne({
-      attributes:["idContrato","idPersona"],
-      include:[
+      attributes: ["idContrato", "idPersona"],
+      include: [
         {
-          model:personas,
-          as:"persona",
-          attributes:["nombrePersona","apellidoPaterno","apellidoMaterno","telefono"]
+          model: personas,
+          as: "persona",
+          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno", "telefono"]
         }
       ],
-      where:{idContrato:idContrato}
+      where: { idContrato: idContrato }
     })
-    const nombre =carpeta;
-    const pathdoc = __dirname + '/../uploads/'+nombre+'/' + 'contrato_final.pdf';
+    const nombre = carpeta;
+    const pathdoc = __dirname + '/../uploads/' + nombre + '/' + 'contrato_final.pdf';
     //return res.status(200).json({contratodb,"path":pathdoc,nombre})
     // Opcional: enviar por WhatsApp
     //await enviarContrato(pathdoc, contratodb.persona.telefono);
 
     // Enviar PDF al cliente
-    res.download(pathdoc, nombre+"contrato_final.pdf", (err) => {
+    res.download(pathdoc, nombre + "contrato_final.pdf", (err) => {
       if (err) {
         console.error("Error al enviar el PDF:", err);
         return res.status(500).send("No se pudo enviar el PDF");
       }
 
       // Opcional: eliminar archivo temporal después de enviarlo
-      
+
     });
   } catch (error) {
     console.error("Error en downloadContrato:", error);
@@ -700,9 +700,9 @@ const contrato = async (folio) => {
 
 const pagosbd = async (fecha) => {
   const nuevafecha = fromatearfecha(fecha)
-  
+
   const start = new Date(`${nuevafecha}T00:00:00.000`);
-    const end = new Date(`${nuevafecha}T23:59:59.999`);
+  const end = new Date(`${nuevafecha}T23:59:59.999`);
   const response = await pagos.findAll(
     {
       attributes: ["folio", "monto", "fechaPago"],
@@ -835,8 +835,134 @@ const findContrato = async (idContrato) => {
 }
 
 
-const datosBanco = async  () =>
-{
-  return await Configuracion.findOne({attributes:['banco','numCuenta','titular']});
+const datosBanco = async () => {
+  return await Configuracion.findOne({ attributes: ['banco', 'numCuenta', 'titular'] });
 }
 
+
+
+
+exports.reportePensiones = async () => {
+  try {
+    const filePath = path.join(__dirname, '../uploads/reporte_pensiones.pdf');
+    const doc = new PDFDocument({ margin: 40 });
+    doc.pipe(fs.createWriteStream(filePath));
+
+    // 📌 Título
+    doc
+      .fontSize(20)
+      .fillColor('#FFFFFF')
+      .font('Helvetica-Bold')
+      .text('Reporte General de Pensiones', { align: 'center', background: '#1A237E' });
+    doc.moveDown(1);
+
+    // 📌 Obtener todas las pensiones con persona asociada y tarifas
+    const pensiones = await Pensiones.findAll({
+      include: [
+        {
+          model: PersonasP, // Persona asociada
+          attributes: ['nombre', 'apellido', 'telefono']
+        },
+        {
+          model: PensionesTarifa, // Tarifas asociadas
+          as: 'tarifas',           // coincide con el alias en associations.js
+          include: [
+            {
+              model: Tarifas,
+              attributes: ['descripcion', 'precio']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!pensiones || pensiones.length === 0) {
+      doc.font('Helvetica').fontSize(12).fillColor('#000').text('No hay pensiones registradas.');
+      doc.end();
+      return { estatus: true, file: filePath };
+    }
+
+    // 📌 Recorrer pensiones
+    for (const p of pensiones) {
+      const datos = p.get({ plain: true });
+      const persona = datos.PersonaP || {};
+      console.log(persona)
+      const tarifas = datos.tarifas || [];
+
+      // Encabezado
+      doc
+        .font('Helvetica-Bold')
+        .fontSize(13)
+        .fillColor('#0D47A1')
+        .text(`Pensión #${datos.idPension} - ${persona.nombre || ''} ${persona.apellido || ''}`);
+
+      // Datos generales
+      doc
+        .moveDown(0.3)
+        .font('Helvetica')
+        .fontSize(10)
+        .fillColor('#333')
+        .text(`Teléfono: ${persona.telefono || 'N/A'}`)
+        .text(`Fecha inicio: ${datos.fechaInicio}`)
+        .text(`Precio acordado: $${parseFloat(datos.precioAcordado).toFixed(2)}`)
+        .text(`Estado: ${datos.estado ? 'Activa' : 'Inactiva'}`);
+
+      doc.moveDown(0.5);
+
+      // Tarifas
+      if (tarifas.length > 0) {
+        doc.font('Helvetica-Bold').fillColor('#1976D2').text('Tarifas:');
+        tarifas.forEach(t => {
+          
+          const tarifa = t.tarifa || {};
+          const precio = parseFloat(tarifa.precio) || 0;
+          doc
+            .font('Helvetica')
+            .fillColor('#444')
+            .text(`  • ${tarifa.descripcion || 'Sin descripción'} - $${precio.toFixed(2) || '0.00'}`);
+        });
+      }
+
+      // Cobros pendientes
+      const cobros = await Cobro.findAll({
+        where: { idPension: datos.idPension, estado: false }
+      });
+
+      if (cobros.length > 0) {
+        doc.moveDown(0.5);
+        doc.font('Helvetica-Bold').fillColor('#C62828').text('Cobros Pendientes:');
+        for (const c of cobros) {
+          const pagos = await Pago.findAll({ where: { idCobro: c.idCobro } });
+          const totalPagado = pagos.reduce((sum, pago) => sum + parseFloat(pago.montoPagado), 0);
+          const monto = parseFloat(c.monto) || 0; // convierte a número y evita NaN
+          const deudaValor = parseFloat(c.monto) - totalPagado;
+          const deuda = parseFloat(c.monto) - totalPagado;
+
+          doc
+            .font('Helvetica')
+            .fillColor('#000')
+            .text(
+              `  • Periodo: ${c.periodo} | Vence: ${c.fechaVencimiento} | Monto: $${monto.toFixed(2)} | Deuda: $${deudaValor.toFixed(2)}`
+            );
+        }
+      }
+
+      doc.moveDown(1);
+      // Línea separadora
+      doc
+        .moveTo(doc.page.margins.left, doc.y)
+        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+        .strokeColor('#1A237E')
+        .lineWidth(0.8)
+        .stroke()
+        .moveDown(1);
+    }
+
+    doc.end();
+    return { estatus: true, file: filePath };
+
+  } catch (error) {
+    console.error('❌ Error generando reporte pensiones:', error);
+    return { estatus: false, error };
+  }
+};
