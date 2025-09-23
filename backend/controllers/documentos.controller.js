@@ -16,6 +16,7 @@ const Configuracion = require('../models/configuracion');
 const { NumerosALetras } = require('numero-a-letras');
 const { Departamentos, Detalles } = require('../models');
 const { Pensiones, PersonasP, Tarifas, Cobro, Pago, PensionesTarifa } = require('../models/assosiation');
+const sequelize = require('../config/database');
 
 exports.tarjeta = async (req, res) => {
   try {
@@ -855,6 +856,52 @@ exports.reportePensiones = async () => {
       .font('Helvetica-Bold')
       .text('Reporte General de Pensiones', { align: 'center', background: '#1A237E' });
     doc.moveDown(1);
+    const ayer = new Date();
+    ayer.setDate(ayer.getDate() - 1);
+    const ayerStr = ayer.toISOString().slice(0, 10);
+    const pagosAyer = await Pago.findAll({
+      include: [
+        {
+          model: Cobro,
+          include: [
+            {
+              model: Pensiones,
+              include: [{ model: PersonasP, attributes: ['nombre', 'apellido'] }]
+            }
+          ]
+        }
+      ],
+      where: sequelize.where(sequelize.fn('DATE', sequelize.col('fechaPago')), ayerStr)
+    });
+
+    doc
+      .font('Helvetica-Bold')
+      .fontSize(13)
+      .fillColor('#2E7D32')
+      .text(`Pagos realizados el ${ayerStr}`);
+
+    doc.moveDown(0.5);
+
+    if (!pagosAyer || pagosAyer.length === 0) {
+      doc.font('Helvetica').fontSize(10).fillColor('#000').text('No se registraron pagos ayer.');
+    } else {
+      pagosAyer.forEach(p => {
+        const pagoa = p.get({ plain: true })
+        const pension = pagoa.cobro.pensione || {}; // cuidado con el nombre del modelo
+        console.log(pagoa)
+        const persona = pension.PersonaP || {};
+        
+        doc
+          .font('Helvetica')
+          .fontSize(10)
+          .fillColor('#000')
+          .text(
+            `• ${persona.nombre || ''} ${persona.apellido || ''} - Pensión #${pension.idPension || ''} - $${parseFloat(p.montoPagado).toFixed(2)} - Folio: ${p.idPago}`
+          );
+      });
+    }
+
+    doc.moveDown(1);
 
     // 📌 Obtener todas las pensiones con persona asociada y tarifas
     const pensiones = await Pensiones.findAll({
@@ -886,7 +933,6 @@ exports.reportePensiones = async () => {
     for (const p of pensiones) {
       const datos = p.get({ plain: true });
       const persona = datos.PersonaP || {};
-      console.log(persona)
       const tarifas = datos.tarifas || [];
 
       // Encabezado
@@ -913,7 +959,7 @@ exports.reportePensiones = async () => {
       if (tarifas.length > 0) {
         doc.font('Helvetica-Bold').fillColor('#1976D2').text('Tarifas:');
         tarifas.forEach(t => {
-          
+
           const tarifa = t.tarifa || {};
           const precio = parseFloat(tarifa.precio) || 0;
           doc
