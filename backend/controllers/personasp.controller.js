@@ -25,62 +25,9 @@ exports.crear = async (req, res) => {
     if (!persona) {
       return res.status(404).json({ message: "Persona no encontrada" });
     }
-
-    // 2. Nombre y carpeta donde guardar
-    const nombreCarpeta = `${persona.idPersona}_${persona.nombre}_${persona.apellido}`.replace(/\s+/g, "_");
-    const carpeta = path.join("uploads", "Pensiones", nombreCarpeta);
-
-    if (!fs.existsSync(carpeta)) {
-      fs.mkdirSync(carpeta, { recursive: true });
-    }
-
-    // 3. Nombre del archivo PDF
-    const nombrePDF = `${nombreCarpeta}.pdf`;
-    const rutaPDF = path.join(carpeta, nombrePDF);
-
-    // 4. Crear PDF con PDFKit
-    const doc = new PDFDocument({ autoFirstPage: false });
-    const stream = fs.createWriteStream(rutaPDF);
-    doc.pipe(stream);
-    if (files) {
-      // Asumiendo que recibes ineD (delantera) y ineA (trasera)
-      const ineD = files.ineD?.[0];
-      const ineA = files.ineA?.[0];
-
-      if (ineD && ineA) {
-        try {
-          doc.addPage();
-
-          // Imagen frontal (izquierda)
-          doc.image(ineD.buffer, 70, 150, {
-            fit: [220, 140], // ancho x alto
-            align: "center",
-            valign: "center",
-          });
-
-          // Imagen trasera (derecha)
-          doc.image(ineA.buffer, 320, 150, {
-            fit: [220, 140],
-            align: "center",
-            valign: "center",
-          });
-
-        } catch (e) {
-          console.error("Error agregando imágenes:", e);
-        }
-      }
-    }
-
-    doc.end();
-    persona.update({ INE: rutaPDF });
     await mensajeBienvenida(persona.telefono,persona.nombre + ' ' + persona.apellido);
     // 5. Responder cuando termine
-    stream.on("finish", () => {
-      res.json({
-        message: "PDF creado correctamente",
-        archivo: rutaPDF
-      });
-    });
+
     res.status(200).json("creado")
   } catch (error) {
     console.error("Error en crear:", error);
