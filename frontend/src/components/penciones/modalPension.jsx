@@ -84,7 +84,6 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
 
     setFormData(prev => ({
       ...prev,
-      precioAcordado: dif / factor,
       tipoPension: tipoPension
     }));
   }, [tipoPension, formData.precioAcordado]);
