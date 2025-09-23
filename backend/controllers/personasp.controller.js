@@ -96,6 +96,7 @@ exports.actualizar = async (req, res) => {
         nombre: data.nombre,
         apellido: data.apellido,
         telefono: data.telefono,
+        telefono2: data.telefono2
       },
       {
         where: { idPersona: data.idPersona },

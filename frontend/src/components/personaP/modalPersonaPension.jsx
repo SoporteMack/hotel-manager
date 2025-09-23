@@ -5,6 +5,7 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [telefono2, setTelefono2] = useState("");
   const [mostrarCamaraPara, setMostrarCamaraPara] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [docs, setDocs] = useState({});
@@ -13,6 +14,7 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
       setNombre(item.nombre || "");
       setApellido(item.apellido || "");
       setTelefono(item.telefono || "");
+      setTelefono2(item.telfono2 || "");
     }
   }, [item]);
 
@@ -47,6 +49,7 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
     formData.append("nombre", nombre);
     formData.append("apellido", apellido);
     formData.append("telefono", telefono);
+    formData.append("telefono2", telefono2)
     if (item)
       formData.append("idPersona", item.idPersona);
 
@@ -58,6 +61,7 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
     setNombre("");
     setApellido("");
     setTelefono("");
+    setTelefono2("");
     setDocs({})
   };
 
@@ -147,15 +151,35 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
                     type="tel"
                     value={telefono}
                     onChange={(e) => {
-                      // Permite solo números y máximo 10 dígitos (puedes cambiarlo)
+                      // Permite solo números y máximo 10 dígitos
                       const valor = e.target.value.replace(/[^0-9]/g, "");
                       setTelefono(valor);
+                    }}
+                    maxLength={10} // límite de dígitos (ej: 10 para México)
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm 
+             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Número de teléfono"
+                    required
+                  />
+
+
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Teléfono 2
+                  </label>
+                  <input
+                    type="tel"
+                    value={telefono2}
+                    onChange={(e) => {
+                      // Permite solo números y máximo 10 dígitos (puedes cambiarlo)
+                      const valor = e.target.value.replace(/[^0-9]/g, "");
+                      setTelefono2(valor);
                     }}
                     maxLength={10} // limite de dígitos (ej: 10 para México)
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm 
              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Número de teléfono"
-                  />
+                    placeholder="Número de teléfono" />
 
                 </div>
               </div>

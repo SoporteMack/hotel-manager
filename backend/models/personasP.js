@@ -5,6 +5,7 @@ const PersonaP = sequelize.define("PersonaP", {
     nombre: { type: DataTypes.STRING(100), allowNull: false },
     apellido: { type: DataTypes.STRING(100), allowNull: false },
     telefono: { type: DataTypes.STRING(20) },
+    telefono2:{type:DataTypes.STRING(20),allowNull:false},
     observaciones: { type: DataTypes.TEXT },
     INE:{type:DataTypes.STRING},
     comprobanteDeDomicilio:{type:DataTypes.STRING}
