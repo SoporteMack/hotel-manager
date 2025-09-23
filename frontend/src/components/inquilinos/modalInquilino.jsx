@@ -33,6 +33,7 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
     }
   }, [item]); // <-- importante que se vuelva a ejecutar cuando cambie "item"
 
+
   const sanitizeInput = (texto) =>
     texto
       .normalize("NFD")                // separa letras y acentos
@@ -53,6 +54,9 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
     onClose();
   };
 
+  const handleEstatus =(e) =>{
+    setFormData((prev)=>({...prev,estatus:!formData.estatus}))
+  }
   if (!visible) return null;
 
   return (
@@ -117,7 +121,7 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
                 type="checkbox"
                 name="estatus"
                 checked={formData.estatus}
-                onChange={handleChange}
+                onChange={handleEstatus}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
