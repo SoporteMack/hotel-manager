@@ -28,3 +28,5 @@ export const agregarine = (formData) =>
             'Content-Type': 'multipart/form-data'
         }
     });
+
+export const listaPersonasPensionAdd = () => API.get('api/pension/personas/listaractivos')

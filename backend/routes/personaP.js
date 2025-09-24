@@ -17,5 +17,5 @@ router.post('/descargarcom',verificarToken,personapCotroller.descargarcom);
 router.get('/com',verificarToken,personapCotroller.tienecom);
 
 router.get('/nombre',verificarToken,personapCotroller.nombre);
-
+router.get('/listaractivos',verificarToken,personapCotroller.listarlistaPension);
     module.exports = router;

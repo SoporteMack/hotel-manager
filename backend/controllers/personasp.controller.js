@@ -4,6 +4,8 @@ const path = require('path');
 const PDFDocument = require("pdfkit");
 const { getSock } = require('../utils/baileys');
 const Configuracion = require("../models/configuracion");
+const {PersonasP: PersonaPA, Pensiones, Pension} = require('../models/assosiation')
+const { Op } = require("sequelize");
 exports.listar = async (req, res) => {
   try {
     const response = await PersonaP.findAll();
@@ -293,4 +295,28 @@ const mensajeBienvenida = async (telefono,nombre) => {
     await sock.sendMessage(resulta.jid, { text: 'Se agrego persona para pensión \n\n'+nombre });
   }
 };
+
+exports.listarlistaPension = async (req,res) =>
+{
+  try {
+  
+    const pensionl = await Pension.findAll({attributes:["idPersona"],where:{estado:true}});
+    const idsConPension = pensionl.map(p => p.idPersona);
+    console.log(idsConPension)
+    const personalFiltrado = await PersonaPA.findAll({
+      where: {
+        estatus: 1,
+        visible: 1,
+        idPersona: {
+          [Op.notIn]: idsConPension
+        }
+      }
+    });
+
+    return res.status(200).json(personalFiltrado);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error)
+  } 
+}
 

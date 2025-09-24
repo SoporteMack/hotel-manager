@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment } from "react";
 import { Dialog, Transition, DialogTitle, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { tarifaA } from "../../api/tarifas";
 import Lista from "../items/lista";
-import { listaPersonasPension } from "../../api/personap";
+import { listaPersonasPensionAdd } from "../../api/personap";
 import { tienecom } from "../../api/pensiones";
 import { useAuth } from "../../context/authContext";
 
@@ -105,7 +105,7 @@ export default function ModalPension({ isOpen, onClose, onSave, initialData = nu
   };
 
   const listarPersonas = async () => {
-    const res = await listaPersonasPension().then(res => { return res.data });
+    const res = await listaPersonasPensionAdd ().then(res => { return res.data });
     setListaPersonas(
       res.map((i) => ({
         value: i.idPersona,

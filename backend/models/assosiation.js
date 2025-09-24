@@ -9,6 +9,8 @@ const Pension = require('./pensiones');
 
 // Pensiones -> Persona
 Pensiones.belongsTo(PersonasP, { foreignKey: 'idPersona', onDelete: 'CASCADE' });
+// Persona -> Pensiones
+PersonasP.hasMany(Pensiones, { as: 'pensione', foreignKey: 'idPersona' });
 
 // Pensiones -> PensionesTarifa
 Pensiones.hasMany(PensionesTarifa, { foreignKey: 'idPension', as: 'tarifas' });
