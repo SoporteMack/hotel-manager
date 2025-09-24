@@ -45,6 +45,11 @@ const persona = sequelize.define('persona', {
         type:DataTypes.BOOLEAN,
         allowNull:false,
         defaultValue:1,
+    },
+    visible:{
+        type:DataTypes.BOOLEAN,
+        allowNull:false,
+        defaultValue:1
     }
 },{timestamps:false});
 module.exports = persona;

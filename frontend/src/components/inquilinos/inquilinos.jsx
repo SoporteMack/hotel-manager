@@ -61,14 +61,15 @@ function Inquilinos() {
   }, []);
 
   const filteredItems = useMemo(() => {
-    return inquilinos.filter(({ nombrePersona, apellidoPaterno, apellidoMaterno, telefono, correo, estatus }) => {
+    return inquilinos.filter(({ nombrePersona, apellidoPaterno, apellidoMaterno, telefono, correo, estatus,visible}) => {
       const text = `${nombrePersona} ${apellidoPaterno} ${apellidoMaterno || ''} ${telefono} ${correo || ''}`.toLowerCase();
       const searchLower = search.toLowerCase();
       const matchesSearch = text.includes(searchLower);
       const matchesStatus =
-        filterStatus === 'Todos' ||
-        (filterStatus === 'Activo' && estatus) ||
-        (filterStatus === 'Inactivo' && !estatus);
+        (filterStatus === 'Todos' && visible) ||
+        (filterStatus === 'Activo' && estatus && visible) ||
+        (filterStatus === 'Inactivo' && !estatus && visible) ||
+        (filterStatus === 'Eliminados' && !visible);
       return matchesSearch && matchesStatus;
     });
   }, [inquilinos, search, filterStatus]);
@@ -97,8 +98,9 @@ function Inquilinos() {
             { value: "Todos", label: "Todos" },
             { value: "Activo", label: "Activos" },
             { value: "Inactivo", label: "Inactivos" },
+             {value: "Eliminados", label:"Eliminados"},
           ]}
-          value={{ filterStatus }}
+          value={filterStatus }
           onChange={setFilterStatus}
         />
   

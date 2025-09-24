@@ -8,6 +8,7 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
     telefono: '',
     correo: '',
     estatus: true,
+    visible:true
   });
 
   // ⛏️ Efecto para llenar los datos cuando abres el modal con "item"
@@ -20,6 +21,7 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
         telefono: item.telefono || '',
         correo: item.correo || '',
         estatus: item.estatus !== undefined ? item.estatus : true,
+        visible: item.visible !== undefined ? item.visible : true,
       });
     } else {
       setFormData({
@@ -56,6 +58,9 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
 
   const handleEstatus =(e) =>{
     setFormData((prev)=>({...prev,estatus:!formData.estatus}))
+  }
+  const handleVisible = (e)=>{
+    setFormData((prev)=>({...prev,visible:!formData.visible}))
   }
   if (!visible) return null;
 
@@ -127,6 +132,22 @@ function ModalInquilino({ visible, onClose, onGuardar, item = null }) {
               <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
               <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 peer-checked:translate-x-full"></div>
             </label>
+         
+            {item? (
+              <>
+              <span className="text-sm text-gray-700">{formData.visible ? 'Visible':'No Visible'}</span>
+            <label htmlFor="visible" className="relative cursor-pointer">
+              <input
+                id="visible"
+                type="checkbox"
+                name="visible"
+                checked={formData.visible}
+                onChange={handleVisible}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-red-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
+              <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 peer-checked:translate-x-full"></div>
+            </label></>):null}
           </div>
 
           <div className="flex justify-end gap-3 mt-4">

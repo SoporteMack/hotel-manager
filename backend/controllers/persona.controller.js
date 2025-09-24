@@ -10,13 +10,15 @@ exports.listar = async (req,res) =>{
 
 exports.crear = async (req,res)=>{
    try{
-    const {nombrePersona,apellidoPaterno,apellidoMaterno,telefono,correo} = req.body;
+    const {nombrePersona,apellidoPaterno,apellidoMaterno,telefono,correo,estatus,visble} = req.body;
    const personabd = await persona.create({
         nombrePersona:nombrePersona,
         apellidoPaterno:apellidoPaterno,
         apellidoMaterno:apellidoMaterno,
         telefono:telefono,
-        correo:correo
+        correo:correo,
+        estatus:estatus,
+        visible:visble
     });
     const nomcom = personabd.nombrePersona + " " + personabd.apellidoPaterno + " " + personabd.apellidoMaterno;
     mensajeBienvenida(telefono,nomcom);
@@ -68,7 +70,8 @@ exports.listaActivos = async (req,res) =>
     const lista = await persona.findAll({
       attributes:['idPersona','nombrePersona','apellidoPaterno','apellidoMaterno'],
       where:{
-        estatus:true
+        estatus:true,
+        visible:true
       }
     })
     res.status(200).json({estatus:true,lista:lista});
