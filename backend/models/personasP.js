@@ -8,7 +8,9 @@ const PersonaP = sequelize.define("PersonaP", {
     telefono2:{type:DataTypes.STRING(20),allowNull:false},
     observaciones: { type: DataTypes.TEXT },
     INE:{type:DataTypes.STRING},
-    comprobanteDeDomicilio:{type:DataTypes.STRING}
+    comprobanteDeDomicilio:{type:DataTypes.STRING},
+    estatus:{type:DataTypes.BOOLEAN,allowNull:false,defaultValue:1},
+    visible:{type:DataTypes.BOOLEAN,allowNull:false,defaultValue:1}
   }, {
     tableName: "personasP",
     timestamps: false,

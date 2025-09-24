@@ -66,6 +66,8 @@ function TablaPersonasPension({ items, onEditar, listar }) {
             <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">ID Persona</th>
             <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Nombre</th>
             <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Apellido</th>
+            <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Telefono</th>
+            <th className="px-4 py-2 text-left text-sm font-medium text-gray-700">Telefono 2</th>
             <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">Acciones</th>
           </tr>
         </thead>
@@ -75,7 +77,8 @@ function TablaPersonasPension({ items, onEditar, listar }) {
               <td className="px-4 py-2 text-sm text-gray-600">{persona.idPersona}</td>
               <td className="px-4 py-2 text-sm text-gray-600">{persona.nombre}</td>
               <td className="px-4 py-2 text-sm text-gray-600">{persona.apellido}</td>
-
+              <td className="px-4 py-2 text-sm text-gray-600">{persona.telefono}</td>
+              <td className="px-4 py-2 text-sm text-gray-600">{persona.telefono2}</td>
               <td className="px-4 py-2 text-center space-y-2 sm:space-y-0 sm:space-x-2 flex flex-col sm:flex-row justify-center items-center">
                 {/* Botón Editar */}
                 {user.rol ==="admin"&&(<button

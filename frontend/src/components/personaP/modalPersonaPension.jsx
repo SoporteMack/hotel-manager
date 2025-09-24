@@ -6,6 +6,8 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
   const [apellido, setApellido] = useState("");
   const [telefono, setTelefono] = useState("");
   const [telefono2, setTelefono2] = useState("");
+  const [estatus, setEstatus] = useState(true);
+  const [visible, setVisible] = useState(true);
   const [mostrarCamaraPara, setMostrarCamaraPara] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [docs, setDocs] = useState({});
@@ -14,7 +16,10 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
       setNombre(item.nombre || "");
       setApellido(item.apellido || "");
       setTelefono(item.telefono || "");
-      setTelefono2(item.telfono2 || "");
+      setTelefono2(item.telefono2 || "");
+      setEstatus(item.estatus ?? true);
+      setVisible(item.visible ?? true);
+
     }
   }, [item]);
 
@@ -49,7 +54,9 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
     formData.append("nombre", nombre);
     formData.append("apellido", apellido);
     formData.append("telefono", telefono);
-    formData.append("telefono2", telefono2)
+    formData.append("telefono2", telefono2);
+    formData.append("estatus", estatus);
+    formData.append("visible", visible);
     if (item)
       formData.append("idPersona", item.idPersona);
 
@@ -69,6 +76,13 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
     { nombre: "ineD", label: "INE parte delantera" },
     { nombre: "ineA", label: "INE parte trasera" },
   ];
+  const handleEstatus = () => {
+    setEstatus(!estatus);
+  }
+
+  const handleVisible = () => {
+    setVisible(!visible);
+  }
 
 
   return (
@@ -181,6 +195,38 @@ function ModalPersonaPension({ onClose, onGuardar, item }) {
              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Número de teléfono" />
 
+                </div>
+                {/* Estatus */}
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-700">Estatus</span>
+                  <label htmlFor="estatus" className="relative cursor-pointer">
+                    <input
+                      id="estatus"
+                      type="checkbox"
+                      name="estatus"
+                      checked={estatus}
+                      onChange={handleEstatus}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
+                    <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 peer-checked:translate-x-full"></div>
+                  </label>
+
+                  {item ? (
+                    <>
+                      <span className="text-sm text-gray-700">{visible ? 'Visible' : 'No Visible'}</span>
+                      <label htmlFor="visible" className="relative cursor-pointer">
+                        <input
+                          id="visible"
+                          type="checkbox"
+                          name="visible"
+                          checked={visible}
+                          onChange={handleVisible}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-red-300 rounded-full peer-checked:bg-green-500 transition-colors duration-300"></div>
+                        <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 peer-checked:translate-x-full"></div>
+                      </label></>) : null}
                 </div>
               </div>
 

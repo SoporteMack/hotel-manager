@@ -43,7 +43,9 @@ exports.actualizar = async (req, res) => {
         nombre: data.nombre,
         apellido: data.apellido,
         telefono: data.telefono,
-        telefono2: data.telefono2
+        telefono2: data.telefono2,
+        estatus:data.estatus,
+        visible:data.visible
       },
       {
         where: { idPersona: data.idPersona },

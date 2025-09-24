@@ -7,6 +7,7 @@ import "notyf/notyf.min.css";
 import { listaPersonasPension, agregarPersonaPension, editarPersonaPension } from "../../api/personap";
 import Loader from "../items/loader";
 import { useIsMobile } from '../../hooks/useIsMobile';
+import Lista from "../items/lista";
 
 function PersonasPension() {
   const notyf = useRef(new Notyf({
@@ -20,6 +21,7 @@ function PersonasPension() {
   const [showModal, setShowModal] = useState(false);
   const [personaEditar, setPersonaEditar] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('Activo');
 
   const handleAgregar = () => {
     setPersonaEditar(null);
@@ -37,17 +39,32 @@ function PersonasPension() {
     try {
       if (personaEditar) {
         const jsonObj = Object.fromEntries(formData.entries());
-        console.log(jsonObj);
-        await editarPersonaPension(jsonObj);
-        notyf.current.success("Persona actualizada exitosamente");
+        if (/^\d{10}$/.test(jsonObj.telefono) && /^\d{10}$/.test(jsonObj.telefono2)) {
+          await editarPersonaPension(jsonObj);
+          notyf.current.success("Persona actualizada exitosamente");
+        } else {
+          notyf.current.error("Ambos teléfonos deben tener exactamente 10 dígitos");
+        }
       } else {
-        await agregarPersonaPension(formData);
-        notyf.current.success("Persona guardada exitosamente");
+        const jsonObj = Object.fromEntries(formData.entries());
+        if (
+          jsonObj.telefono &&
+          jsonObj.telefono2 &&
+          /^\d{10}$/.test(jsonObj.telefono) &&
+          /^\d{10}$/.test(jsonObj.telefono2)
+        ) {
+          await agregarPersonaPension(formData);
+          notyf.current.success("Persona guardada exitosamente");
+        } else {
+          notyf.current.error("Ambos teléfonos deben tener exactamente 10 dígitos");
+        }
+
       }
 
       setShowModal(false);
       obtenerPersonas();
     } catch (e) {
+      console.log(e)
       const error = e.response?.data?.message || "Error al guardar persona";
       notyf.current.error(error);
     } finally { setIsLoading(false); obtenerPersonas(); }
@@ -67,11 +84,17 @@ function PersonasPension() {
   }, []);
 
   const filteredItems = useMemo(() => {
-    return personas.filter(({ nombre, apellido, idPersona }) => {
+    return personas.filter(({ nombre, apellido, idPersona, estatus, visible }) => {
       const text = `${idPersona} ${nombre} ${apellido}`.toLowerCase();
-      return text.includes(search.toLowerCase());
+      const matchesSearch = text.includes(search.toLowerCase());
+      const matchesStatus =
+        (filterStatus === "Todos" && visible) ||
+        (filterStatus === "Activo" && estatus && visible) ||
+        (filterStatus === "Inactivo" && !estatus && visible) ||
+        (filterStatus === "Eliminados" && !visible);
+      return matchesSearch && matchesStatus;
     });
-  }, [personas, search]);
+  }, [personas, search, filterStatus]);
 
   return (
     <div className="p-4">
@@ -89,7 +112,16 @@ function PersonasPension() {
           onChange={e => setSearch(e.target.value)}
           className="w-full sm:max-w-xs border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition"
         />
-
+        <Lista
+          options={[
+            { value: "Todos", label: "Todos" },
+            { value: "Activo", label: "Activos" },
+            { value: "Inactivo", label: "Inactivos" },
+            { value: "Eliminados", label: "Eliminados" },
+          ]}
+          value={filterStatus}
+          onChange={setFilterStatus}
+        />
         <div className="flex gap-2">
           <button
             onClick={obtenerPersonas}
