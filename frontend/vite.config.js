@@ -25,8 +25,8 @@ export default defineConfig({
       filename: 'sw.js',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Monet',
-        short_name: 'Monet',
+        name: 'Pension Monet',
+        short_name: 'Pension Monet',
         description: 'App para administración de hoteles',
         theme_color: '#ffffff',
         background_color: '#ffffff',

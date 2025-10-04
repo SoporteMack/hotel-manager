@@ -291,7 +291,7 @@ exports.vencetredias = async (fecha) => {
           attributes: ["descripcion"]
         }
       ],
-      where: { fechaPago: fecha },
+      where: { fechaPago: fecha,deuda: { [Op.gte]: 0 }  },
       raw: true
     })
     return res

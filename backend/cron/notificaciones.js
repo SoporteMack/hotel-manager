@@ -4,7 +4,7 @@ const { vencetredias } = require('../controllers/contrato.controller');
 const configuracion = require("../models/configuracion");
 
 
-schedule.scheduleJob('35 52 15 * * *', async () => {
+schedule.scheduleJob('00 58 11 * * *', async () => {
   const fecha = new Date();
   fecha.setDate(fecha.getDate() + 3);
   const fechaformateada = fromatearfecha(fecha);

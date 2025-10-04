@@ -220,8 +220,8 @@ exports.reportediario = async () => {
         pagosAgrupados[p.nombre].push(p);
       });
     const totalPagos = pagos.reduce((total, item) => total + item.monto, 0);
-    const ocupados = await contarDepartamentos(1);
-    const disponibles = await contarDepartamentos(0);
+    const ocupados = await contarDepartamentos(0);
+    const disponibles = await contarDepartamentos(1);
     const doc = new PDFDocument({ margin: 40 });
 
     doc.pipe(fs.createWriteStream(filePath));
@@ -483,6 +483,7 @@ exports.reportediario = async () => {
 
 
   } catch (error) {
+    console.log(error )
     return { estatus: false, error: error };
   }
 
@@ -700,6 +701,8 @@ const contrato = async (folio) => {
 }
 
 const pagosbd = async (fecha) => {
+
+
   const nuevafecha = fromatearfecha(fecha)
 
   const start = new Date(`${nuevafecha}T00:00:00.000`);
@@ -955,19 +958,6 @@ exports.reportePensiones = async () => {
 
       doc.moveDown(0.5);
 
-      // Tarifas
-      if (tarifas.length > 0) {
-        doc.font('Helvetica-Bold').fillColor('#1976D2').text('Tarifas:');
-        tarifas.forEach(t => {
-
-          const tarifa = t.tarifa || {};
-          const precio = parseFloat(tarifa.precio) || 0;
-          doc
-            .font('Helvetica')
-            .fillColor('#444')
-            .text(`  • ${tarifa.descripcion || 'Sin descripción'} - $${precio.toFixed(2) || '0.00'}`);
-        });
-      }
 
       // Cobros pendientes
       const cobros = await Cobro.findAll({
