@@ -483,7 +483,7 @@ exports.reportediario = async () => {
 
 
   } catch (error) {
-    console.log(error )
+    console.log(error)
     return { estatus: false, error: error };
   }
 
@@ -893,7 +893,7 @@ exports.reportePensiones = async () => {
         const pension = pagoa.cobro.pensione || {}; // cuidado con el nombre del modelo
         console.log(pagoa)
         const persona = pension.PersonaP || {};
-        
+
         doc
           .font('Helvetica')
           .fontSize(10)
@@ -938,48 +938,61 @@ exports.reportePensiones = async () => {
       const persona = datos.PersonaP || {};
       const tarifas = datos.tarifas || [];
 
-      // Encabezado
-      doc
-        .font('Helvetica-Bold')
-        .fontSize(13)
-        .fillColor('#0D47A1')
-        .text(`Pensión #${datos.idPension} - ${persona.nombre || ''} ${persona.apellido || ''}`);
-
-      // Datos generales
-      doc
-        .moveDown(0.3)
-        .font('Helvetica')
-        .fontSize(10)
-        .fillColor('#333')
-        .text(`Teléfono: ${persona.telefono || 'N/A'}`)
-        .text(`Fecha inicio: ${datos.fechaInicio}`)
-        .text(`Precio acordado: $${parseFloat(datos.precioAcordado).toFixed(2)}`)
-        .text(`Estado: ${datos.estado ? 'Activa' : 'Inactiva'}`);
-
-      doc.moveDown(0.5);
-
-
       // Cobros pendientes
       const cobros = await Cobro.findAll({
         where: { idPension: datos.idPension, estado: false }
       });
 
       if (cobros.length > 0) {
-        doc.moveDown(0.5);
-        doc.font('Helvetica-Bold').fillColor('#C62828').text('Cobros Pendientes:');
         for (const c of cobros) {
           const pagos = await Pago.findAll({ where: { idCobro: c.idCobro } });
           const totalPagado = pagos.reduce((sum, pago) => sum + parseFloat(pago.montoPagado), 0);
           const monto = parseFloat(c.monto) || 0; // convierte a número y evita NaN
           const deudaValor = parseFloat(c.monto) - totalPagado;
           const deuda = parseFloat(c.monto) - totalPagado;
+          console.log(new Date(c.fechaVencimiento))
+          console.log(new Date)
+          const hoy = new Date();
+          hoy.setHours(0, 0, 0, 0); // limpia hora actual
 
-          doc
-            .font('Helvetica')
-            .fillColor('#000')
-            .text(
-              `  • Periodo: ${c.periodo} | Vence: ${c.fechaVencimiento} | Monto: $${monto.toFixed(2)} | Deuda: $${deudaValor.toFixed(2)}`
-            );
+          const fechaVenc = new Date(c.fechaVencimiento);
+          fechaVenc.setHours(0, 0, 0, 0); // limpia hora de vencimiento
+          console.log(fechaVenc >= hoy)
+          if (fechaVenc <= hoy) {
+            // Encabezado
+            doc
+              .font('Helvetica-Bold')
+              .fontSize(13)
+              .fillColor('#0D47A1')
+              .text(`Pensión #${datos.idPension} - ${persona.nombre || ''} ${persona.apellido || ''}`);
+
+            // Datos generales
+            doc
+              .moveDown(0.3)
+              .font('Helvetica')
+              .fontSize(10)
+              .fillColor('#333')
+              .text(`Teléfono: ${persona.telefono || 'N/A'}`)
+              .text(`Fecha inicio: ${datos.fechaInicio}`)
+              .text(`Precio acordado: $${parseFloat(datos.precioAcordado).toFixed(2)}`)
+              .text(`Estado: ${datos.estado ? 'Activa' : 'Inactiva'}`);
+
+            doc.moveDown(0.5);
+
+
+
+
+            doc.moveDown(0.5);
+            doc.font('Helvetica-Bold').fillColor('#C62828').text('Cobros Pendientes:');
+
+
+            doc
+              .font('Helvetica')
+              .fillColor('#000')
+              .text(
+                `  • Periodo: ${c.periodo} | Vence: ${c.fechaVencimiento} | Monto: $${monto.toFixed(2)} | Deuda: $${deudaValor.toFixed(2)}`
+              );
+          }
         }
       }
 
