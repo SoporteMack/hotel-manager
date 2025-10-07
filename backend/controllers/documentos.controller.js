@@ -992,19 +992,20 @@ exports.reportePensiones = async () => {
               .text(
                 `  • Periodo: ${c.periodo} | Vence: ${c.fechaVencimiento} | Monto: $${monto.toFixed(2)} | Deuda: $${deudaValor.toFixed(2)}`
               );
+            doc.moveDown(1);
+            // Línea separadora
+            doc
+              .moveTo(doc.page.margins.left, doc.y)
+              .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+              .strokeColor('#1A237E')
+              .lineWidth(0.8)
+              .stroke()
+              .moveDown(1);
           }
         }
       }
 
-      doc.moveDown(1);
-      // Línea separadora
-      doc
-        .moveTo(doc.page.margins.left, doc.y)
-        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-        .strokeColor('#1A237E')
-        .lineWidth(0.8)
-        .stroke()
-        .moveDown(1);
+
     }
 
     doc.end();
