@@ -860,7 +860,7 @@ exports.reportePensiones = async () => {
       .text('Reporte General de Pensiones', { align: 'center', background: '#1A237E' });
     doc.moveDown(1);
     const ayer = new Date();
-    //ayer.setDate(ayer.getDate() - 1);
+    ayer.setDate(ayer.getDate() - 1);
     const ayerStr = ayer.toISOString().slice(0, 10);
     const pagosAyer = await Pago.findAll({
       include: [
