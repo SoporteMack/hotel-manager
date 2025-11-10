@@ -14,7 +14,7 @@ schedule.scheduleJob('59 59 23 * * *', async () => {
 
     await aumentarInteres(formdiaant);
     await aumentarDeuda(dep);
-    await terminarContrato(formatFechaHoraLocal(fecha))
+    //await terminarContrato(formatFechaHoraLocal(fecha))
 });
 
 const formatFechaHoraLocal = (fecha) => {
