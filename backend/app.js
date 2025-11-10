@@ -38,7 +38,7 @@ app.use(cookieParser());
       cert: fs.readFileSync(process.env.CER),
     };
     const server = https.createServer(options, app);
-    server.listen(process.env.PORT,'0.0.0.0', () => {
+    server.listen(process.env.PORT, () => {
       console.log(`App listening on https://localhost:${process.env.PORT}`);
     });
   });
