@@ -1,6 +1,6 @@
 // controllers/pensionesController.js
 const sequelize = require('../config/database');
-const { Pensiones, PensionesTarifa, Tarifas, Cobro } = require('../models/assosiation');
+const { Pensiones, PensionesTarifa, Tarifas, Cobro, PersonasP } = require('../models/assosiation');
 
 exports.listarPensiones = async (req, res) => {
   try {
@@ -10,7 +10,8 @@ exports.listarPensiones = async (req, res) => {
             model: PensionesTarifa,
             as: 'tarifas',
             include: [Tarifas]
-          }
+          },
+          PersonasP
         ]
       });
     res.status(200).json(pensiones);

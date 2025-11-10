@@ -83,7 +83,7 @@ export default function Pensiones() {
   // Filtrado simple
   const pensionesFiltradas = useMemo(() => {
     return listaPensiones.filter(p => {
-      const texto = `${p.fechaInicio} ${p.precioAcordado} ${p.estado}`.toLowerCase();
+      const texto = `${p.fechaInicio} ${p.PersonaP.nombre} ${p.PersonaP.apellido}`.toLowerCase();
       const busqueda = buscar.toLowerCase();
       const coincideFiltro =
         filtro === "Todos" ||
