@@ -26,4 +26,5 @@ router.get('/rentasvencidas',verificarToken,contratos.rentasvencidas);
 router.post('/actualizargeneral',verificarToken,contratos.actualizarContratogeneral);
 router.get('/nombredep',verificarToken,contratos.nombreDep);
 router.get('/undia',verificarToken,contratos.venceundia);
+router.post('/terminar',verificarToken,contratos.cancelarContrato);
 module.exports = router;

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { detalles, crearDetalle } from "../../api/departamentos";
+import { terminarcontrato } from "../../api/contratos";
 
-function ModalDepartamento({ visible, onClose, onGuardar, departamento }) {
+function ModalDepartamento({ visible, onClose, onGuardar, departamento, setDep, setModaAdvertencia, cambio, setCambio }) {
   const [formData, setFormData] = useState({
     descripcion: "",
     costo: "",
@@ -10,58 +11,95 @@ function ModalDepartamento({ visible, onClose, onGuardar, departamento }) {
   });
   const [opcionesDetalles, setOpcionesDetalles] = useState([]);
   const [nuevoDetalle, setNuevoDetalle] = useState("");
+  const [pendingChange, setPendingChange] = useState(null);
 
   // Cargar detalles desde la BD (solo una vez)
   useEffect(() => {
-    
+    setCambio(false);
     cargarDetalles();
   }, []);
-
-  // Autorrellenar formulario al editar
-useEffect(() => {
-  if (departamento) {
-    setFormData({
-      descripcion: departamento.descripcion || "",
-      costo: departamento.costo || "",
-      estatus: departamento.estatus ?? true,
-      detalles: departamento.detalles
-        ?.filter((d) => d && d.idDetalle) // filtrar nulos
-        .map((d) => d.idDetalle) || [],   // extraer solo IDs
-    });
-  } else {
-    setFormData({
-      descripcion: "",
-      costo: "",
-      estatus: true,
-      detalles: [],
-    });
-  }
-}, [departamento]);
-
-const cargarDetalles = async function () {
-  try {
-    const data = await detalles().then((res) => res.data);
-
-    // Normalizar: forzar a que todos tengan {idDetalle, descripcion}
-    const normalizados = data.map((d) => ({
-      idDetalle: d.idDetalle,
-      descripcion: d.descripcion || d.descripcionDetalle || "Sin nombre",
-    }));
-
-    // Eliminar duplicados por idDetalle
-    const unicos = normalizados.filter(
-      (item, index, self) =>
-        index === self.findIndex((d) => d.idDetalle === item.idDetalle)
-    );
-
-    setOpcionesDetalles(unicos);
-  } catch (error) {
-    console.error("Error al cargar detalles:", error);
+  useEffect(() => {
+    if (cambio && pendingChange) {
+  
+      const { name, value } = pendingChange;
+  
+      // 1. Aplicar el cambio real
+      setFormData(prev => {
+        const updated = { ...prev, [name]: value };
+  
+        // 2. Guardar automáticamente (terminar contrato)
+        const data = {numDep:departamento.numDepartamento}
+        terminarContratoE(data);
+        onGuardar(updated);
+        
+  
+        return updated;
+      });
+  
+      // 3. Limpiar
+      setPendingChange(null);
+      setCambio(false);
+    }
+  }, [cambio]);
+  
+  
+const terminarContratoE = async (data)=> {
+  try
+  {
+    await terminarcontrato(data);
+  }catch(e)
+  {
+    console.log(e);
   }
 }
+  // Autorrellenar formulario al editar
+  useEffect(() => {
+    if (departamento) {
+      setFormData({
+        descripcion: departamento.descripcion || "",
+        costo: departamento.costo || "",
+        estatus: departamento.estatus ?? true,
+        detalles: departamento.detalles
+          ?.filter((d) => d && d.idDetalle) // filtrar nulos
+          .map((d) => d.idDetalle) || [],   // extraer solo IDs
+      });
+    } else {
+      setFormData({
+        descripcion: "",
+        costo: "",
+        estatus: true,
+        detalles: [],
+      });
+    }
+  }, [departamento]);
+
+  const cargarDetalles = async function () {
+    try {
+      const data = await detalles().then((res) => res.data);
+
+
+      // Normalizar: forzar a que todos tengan {idDetalle, descripcion}
+      const normalizados = data.map((d) => ({
+        idDetalle: d.idDetalle,
+        descripcion: d.descripcion || d.descripcionDetalle || "Sin nombre",
+      }));
+
+      // Eliminar duplicados por idDetalle
+      const unicos = normalizados.filter(
+        (item, index, self) =>
+          index === self.findIndex((d) => d.idDetalle === item.idDetalle)
+      );
+
+      setOpcionesDetalles(unicos);
+    } catch (error) {
+      console.error("Error al cargar detalles:", error);
+    }
+  }
   // Manejar cambios de input
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+  
+    // Detalles normales
     if (name === "detalles") {
       const id = parseInt(value);
       setFormData((prev) => ({
@@ -70,14 +108,41 @@ const cargarDetalles = async function () {
           ? [...prev.detalles, id]
           : prev.detalles.filter((d) => d !== id),
       }));
-    } else {
+      return;
+    }
+  
+    // 👉 Solo aplicar lógica especial para el checkbox estatus
+    if (name === "estatus" && type === "checkbox") {
+  
+      // Si el estado actual es OCUPADO y el usuario quiere DESOCUPAR → mostrar modal
+      if (formData.estatus === false && checked === true) {
+        setDep(departamento);
+  
+        setPendingChange({
+          name: "estatus",
+          value: true
+        });
+  
+        setModaAdvertencia(true);
+        return; // ❗ no cambiar nada hasta aceptar
+      }
+  
+      // Si no estaba ocupado → permitir cambio directo sin modal
       setFormData((prev) => ({
         ...prev,
-        [name]: type === "checkbox" ? checked : value,
+        estatus: checked
       }));
+  
+      return;
     }
+  
+    // Otros inputs normales
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
-
+  
   // Agregar un nuevo detalle
   const handleAgregarDetalle = async () => {
     if (!nuevoDetalle.trim()) return;

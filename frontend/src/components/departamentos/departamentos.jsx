@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import ModalDepartamento from "./modalDepartamento";
+import ModalAdvertencia from "./modalAdvertenciaDesocupar";
 import { departamentos as listaDepartamentos, agregarDepartamento, actualizarDepartamento } from "../../api/departamentos";
 import TarjetaDepartamento from "./tarjetaDepartamento";
 import Lista from "../items/lista";
@@ -8,9 +9,12 @@ import { useAuth } from "../../context/authContext";
 
 function Departamentos() {
   const [departamentos, setDepartamentos] = useState([]);
+  const [dep, setDep] = useState();
+  const [cambio,setCambio] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [modaladvertencia, setModaAdvertencia] = useState(false);
   const [departamentoEditar, setDepartamentoEditar] = useState(null);
   const [filtro, setFiltro] = useState('Todos');
   const [buscar, setBuscar] = useState('');
@@ -77,6 +81,9 @@ function Departamentos() {
       return coincideBusqueda && coincideFiltro;
     });
   }, [departamentos, buscar, filtro]);
+  const onCloseAd = ()=>{
+    setModaAdvertencia(false);
+  }
 
   if (loading) return <p className="text-center mt-6 text-gray-500">Cargando departamentos...</p>;
   if (error) return <p className="text-center mt-6 text-red-600">{error}</p>;
@@ -149,7 +156,7 @@ function Departamentos() {
               <TarjetaDepartamento
                 key={dep.numDepartamento}
                 {...dep}
-                abrirModalEditar={()=>abrirModalEditar(dep)}
+                abrirModalEditar={() => abrirModalEditar(dep)}
               />
             ))}
           </div>
@@ -161,10 +168,20 @@ function Departamentos() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         onGuardar={guardarDepartamento}
+        cambio={cambio}
+        setCambio={setCambio}
+        setDep={setDep}
+        setModaAdvertencia={ setModaAdvertencia}
         departamento={departamentoEditar}
       />
+      {modaladvertencia && dep &&
+        (<>
+        <ModalAdvertencia isOpen={modaladvertencia} onClose={onCloseAd} departamento={dep} setCambio={setCambio}/>
+        </>)
+      }
     </section>
   );
+
 }
 
 export default Departamentos;

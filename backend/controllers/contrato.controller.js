@@ -391,7 +391,15 @@ exports.actualizarContratogeneral = async (req, res) => {
   }
 }
 
-
+exports.cancelarContrato = async (req,res)  =>{
+  const {numDep} = req.body;
+  try {
+    await contratos.update({estatus:0},{where:{numDepartamento:numDep}});
+    res.status(200).json("actulización correcta");
+  } catch (error) {
+    res.status(500).json(error)
+  }
+}
 const generarContrato = async (idContrato) => {
   const contratodb = await findContrato(idContrato);
   const fechai = new Date(contratodb.fechaInicio);
