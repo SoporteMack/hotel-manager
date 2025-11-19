@@ -64,7 +64,7 @@ exports.crear = async (req, res) => {
       const foliopago = pag.folio;
       const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
       const mesC = await mesContrato(idContrato);
-      await nota(foliopago);
+      await nota(foliopago,mesC);
       const telefono = await obtenerTelefono(idContrato);
       await esperarArchivoListo(rutaArchivo)
       await enviarNota(telefono, rutaArchivo,mesC)

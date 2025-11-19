@@ -33,7 +33,7 @@ exports.crear = async (req, res) => {
         ultimoCobro.update({ estado: true });
         const fecha = await nuevoCobro(idPension,ultimoCobro.monto,ultimoCobro.fechaVencimiento)
         const rutaArchivo = path.join(__dirname, '../uploads', 'notaP.pdf');
-        await nota(pago.idPago);
+        await nota(pago.idPago,fecha);
         const telefono = await obtenerTelefono(idPension);
         await esperarArchivoListo(rutaArchivo)
         await enviarNota(telefono, rutaArchivo,fecha)
@@ -46,8 +46,12 @@ exports.crear = async (req, res) => {
     }
 }
 
-const nota = async (folio) => {
+const nota = async (folio,periodo) => {
     try {
+        const newFecha = new Date(periodo).toLocaleDateString('es-Mx',{
+            timeZone:'America/Mexico_City',
+            month:'long',
+          })
         const datos = await pension(folio);
         const dato = datos[0];
         const filePath = path.join(__dirname, '../uploads/notaP.pdf');
@@ -55,13 +59,13 @@ const nota = async (folio) => {
         // Simulación de datos
         const nota = {
             folio: folio,
-            fecha: new Date(dato.fechaPago).toLocaleDateString(),
+            fecha: new Date().toLocaleDateString(),
             cliente: {
                 nombre: `${dato.cobro.pensione.PersonaP.nombre} ${dato.cobro.pensione.PersonaP.apellido}`,
                 direccion: '4 Poniente 1414, Puebla',
             },
             productos: [
-                { descripcion: `ABONO RENTA Pension`, cantidad: 1, precio: dato.montoPagado },
+                { descripcion: `ABONO RENTA Pension del mes de ${newFecha}`.toUpperCase(), cantidad: 1, precio: dato.montoPagado },
             ],
         };
 

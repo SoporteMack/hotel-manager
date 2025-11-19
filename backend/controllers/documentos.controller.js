@@ -111,7 +111,7 @@ exports.comprobante = async (req, res) => {
 
 
 
-exports.nota = async (folio) => {
+exports.nota = async (folio,mesC) => {
   try {
     const dato = await contrato(folio);
     const filePath = path.join(__dirname, '../uploads/nota.pdf');
@@ -125,7 +125,7 @@ exports.nota = async (folio) => {
         direccion: '4 Poniente 1414, Puebla',
       },
       productos: [
-        { descripcion: `ABONO RENTA ${dato['contrato.departamento.descripcion']}`, cantidad: 1, precio: dato.monto },
+        { descripcion: `ABONO RENTA ${dato['contrato.departamento.descripcion']} del mes ${mesC}`.toUpperCase(), cantidad: 1, precio: dato.monto },
       ],
     };
 
