@@ -119,7 +119,7 @@ exports.nota = async (folio) => {
     // Simulación de datos
     const nota = {
       folio: dato.folio,
-      fecha: new Date(dato.fechaPago).toLocaleDateString(),
+      fecha: new Date().toLocaleDateString(),
       cliente: {
         nombre: `${dato['contrato.persona.nombrePersona']} ${dato['contrato.persona.apellidoPaterno']} ${dato['contrato.persona.apellidoMaterno']}`,
         direccion: '4 Poniente 1414, Puebla',
@@ -143,7 +143,7 @@ exports.nota = async (folio) => {
       .text('Nota de Servicio', { align: 'right' })
       .fontSize(10)
       .text(`Folio: ${nota.folio}`, { align: 'right' })
-      .text(`Fecha de pago: ${nota.fecha}`, { align: 'right' });
+      .text(`Fecha de relización de pago: ${nota.fecha}`, { align: 'right' });
 
     doc.moveDown();
 

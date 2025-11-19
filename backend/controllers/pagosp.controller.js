@@ -31,14 +31,14 @@ exports.crear = async (req, res) => {
         const data = { idCobro: ultimoCobro.idCobro, montoPagado: monto }
         const pago = await Pago.create(data);
         ultimoCobro.update({ estado: true });
-        await nuevoCobro(idPension,ultimoCobro.monto,ultimoCobro.fechaVencimiento)
+        const fecha = await nuevoCobro(idPension,ultimoCobro.monto,ultimoCobro.fechaVencimiento)
         const rutaArchivo = path.join(__dirname, '../uploads', 'notaP.pdf');
         await nota(pago.idPago);
         const telefono = await obtenerTelefono(idPension);
         await esperarArchivoListo(rutaArchivo)
-        await enviarNota(telefono, rutaArchivo)
+        await enviarNota(telefono, rutaArchivo,fecha)
         const telefonoadmin = await configuracion.findOne().then(res => { return res.telefono });
-        await enviarNota(telefonoadmin, rutaArchivo);
+        await enviarNota(telefonoadmin, rutaArchivo,fecha);
         res.status(200).json({ msg: "cobro exitoso" });
     } catch (error) {
         console.log(error)
@@ -200,7 +200,11 @@ async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
     });
 }
 
-const enviarNota = async (telefono, rutaArchivo) => {
+const enviarNota = async (telefono, rutaArchivo,periodo) => {
+    const newFecha = new Date(periodo).toLocaleDateString('es-Mx',{
+    timeZone:'America/Mexico_City',
+    month:'long',
+  })
     const sock = getSock();
     const res = await configuracion.findOne();
     const msj = res.envioNotasP;
@@ -218,7 +222,7 @@ const enviarNota = async (telefono, rutaArchivo) => {
         document: buffer,
         mimetype: 'application/pdf',
         fileName: 'NOTA.pdf',
-        caption: `Fecha: ${formatoFecha}\n\n` + msj
+        caption: `Fecha: ${formatoFecha}\n\nDel mes de: ${newFecha}\n\n` + msj
     });
 };
 
@@ -266,6 +270,7 @@ const nuevoCobro = async (idPension,monto,fechaVencimiento) => {
         fechaVencimiento: vencimientoFormatted,
         estado: 0
       });
+      return fecha
 }
 
 exports.listarxfecha = async (req,res)=>

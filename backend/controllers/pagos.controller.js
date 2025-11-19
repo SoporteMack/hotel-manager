@@ -9,6 +9,7 @@ const path = require('path')
 const { nota } = require("./documentos.controller");
 const { getSock } = require('../utils/baileys');
 const fs = require('fs');
+const sequelize = require("../config/database");
 
 
 exports.listar = async (req, res) => {
@@ -62,13 +63,14 @@ exports.crear = async (req, res) => {
       const pag = await pagos.create(datospago);
       const foliopago = pag.folio;
       const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
+      const mesC = await mesContrato(idContrato);
       await nota(foliopago);
       const telefono = await obtenerTelefono(idContrato);
       await esperarArchivoListo(rutaArchivo)
-      await enviarNota(telefono,rutaArchivo)
-      const telefonoadmin = await configuracion.findOne().then(res =>{return res.telefono});
-      await enviarNota(telefonoadmin,rutaArchivo)
-
+      await enviarNota(telefono, rutaArchivo,mesC)
+      const telefonoadmin = await configuracion.findOne().then(res => { return res.telefono });
+      await enviarNota(telefonoadmin, rutaArchivo,mesC)
+      
       res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
     }
     else {
@@ -111,10 +113,10 @@ exports.editar = async (req, res) => {
     await nota(folio);
     const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
     const telefono = await obtenerTelefono(idContrato);
-    await enviarNota(telefono,rutaArchivo);
-    await enviarmsg(idContrato,folio);
-    const telefonoadmin = await configuracion.findOne().then(res =>{return res.telefono});
-    await enviarNota(telefonoadmin,rutaArchivo);
+    await enviarNota(telefono, rutaArchivo);
+    await enviarmsg(idContrato, folio);
+    const telefonoadmin = await configuracion.findOne().then(res => { return res.telefono });
+    await enviarNota(telefonoadmin, rutaArchivo);
     return res.status(201).json({ estatus: true, msj: "Monto y deuda actualizados correctamente" });
 
   } catch (error) {
@@ -133,11 +135,11 @@ exports.ingresosdeldia = async (req, res) => {
     }
 
     const start = new Date(dia);
-    start.setDate(start.getDate()+1);
-    start.setHours(0,0,0,0);
+    start.setDate(start.getDate() + 1);
+    start.setHours(0, 0, 0, 0);
     const end = new Date(dia2);
-    end.setHours(23,59,59,59);
-    end.setDate(end.getDate()+1)
+    end.setHours(23, 59, 59, 59);
+    end.setDate(end.getDate() + 1)
     const resultado = await pagos.findOne({
       attributes: [[fn('SUM', col('monto')), 'pagos']],
       where: {
@@ -244,7 +246,7 @@ exports.listarpagoporpersona = async (req, res) => {
 }
 
 
-exports.obtenerUltimos5IngresosDelDia = async (req,res) => {
+exports.obtenerUltimos5IngresosDelDia = async (req, res) => {
   try {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0); // inicio del día
@@ -262,18 +264,18 @@ exports.obtenerUltimos5IngresosDelDia = async (req,res) => {
       include: [
         {
           model: contratos,
-          as:"contrato",
-          attributes: ['idContrato'] ,
-          include:[{
-            model:personas,
-            as:"persona",
-            attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+          as: "contrato",
+          attributes: ['idContrato'],
+          include: [{
+            model: personas,
+            as: "persona",
+            attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
           },
-        {
-          model:departamentos,
-          as: "departamento",
-          attributes:['descripcion']
-        }]
+          {
+            model: departamentos,
+            as: "departamento",
+            attributes: ['descripcion']
+          }]
         }
       ]
     });
@@ -285,7 +287,7 @@ exports.obtenerUltimos5IngresosDelDia = async (req,res) => {
     return res.status(200).json(ultimos5Formateados);
   } catch (error) {
     console.log(error)
-    return res.status(500).json({msg:"errro al obtner los datos"});
+    return res.status(500).json({ msg: "errro al obtner los datos" });
   }
 };
 
@@ -302,22 +304,21 @@ const restardeuda = async (idContrato, fecha, monto, deuda) => {
   }
 }
 
-const obtenerTelefono = async (idContrato)=>
-{
+const obtenerTelefono = async (idContrato) => {
   const res = await contratos.findOne({
-    attributes:['idContrato'],
-    where:{idContrato:idContrato},
-    include:[{
-      model:personas,
-      as:'persona',
-      attributes:['telefono']
+    attributes: ['idContrato'],
+    where: { idContrato: idContrato },
+    include: [{
+      model: personas,
+      as: 'persona',
+      attributes: ['telefono']
     }],
-    raw:true
+    raw: true
   })
   return res['persona.telefono'];
 }
 
-const enviarNota = async (telefono,rutaArchivo) => {
+const enviarNota = async (telefono, rutaArchivo,mes) => {
   const sock = getSock();
   const res = await configuracion.findOne();
   const msj = res.envioNotas;
@@ -335,7 +336,7 @@ const enviarNota = async (telefono,rutaArchivo) => {
     document: buffer,
     mimetype: 'application/pdf',
     fileName: 'NOTA.pdf',
-    caption: `Fecha: ${formatoFecha}\n\n` + msj
+    caption: `Fecha: ${formatoFecha}\n\nDel mes de ${mes}\n\n` + msj
   });
 };
 
@@ -369,31 +370,54 @@ async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
     check();
   });
 }
-const enviarmsg = async (idContrato,folio) =>{
+const enviarmsg = async (idContrato, folio) => {
   const sock = getSock();
   const res = await contratos.findOne({
-    attributes:["idContrato"],
-    where:{idContrato:idContrato},
-    include:[{
-      model:personas,
-      as:"persona",
-      attributes:["nombrePersona","apellidoPaterno","apellidoMaterno"]
+    attributes: ["idContrato"],
+    where: { idContrato: idContrato },
+    include: [{
+      model: personas,
+      as: "persona",
+      attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
     }]
-  }).then(res => {return res.persona})
+  }).then(res => { return res.persona })
 
-  const telefono = await configuracion.findOne().then(res =>{return res.telefono});
-  const nom = res.nombrePersona + " "  + res.apellidoPaterno + " "  + res.apellidoMaterno;
+  const telefono = await configuracion.findOne().then(res => { return res.telefono });
+  const nom = res.nombrePersona + " " + res.apellidoPaterno + " " + res.apellidoMaterno;
   const msj = "se actulizo pago de folio " + folio + "\n de la persona " + nom
   const numero = '521' + telefono;
-    try {
-      await sock.sendMessage(`${numero}@s.whatsapp.net`, {
-        text: msj
-      });
-      console.log(`✅ Mensaje enviado a ${numero}`);
+  try {
+    await sock.sendMessage(`${numero}@s.whatsapp.net`, {
+      text: msj
+    });
+    console.log(`✅ Mensaje enviado a ${numero}`);
 
-    } catch (err) {
-      console.error('❌ Error al enviar mensaje:', err);
-    }
+  } catch (err) {
+    console.error('❌ Error al enviar mensaje:', err);
+  }
 }
-  
-  
+
+const mesContrato = async (idContrato) => {
+  const totalnumpagos = await pagos.findAll({
+    attributes: [
+      [sequelize.fn('COUNT', sequelize.col('numPago')), 'numPagos']
+    ],
+    where: { idContrato: idContrato },
+    raw: true
+  })
+  const fechaContrato = await contratos.findOne(
+    {
+      attributes: ['fechaInicio'],
+      where: { idContrato: idContrato },
+      raw: true
+    }
+  )
+  console.log(totalnumpagos[0]['numPagos'])
+  const date = new Date(fechaContrato['fechaInicio']);
+  const nuevafecha = new Date(new Date(fechaContrato['fechaInicio']).setMonth(date.getMonth() + totalnumpagos[0]['numPagos']));
+  const newDate = nuevafecha.toLocaleDateString('es-Mx',{
+    timeZone:'America/Mexico_City',
+    month:'long',
+  })
+  return newDate
+} 
