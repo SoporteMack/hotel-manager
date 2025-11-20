@@ -8,3 +8,5 @@ const API = axios.create({
 
 export const crear = (data)=>API.post('api/pension/pagos/crear',data);
 export const listarxfecha = (inicio,fin) => API.get('api/pension/pagos/listarxfecha',{params:{inicio:inicio,fin:fin}});
+export const getdif = (data) =>API.post('api/pension/pagos/diferencia',data);
+export const getvig = (data) => API.post('api/pension/cobros/vigencia',data);

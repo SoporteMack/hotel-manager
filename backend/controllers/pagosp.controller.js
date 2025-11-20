@@ -8,6 +8,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const PagosP = require('../models/pagoP');
 const { Op, fn, col, where, json } = require("sequelize");
+const sequelize = require('../config/database');
 
 exports.listar = async (req, res) => {
     try {
@@ -31,14 +32,14 @@ exports.crear = async (req, res) => {
         const data = { idCobro: ultimoCobro.idCobro, montoPagado: monto }
         const pago = await Pago.create(data);
         ultimoCobro.update({ estado: true });
-        const fecha = await nuevoCobro(idPension,ultimoCobro.monto,ultimoCobro.fechaVencimiento)
+        const fecha = await nuevoCobro(idPension, ultimoCobro.monto, ultimoCobro.fechaVencimiento)
         const rutaArchivo = path.join(__dirname, '../uploads', 'notaP.pdf');
-        await nota(pago.idPago,fecha);
+        await nota(pago.idPago, fecha);
         const telefono = await obtenerTelefono(idPension);
         await esperarArchivoListo(rutaArchivo)
-        await enviarNota(telefono, rutaArchivo,fecha)
+        await enviarNota(telefono, rutaArchivo, fecha)
         const telefonoadmin = await configuracion.findOne().then(res => { return res.telefono });
-        await enviarNota(telefonoadmin, rutaArchivo,fecha);
+        await enviarNota(telefonoadmin, rutaArchivo, fecha);
         res.status(200).json({ msg: "cobro exitoso" });
     } catch (error) {
         console.log(error)
@@ -46,12 +47,12 @@ exports.crear = async (req, res) => {
     }
 }
 
-const nota = async (folio,periodo) => {
+const nota = async (folio, periodo) => {
     try {
-        const newFecha = new Date(periodo).toLocaleDateString('es-Mx',{
-            timeZone:'America/Mexico_City',
-            month:'long',
-          })
+        const newFecha = new Date(periodo).toLocaleDateString('es-Mx', {
+            timeZone: 'America/Mexico_City',
+            month: 'long',
+        })
         const datos = await pension(folio);
         const dato = datos[0];
         const filePath = path.join(__dirname, '../uploads/notaP.pdf');
@@ -204,11 +205,11 @@ async function esperarArchivoListo(ruta, maxEspera = 8000, intervalo = 300) {
     });
 }
 
-const enviarNota = async (telefono, rutaArchivo,periodo) => {
-    const newFecha = new Date(periodo).toLocaleDateString('es-Mx',{
-    timeZone:'America/Mexico_City',
-    month:'long',
-  })
+const enviarNota = async (telefono, rutaArchivo, periodo) => {
+    const newFecha = new Date(periodo).toLocaleDateString('es-Mx', {
+        timeZone: 'America/Mexico_City',
+        month: 'long',
+    })
     const sock = getSock();
     const res = await configuracion.findOne();
     const msj = res.envioNotasP;
@@ -247,11 +248,11 @@ const obtenerTelefono = async (idPension) => {
     const telfono = res[0].PersonaP.telefono;
     return telfono;
 }
-const nuevoCobro = async (idPension,monto,fechaVencimiento) => {
+const nuevoCobro = async (idPension, monto, fechaVencimiento) => {
     const res = await pensiones.findByPk(idPension);
     const tipoPension = res.tipoPension;
     const date = new Date(fechaVencimiento);
-    const fecha = date.getFullYear() + '-'+String(date.getMonth() + 1).padStart(2, '0') + '-'+String(date.getDate()).padStart(2, '0');
+    const fecha = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
     let vencimiento = new Date(date);
 
     if (tipoPension === "MENSUAL") {
@@ -270,39 +271,40 @@ const nuevoCobro = async (idPension,monto,fechaVencimiento) => {
     await Cobro.create({
         idPension,
         periodo: fecha,
-        monto:monto,
+        monto: monto,
         fechaVencimiento: vencimientoFormatted,
         estado: 0
-      });
-      return fecha
+    });
+    return fecha
 }
 
-exports.listarxfecha = async (req,res)=>
-{
+exports.listarxfecha = async (req, res) => {
     try {
         const inicio = req.query.inicio;
         const fin = req.query.fin;
         const response = await PagosP.findAll(
             {
-                where:{fechaPago: {
-                    [Op.gte]: inicio,
-                    [Op.lt]: fin
-                  }},
-                include:[
+                where: {
+                    fechaPago: {
+                        [Op.gte]: inicio,
+                        [Op.lt]: fin
+                    }
+                },
+                include: [
                     {
-                        model:Cobro,
-                        as:"cobro",
-                        attributes:["fechaVencimiento"],
-                        include:[
+                        model: Cobro,
+                        as: "cobro",
+                        attributes: ["fechaVencimiento"],
+                        include: [
                             {
-                                model:pensiones,
-                                as:"pensione",
-                                attributes:["idPension"],
-                                include:[
+                                model: pensiones,
+                                as: "pensione",
+                                attributes: ["idPension"],
+                                include: [
                                     {
-                                        model:personap,
-                                        as:"PersonaP",
-                                        attributes:["nombre","apellido"]
+                                        model: personap,
+                                        as: "PersonaP",
+                                        attributes: ["nombre", "apellido"]
                                     }
                                 ]
                             }
@@ -315,5 +317,26 @@ exports.listarxfecha = async (req,res)=>
     } catch (error) {
         console.log(error);
         res.statu(500).json(erro)
+    }
+}
+exports.diferencia = async (req, res) => {
+    const { idPension } = req.body
+    try {
+        const result = await sequelize.query(`
+            SELECT SUM(monto) - SUM(montopagado) as diferencia
+            FROM pagosp as pp
+            RIGHT JOIN cobros as c ON c.idCobro = pp.idCobro
+            WHERE c.idPension = :idPension
+        `, {
+            replacements: { idPension: idPension },
+            type: sequelize.QueryTypes.SELECT,
+            plain: true 
+        });
+               
+        return res.status(200).json(result)
+
+    } catch (error) {
+        res.status(500).json(error)
+        console.log(error)
     }
 }

@@ -6,7 +6,7 @@ import {
     DialogPanel,
 } from "@headlessui/react";
 
-export default function ModalPagos({ isOpen, onClose, pension, onGuardar, nombre }) {
+export default function ModalPagos({ isOpen, onClose, pension, onGuardar, nombre,listar }) {
     const [monto, setMonto] = useState(0);
     useEffect(() => {
         if (pension) {

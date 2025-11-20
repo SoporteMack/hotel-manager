@@ -73,6 +73,7 @@ export default function Pensiones() {
     setLoadingG(true);
     try{
        await crear(data);
+       listar();
       notyf.current.success("Pago Realizado");
     }catch(error)
     {
@@ -148,7 +149,7 @@ export default function Pensiones() {
         onSave={guardarPension}
         initialData={modalData}
       />
-      <ModalPagos isOpen={mPagos} onClose={() => setMPagos(false)} pension={pension} onGuardar={handleGuardar} nombre={nombre}/>
+      <ModalPagos isOpen={mPagos} onClose={() => setMPagos(false)} pension={pension} onGuardar={handleGuardar} nombre={nombre} listar={listar}/>
     </section>
   );
 }
