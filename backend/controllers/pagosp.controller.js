@@ -324,7 +324,7 @@ exports.diferencia = async (req, res) => {
     try {
         const result = await sequelize.query(`
             SELECT SUM(monto) - SUM(montopagado) as diferencia
-            FROM pagosp as pp
+            FROM pagosP as pp
             RIGHT JOIN cobros as c ON c.idCobro = pp.idCobro
             WHERE c.idPension = :idPension
         `, {
