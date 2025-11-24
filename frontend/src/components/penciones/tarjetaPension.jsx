@@ -189,7 +189,7 @@ export default function TarjetaPension({ pension, abrirModalEditar, setMPago, se
             </button>
           )}
           
-          {mostrarBotonPago && (
+          {(mostrarBotonPago || user.rol ==="admin") && (
             <button
               onClick={() => handleAbrirModal(pension, nombreP)}
               className="px-4 py-2 text-sm font-medium rounded-md border border-blue-600 text-blue-600 hover:bg-blue-50 transition hover:scale-105"

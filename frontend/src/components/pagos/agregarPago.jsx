@@ -1,4 +1,4 @@
-import { useState, useRef,useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import ModalPago from "./modalPagos";
 import { listacontratosxpersona } from "../../api/contratos";
 import { Notyf } from "notyf"; Notyf
@@ -22,7 +22,7 @@ function AgregarPagos() {
     const [data, setData] = useState(null);
     const [pago, setPago] = useState(0);
     const [isAdmin, setIsAdmin] = useState(false);
-    const {user} = useAuth();
+    const { user } = useAuth();
     const handlebuscar = async (e) => {
         e.preventDefault();
         setData(null);
@@ -50,7 +50,6 @@ function AgregarPagos() {
         }
     }
     useEffect(() => {
-        console.log(user?.rol === "admin")
         if (user?.rol === "admin")
             setIsAdmin(true)
     }, [])
@@ -246,7 +245,6 @@ function AgregarPagos() {
                                 >
                                     Pago:
                                 </label>
-                                {console.log(isAdmin)}
                                 <input
                                     id="pago"
                                     type="number"
@@ -256,15 +254,26 @@ function AgregarPagos() {
                                     disabled={!isAdmin}
                                 />
                             </div>
-                            <div className="w-full p-2 flex justify-end">
-                                <button
-                                    type="button"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition"
-                                    onClick={handlePagar} // asegúrate de definir esta función en tu componente
-                                >
-                                    Pagar
-                                </button>
-                            </div>
+                            {(() => {
+                                console.log(data)
+                                const hoy = new Date();
+                                const fechaPago = data?.fechaPago ? new Date(data.fechaPago) : null;
+                                const diasFaltantes = fechaPago ? Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24)) : null;
+                                const faltanTresDiasOMenos = diasFaltantes !== null && diasFaltantes <= 3 && diasFaltantes >= 0;
+                                console.log(faltanTresDiasOMenos)
+                                console.log()
+                                return (parseFloat(data?.deuda) === 0 && faltanTresDiasOMenos) || data?.deuda > 0  || isAdmin;
+                            })() && (
+                                    <div className="w-full p-2 flex justify-end">
+                                        <button
+                                            type="button"
+                                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition"
+                                            onClick={handlePagar}
+                                        >
+                                            Pagar
+                                        </button>
+                                    </div>
+                                )}
 
                         </>
                     ) : null
