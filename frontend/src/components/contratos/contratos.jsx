@@ -4,6 +4,7 @@ import TableContratos from './tablacontratos';
 import Lista from '../items/lista';
 
 import EditarContrato from "./editarContratos";
+import UltimosPagos from './ultmospaogs';
 
 function Contratos() {
   const [filterStatus, setFilterStatus] = useState('Activo');
@@ -13,6 +14,7 @@ function Contratos() {
   const [isOpen,setIsOpen] = useState(false);
   const onClose = ()=> setIsOpen(false)
   const [dataContrato,setDataContrato] = useState()
+  const [isOpenU,setIsOPenU] =  useState(false);
 
   useEffect(() => {
     listar();
@@ -94,11 +96,16 @@ function Contratos() {
         <p className="text-gray-600 text-center mt-10">Cargando contratos...</p>
       ) : (
         <>
-        <TableContratos items={filtredItems} setLoading={setLoading} setIsOpen={setIsOpen} setContrato={setDataContrato} listar={listar}/>
+        <TableContratos items={filtredItems} setLoading={setLoading} setIsOpen={setIsOpen} setContrato={setDataContrato} listar={listar} setIsOpenU={setIsOPenU}/>
         
           {dataContrato && (<EditarContrato onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} contrato={dataContrato} setData={setDataContrato} setIsOpenloader={setLoading}/>)}
         </>
       )}
+      {isOpenU && dataContrato !== undefined &&
+        (<>
+          <UltimosPagos isOpen={isOpenU} setIsOpen={setIsOPenU} contrato={dataContrato}/>
+        </>)
+      }
     </section>
   );
 }

@@ -32,3 +32,4 @@ export const listacontratosxpersona = (nombre,apellidoP,apellidoM) =>API.get('ap
 export const  actualizargeneral = (data) =>API.post('api/contratos/actualizargeneral',data)
 export const actualizarobservaciones = (data) => API.post('api/contratos/actualizarobservaciones',data);
 export const terminarcontrato = (data) => API.post('api/contratos/terminar',data);
+export const ultimosPago = (data) => API.post('api/contratos/ultimospagos',data);

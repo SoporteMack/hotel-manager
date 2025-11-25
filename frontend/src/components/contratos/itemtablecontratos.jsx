@@ -1,9 +1,9 @@
 // ItemTablaContrato.jsx
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Pencil, Paperclip, Eye, Download, User, Building2 } from "lucide-react";
+import { Pencil, Paperclip, Eye, Download, User, Building2,HandCoins} from "lucide-react";
 
-function ItemTablaContrato({ item, setLoading, user, onEditar, onAgregarDoc, onVerObservaciones, viewMode = "desktop" }) {
+function ItemTablaContrato({ item, setLoading, user, onEditar, onAgregarDoc, onVerObservaciones, viewMode = "desktop",setIsOpenU,setContrato}) {
   const apiUrl = import.meta.env.VITE_API_URL;
   const baseurl = "/api/documentos/obtenertarjetas";
   const [base, setBase] = useState("");
@@ -87,6 +87,11 @@ function ItemTablaContrato({ item, setLoading, user, onEditar, onAgregarDoc, onV
       setLoading(false);
     }
   };
+  const handlemostratultimosoago =async () =>
+  {
+   setIsOpenU(true);
+   setContrato(item);
+  }
 
   // Vista Desktop (Tabla)
   if (viewMode === "desktop") {
@@ -199,6 +204,11 @@ function ItemTablaContrato({ item, setLoading, user, onEditar, onAgregarDoc, onV
             >
               <Eye size={12} /> Ver
             </button>
+            <button
+              onClick={handlemostratultimosoago}             className="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-50 text-gray-700 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors"
+            > 
+              <HandCoins size={24} /> Ver
+ s           </button>
           </div>
         </td>
       </tr>

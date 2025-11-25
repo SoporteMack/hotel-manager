@@ -27,4 +27,5 @@ router.post('/actualizargeneral',verificarToken,contratos.actualizarContratogene
 router.get('/nombredep',verificarToken,contratos.nombreDep);
 router.get('/undia',verificarToken,contratos.venceundia);
 router.post('/terminar',verificarToken,contratos.cancelarContrato);
+router.post('/ultimospagos',verificarToken,contratos.ultimospagos);
 module.exports = router;

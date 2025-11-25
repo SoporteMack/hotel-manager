@@ -5,17 +5,17 @@ import fs from 'fs'
 
 export default defineConfig({
   server: {
-    port: 5173,
+    port: 5174,
     // Permitir todos los hosts ngrok
     allowedHosts: [
       'localhost',
       '.ngrok-free.app'  // Permite cualquier subdominio de ngrok
     ],
     host: '0.0.0.0', 
-    /*https: {
+    https: {
       key: fs.readFileSync('localhost+2-key.pem'),
       cert: fs.readFileSync('localhost+2.pem')
-    },*/
+    },
     
   },
   plugins: [

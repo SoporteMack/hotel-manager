@@ -4,6 +4,7 @@ const departamentos = require('../models/departamentos');
 const personas = require('../models/personas');
 const pagos = require('../models/pagos');
 const Configuracion = require('../models/configuracion')
+const sequelize = require('sequelize')
 const { Departamentos, Detalles } = require('../models');
 
 const path = require('path');
@@ -595,5 +596,25 @@ exports.editarObservaciones = async (req, res) => {
     res.status(200).json({ status: true, msg: "se atulizaron correctamnete las observaciones " })
   } catch (error) {
     res.status(500).json({ statu: false, msg: "error al acutlizar observaciones" })
+  }
+}
+
+exports.ultimospagos = async (req,res)=>{
+  const {idContrato} = req.body;
+  try {
+    const numpagos = await pagos.findAll({
+      attributes:[[sequelize.fn('COUNT',sequelize.col('numPago')),'numPago']],
+      where:{idContrato:idContrato},
+      raw:true
+    })
+    const pagosd = await pagos.findAll({where:{idContrato:idContrato}});
+    const data = {
+      numpagos:numpagos[0].numPago,
+      pagos:pagosd
+    }
+    res.status(200).json(data);
+  } catch (error) {
+    console.log(error)
+    res.status(500).json(error);
   }
 }

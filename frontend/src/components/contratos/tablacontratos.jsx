@@ -5,7 +5,7 @@ import ModalAgregarDocs from "./modalAgregarDocs";
 import ModalObservaciones from "./modalObservaciones";
 import { ItemTablaContrato } from "./itemtablecontratos";
 
-function TablaContratos({ items, setLoading, setIsOpen, setContrato, listar }) {
+function TablaContratos({ items, setLoading, setIsOpen, setContrato, listar,setIsOpenU}) {
   const { user } = useAuth();
   const [modalAddDoc, setModalAddDoc] = useState(false);
   const [openObservaciones, setOpenObservaciones] = useState(false);
@@ -71,6 +71,8 @@ function TablaContratos({ items, setLoading, setIsOpen, setContrato, listar }) {
                 onAgregarDoc={() => handleAgregarDoc(item)}
                 onVerObservaciones={() => handleVerObservaciones(item)}
                 viewMode="desktop"
+                setIsOpenU={setIsOpenU}
+                setContrato={setContrato}
               />
             ))}
           </tbody>

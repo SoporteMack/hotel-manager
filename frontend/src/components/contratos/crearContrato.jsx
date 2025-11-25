@@ -61,6 +61,7 @@ function CrearContrato() {
       return fecha.getFullYear() + "-" + String(fecha.getMonth()).padStart(2, "0") + "-" + String(fecha.getDate()).padStart(2, "0");
     }
     const fecha = new Date();
+    fecha.setMonth(fecha.getMonth()+1);
     const fechaS = new Date(fecha); // importante: crear nueva fecha para no mutar la misma
     fechaS.setMonth(fecha.getMonth() + 6);
   
