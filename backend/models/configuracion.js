@@ -5,7 +5,7 @@ const Configuracion = sequelize.define('configuraciones', {
     telefono: {
         type: DataTypes.STRING(15),
         allowNull: false,
-        primaryKey: true, // ✅ clave primaria
+        primaryKey: true,
         validate: {
             notNull: { msg: 'El teléfono es obligatorio' },
             notEmpty: { msg: 'El teléfono no puede estar vacío' },
@@ -13,14 +13,16 @@ const Configuracion = sequelize.define('configuraciones', {
             len: { args: [10, 15], msg: 'El teléfono debe tener entre 10 y 15 dígitos' }
         }
     },
+
     horaRepDiario: {
-        type: DataTypes.TIME, // Guarda en formato HH:mm:ss en MySQL
+        type: DataTypes.TIME,
         allowNull: false,
         validate: {
-          notNull: { msg: 'La hora de reporte es obligatoria' },
-          notEmpty: { msg: 'La hora de reporte no puede estar vacía' }
+            notNull: { msg: 'La hora de reporte es obligatoria' },
+            notEmpty: { msg: 'La hora de reporte no puede estar vacía' }
         },
     },
+
     numCuenta: {
         type: DataTypes.STRING(20),
         allowNull: false,
@@ -31,6 +33,7 @@ const Configuracion = sequelize.define('configuraciones', {
             len: { args: [10, 20], msg: 'El número de cuenta debe tener entre 10 y 20 dígitos' }
         }
     },
+
     banco: {
         type: DataTypes.STRING(50),
         allowNull: false,
@@ -39,6 +42,7 @@ const Configuracion = sequelize.define('configuraciones', {
             notEmpty: { msg: 'El banco no puede estar vacío' }
         }
     },
+
     titular: {
         type: DataTypes.STRING(50),
         allowNull: false,
@@ -47,75 +51,83 @@ const Configuracion = sequelize.define('configuraciones', {
             notEmpty: { msg: 'El titular no puede estar vacío' }
         }
     },
-    bienvenida:{
-        type: DataTypes.TEXT(50),
+
+    bienvenida: {
+        type: DataTypes.TEXT,
         allowNull: false,
         validate: {
-            notNull: { msg: 'La bienvenida es obligatorio' },
-            notEmpty: { msg: 'La bienvenida no puede estar vacío' }
+            notNull: { msg: 'La bienvenida es obligatoria' },
+            notEmpty: { msg: 'La bienvenida no puede estar vacía' }
         }
     },
-    envioNotas:{
-        type: DataTypes.TEXT(50),
-        allowNull: false,
-        validate: {
-            notNull: { msg: 'El mensaje es obligatorio' },
-            notEmpty: { msg: 'El mensaje no puede estar vacío' }
-        }
-    },
-    envioContrato:{
-        type: DataTypes.TEXT(50),
+
+    envioNotas: {
+        type: DataTypes.TEXT,
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
             notEmpty: { msg: 'El mensaje no puede estar vacío' }
         }
     },
-    vencimiento3Dias:{
-        type: DataTypes.TEXT(50),
+
+    envioContrato: {
+        type: DataTypes.TEXT,
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
             notEmpty: { msg: 'El mensaje no puede estar vacío' }
         }
     },
-    vencimiento1Dia:{
-        type: DataTypes.TEXT(50),
+
+    vencimiento3Dias: {
+        type: DataTypes.TEXT,
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
             notEmpty: { msg: 'El mensaje no puede estar vacío' }
         }
     },
-    bienvenidaP:{
-        type: DataTypes.TEXT(50),
-        allowNull: false,
-        validate: {
-            notNull: { msg: 'La bienvenida es obligatorio' },
-            notEmpty: { msg: 'La bienvenida no puede estar vacío' }
-        }
-    },
-    envioNotasP:{
-        type: DataTypes.TEXT(50),
+
+    vencimiento1Dia: {
+        type: DataTypes.TEXT,
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
             notEmpty: { msg: 'El mensaje no puede estar vacío' }
         }
     },
-    vencimiento3DiasP:{
-        type: DataTypes.TEXT(50),
+
+    bienvenidaP: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        validate: {
+            notNull: { msg: 'La bienvenida es obligatoria' },
+            notEmpty: { msg: 'La bienvenida no puede estar vacía' }
+        }
+    },
+
+    envioNotasP: {
+        type: DataTypes.TEXT,
         allowNull: false,
         validate: {
             notNull: { msg: 'El mensaje es obligatorio' },
             notEmpty: { msg: 'El mensaje no puede estar vacío' }
         }
     },
-    
+
+    vencimiento3DiasP: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        validate: {
+            notNull: { msg: 'El mensaje es obligatorio' },
+            notEmpty: { msg: 'El mensaje no puede estar vacío' }
+        }
+    },
+
 }, {
     timestamps: false,
     freezeTableName: true,
-    id: false // ✅ Evita que Sequelize agregue automáticamente `id`
+    id: false
 });
 
 module.exports = Configuracion;
