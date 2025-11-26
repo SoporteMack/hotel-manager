@@ -1,44 +1,46 @@
-const {DataTypes, NOW} = require('sequelize');
+const { DataTypes, NOW } = require('sequelize');
 const sequelize = require('../config/database');
-const contratos = require('./contratos');
-const pagos = sequelize.define('pagos',{
-    folio:{
-        type:DataTypes.INTEGER,
-        primaryKey:true,
-        autoIncrement:true,
+const cobrosR = require('./cobrosR');
+
+const pagos = sequelize.define('pagos', {
+    folio: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
     },
-    numPago:{
-        type:DataTypes.INTEGER,
-        allowNull:false,
+    idCobro: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
-    monto:{
-        type:DataTypes.FLOAT,
-        allowNull:false,
-        validate:{
-            isFloat:{msg:'Monto de pago no es valido debe de ser numerico'}
-        },
-    },
-    fechaPago:{
-        type:DataTypes.DATE,
-        allowNull:false,
-        defaultValue:NOW,
-        validate:{
-            isDate:{msg:"No es Valido la fecha"}
+    monto: {
+        type: DataTypes.FLOAT(8, 3),
+        allowNull: false,
+        validate: {
+            isFloat: { msg: "Monto del pago no válido" }
         }
     },
-    idContrato:{
-        type:DataTypes.INTEGER,
-        allowNull:false,
+    fechaPago: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+        defaultValue: NOW,
+        validate: {
+            isDate: { msg: "Fecha de pago no válida" }
+        }
     }
-},{timestamps:false});
-// Relación 1:N
-contratos.hasMany(pagos, {
-    foreignKey: 'idContrato',
-    sourceKey: 'idContrato'
-  });
-  
-  pagos.belongsTo(contratos, {
-    foreignKey: 'idContrato',
-    targetKey: 'idContrato'
-  });
+}, {
+    timestamps: false,
+    freezeTableName: true
+});
+
+// Relación: un cobro tiene muchos pagos
+cobrosR.hasMany(pagos, {
+    foreignKey: 'idCobro',
+    onDelete: 'CASCADE'
+});
+
+pagos.belongsTo(cobrosR, {
+    foreignKey: 'idCobro',
+    onDelete: 'CASCADE'
+});
+
 module.exports = pagos;

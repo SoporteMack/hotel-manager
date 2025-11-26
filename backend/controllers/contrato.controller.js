@@ -19,6 +19,7 @@ const mammoth = require('mammoth'); // para convertir docx a HTML
 const puppeteer = require('puppeteer');
 const { NumerosALetras } = require('numero-a-letras');
 const persona = require('../models/personas');
+const cobrosR = require('../models/cobrosR');
 
 
 exports.listar = async (req, res) => {
@@ -112,6 +113,12 @@ exports.crear = async (req, res) => {
   try {
     const data = req.body;
     const files = req.files;
+    const fecha = new Date(data.fechaInicio);
+    const fechaVencimiento = new Date(fecha);
+    const numdep = data.numDepartamento;
+    fechaVencimiento.setMonth(fechaVencimiento.getMonth() + 1);
+    const preciodep = await departamentos.findByPk(numdep,{attributes:["costo"]});
+  
 
     // Validaciones
     if (!data || !files) return res.status(400).json({ msg: "Datos incompletos" });
@@ -157,6 +164,14 @@ exports.crear = async (req, res) => {
 
 
     const condb = await contratos.create(data);
+    const datacobro = {
+      idContrato: condb.idContrato,
+      periodo:formatearFecha(fecha),
+      monto:preciodep.costo,
+      fechaVencimiento:formatearFecha(fechaVencimiento),
+      estatus:true
+    }
+    await cobrosR.create(datacobro);
     await departamentos.update(
       { estatus: false },
       { where: { numDepartamento: data.numDepartamento } }
@@ -185,7 +200,7 @@ exports.porcentajeocupado = async (req, res) => {
         model: departamentos,
         as: 'departamento',
         attributes: [], // no necesitas columnas extra
-        required: true
+        required: 1
       }],
       raw: true
     });
@@ -617,4 +632,14 @@ exports.ultimospagos = async (req,res)=>{
     console.log(error)
     res.status(500).json(error);
   }
+}
+
+const formatearFecha = (fecha) => {
+  const d = new Date(fecha);
+  let month = '' + (d.getMonth() + 1);
+  let day = '' + d.getDate();
+  const year = d.getFullYear();
+  const formattedMonth = month.length < 2 ? '0' + month : month;
+  const formattedDay = day.length < 2 ? '0' + day : day;
+  return [year, formattedMonth, formattedDay].join('-');
 }
