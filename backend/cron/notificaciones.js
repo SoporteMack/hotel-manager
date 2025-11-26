@@ -6,7 +6,7 @@ const configuracion = require("../models/configuracion");
 
 schedule.scheduleJob('00 58 11 * * *', async () => {
   const fecha = new Date();
-  fecha.setDate(fecha.getDate() + 3);
+  fecha.setDate(fecha.getDate() + 2);
   const fechaformateada = fromatearfecha(fecha);
   const sock = getSock(); // ✅ obtener sock actual
   if (!sock) {
@@ -33,7 +33,7 @@ schedule.scheduleJob('00 58 11 * * *', async () => {
       console.error('❌ Error al enviar mensaje:', err);
     }
   }
-vencimiento1dia(fecha);
+//vencimiento1dia(fecha);
 
 });
 const fromatearfecha = (fecha) => {

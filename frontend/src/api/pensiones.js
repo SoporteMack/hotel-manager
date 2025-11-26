@@ -10,3 +10,4 @@ export const crearPension = (data)=> API.post('api/pension/crear',data);
 export const actualizarPension = (data) =>API.post('api/pension/actualizar',data);
 export const tienecom = (idPersona)=>API.get('api/pension/personas/com',{params:{idPersona:idPersona}});
 export const nombre = (idPersona)=>API.get('api/pension/personas/nombre',{params:{idPersona:idPersona}});
+export const  pagoxcobro = (data) => API.post('api/pension/cobros/cobrosxpago',data);

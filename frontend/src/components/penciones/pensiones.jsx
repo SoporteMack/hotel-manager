@@ -8,6 +8,7 @@ import TarjetaPension from "./tarjetaPension";
 import Loader from "../items/loader"
 import ModalPagos from "./modalPagos";
 import { crear } from "../../api/pagosp";
+import ModalMostrarPagos from "./modalMostrarPagos";
 
 export default function Pensiones() {
   const [listaPensiones, setListaPensiones] = useState([]);
@@ -20,6 +21,7 @@ export default function Pensiones() {
   const [mPagos, setMPagos] = useState(false);
   const [pension,setPension] = useState({});
   const [nombre,setNombre] = useState("");
+  const [modalMPagos,setModalMPagos] = useState(false);
 
   const { user } = useAuth();
   const notyf = useRef(new Notyf({ duration: 3000, dismissible: true }));
@@ -137,7 +139,7 @@ export default function Pensiones() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pensionesFiltradas.map((p) => (
             <div key={p.idPension}>
-              <TarjetaPension pension={p} abrirModalEditar={() => abrirModalEditar(p)} setMPago={setMPagos} setItem={setPension} setNombre={setNombre}/>
+              <TarjetaPension pension={p} abrirModalEditar={() => abrirModalEditar(p)} setMPago={setMPagos} setItem={setPension} setNombre={setNombre} setModalPagos={setModalMPagos} setPensionData={setPension}/>
             </div>
           ))}
         </div>
@@ -149,6 +151,7 @@ export default function Pensiones() {
         onSave={guardarPension}
         initialData={modalData}
       />
+      <ModalMostrarPagos isOpen={modalMPagos} setIsOpen={setModalMPagos} pension={pension}/>
       <ModalPagos isOpen={mPagos} onClose={() => setMPagos(false)} pension={pension} onGuardar={handleGuardar} nombre={nombre} listar={listar}/>
     </section>
   );

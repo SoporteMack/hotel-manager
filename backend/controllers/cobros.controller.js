@@ -58,3 +58,30 @@ exports.vigencia = async (req,res) =>
     return res.status(500).json(error)
   }
 }
+
+exports.cobrosxpagos = async (req,res) =>{
+  try
+  {
+    const {idPension} = req.body;
+    const response = await Cobro.findAll(
+      {
+        attributes:["periodo","estado","fechaVencimiento"],
+        include:[
+          {
+            model:Pago,
+            as:"pagoPs",
+            attributes:["idPago","fechaPago","montoPagado"]
+          }
+        ],
+        where:{idPension:idPension},
+        order: [["periodo", "ASC"]],
+        raw:true
+      }
+    )
+    res.status(200).json(response)
+  }catch (error)
+  {
+    console.log(error);
+    res.status(500).json(error);
+  }
+}
