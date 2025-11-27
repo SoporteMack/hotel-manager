@@ -1,121 +1,90 @@
 const schedule = require('node-schedule');
+const pagos = require('../models/pagos');
 const contratos = require('../models/contratos');
 const departamentos = require('../models/departamentos');
-const { where, Op } = require('sequelize');
+const { Op} = require('sequelize');
+const sequelize = require('sequelize')
+const cobrosR = require('../models/cobrosR');
 
-schedule.scheduleJob('59 59 23 * * *', async () => {
-    const fecha = new Date();
-    const diaanterior = new Date();
-    diaanterior.setDate(diaanterior.getDate() - 1);
-    diaanterior.setMonth(diaanterior.getMonth()+1);
-    const formdiaant = formatFechaHoraLocal(diaanterior);
-    const fechaformateada = formatFechaHoraLocal(fecha);
-    const dep = await obtenerdep(fechaformateada);
+schedule.scheduleJob('0 19 12 * * *', async () => {
+    const hoy = formatearFecha(new Date());
+    const fechaAnterior = new Date(hoy);
+    const diaAnterior = formatearFecha(fechaAnterior);
+    const vencimeintosAyer = await cobrosR.findAll({ where: { fechaVencimiento: diaAnterior, estado: 0 } });
+    vencimeintosAyer.map(async (item) => {
+        try {
+            const costoDepa = await findCostoDepa(item.idContrato);
+            const fecha = new Date(item.fechaVencimiento);
+            fecha.setDate(fecha.getDate() + 2);
+            const nuevoPeriodo = formatearFecha(fecha)
+            fecha.setMonth(fecha.getMonth() + 1);
+            fecha.setDate(fecha.getDate() - 1);
+            const nuevaFechaVencimiento = formatearFecha(fecha);
+            const data = {
+                idContrato: item.idContrato,
+                periodo: nuevoPeriodo,
+                monto:costoDepa,
+                fechaVencimiento: nuevaFechaVencimiento,
+                estado: 0
+            };
+            await cobrosR.create(data);
+            await restardeuda(item.idContrato, nuevaFechaVencimiento, costoDepa, null);
+        }
+        catch (error) {
+            console.log('Error al aumentar interes por retraso en pago para contrato:', item.idContrato, error);
+        }
+    });
 
-    await aumentarInteres(formdiaant);
-    await aumentarDeuda(dep);
-    //await terminarContrato(formatFechaHoraLocal(fecha))
 });
 
-const formatFechaHoraLocal = (fecha) => {
-    const f = new Date(fecha);
-    const pad = n => n.toString().padStart(2, '0');
-    return `${f.getFullYear()}-${pad(f.getMonth() + 1)}-${pad(f.getDate())}`;
-};
-
-const obtenerdep = async (fecha) => {
-    try {
-        const contratosdb = await contratos.findAll({
-            attributes: ["idContrato", "deuda","fechaPago"],
-            where: { fechaPago: fecha, estatus: 1 },
-            required: false,
-            include: [{
-                model: departamentos,
-                as: "departamento",
-                attributes: ["costo"]
-            }],
-            raw: true
-        })
-        return contratosdb;
-    } catch (error) {
-        return [];
-    }
+const findCostoDepa = async (idContrato) => {
+    const contrato = await contratos.findByPk(idContrato);
+    const departamento = await departamentos.findByPk(contrato.numDepartamento);
+    return departamento.costo;
 }
 
-const aumentarDeuda = async (deps) => {
-    if (!deps || deps.length === 0) {
-        console.log('⚠️ No hay contratos para procesar.');
-        return;
-    }
-
-    for (const dep of deps) {
-        const id = dep.idContrato;
-        const deudaActual = parseFloat(dep.deuda);
-        const fechaPago = new Date(dep.fechaPago);
-        fechaPago.setDate(fechaPago.getDate()+1)
-        fechaPago.setMonth(fechaPago.getMonth()+1);
-        const costo = parseFloat(dep['departamento.costo']) || 0;
-
-        const nuevaDeuda = deudaActual + costo;
-        try {
-            await contratos.update(
-                { deuda: nuevaDeuda,fechaPago:fechaPago },
-                { where: { idContrato: id } }
-            );
-            console.log(`✅ Deuda actualizada para contrato ${id}: ${nuevaDeuda}`);
-        } catch (error) {
-            console.error(`❌ Error al actualizar contrato ${id}:`, error);
-        }
-    }
-};
-
-const aumentarInteres = async (diaAnterior) => {
-    try {
-        const contratosdb = await obenterretaatrasada(diaAnterior)
-        for (const contrato of contratosdb) {
-            const costo = contrato['departamento.costo'] || 0;
-            const interes = Math.round(costo * 0.10);
-            const nuevadeuda = parseFloat(contrato.deuda) + interes;
-            await contratos.update({ deuda: nuevadeuda }, { where: { idContrato: contrato.idContrato } });
-
-        }
-    } catch (error) {
-        console.log(error)
-    }
-
+const formatearFecha = (fecha) => {
+    const d = new Date(fecha);
+    let month = '' + (d.getMonth() + 1);
+    let day = '' + d.getDate();
+    const year = d.getFullYear();
+    const formattedMonth = month.length < 2 ? '0' + month : month;
+    const formattedDay = day.length < 2 ? '0' + day : day;
+    return [year, formattedMonth, formattedDay].join('-');
 }
 
-const obenterretaatrasada = async (fecha) => {
-    try {
-        const contratosdb = await contratos.findAll({
-            attributes: ["idContrato", "deuda"],
-            where: { fechaPago: fecha, estatus: 1,deuda:{[Op.gt]:0}},
-            required: false,
-            include: [{
-                model: departamentos,
-                as: "departamento",
-                attributes: ["costo"]
-            }],
-            raw: true
-        })
-        return contratosdb;
-    } catch (error) {
-        return [];
+const restardeuda = async (idContrato, _fecha, _monto, _deuda) => {
+  try {
+    // Sumar todos los 'monto' de cobrosR para este contrato
+    const totalCobrosRes = await cobrosR.findOne({
+      attributes: [[sequelize.fn('SUM', sequelize.col('monto')), 'totalCobros']],
+      where: { idContrato },
+      raw: true
+    });
+    const totalCobros = parseFloat(totalCobrosRes?.totalCobros) || 0;
+
+    // Obtener todos los idCobro relacionados al contrato
+    const cobrosList = await cobrosR.findAll({ attributes: ['idCobro'], where: { idContrato }, raw: true });
+    const cobrosIds = cobrosList.map(c => c.idCobro).filter(Boolean);
+
+    // Sumar todos los pagos (campo 'monto') asociados a esos idCobro
+    let totalPagos = 0;
+    if (cobrosIds.length > 0) {
+      const pagosRes = await pagos.findOne({
+        attributes: [[sequelize.fn('SUM', sequelize.col('monto')), 'totalPagos']],
+        where: { idCobro: { [Op.in]: cobrosIds } },
+        raw: true
+      });
+      totalPagos = parseFloat(pagosRes?.totalPagos) || 0;
     }
-}
 
-const terminarContrato = async (fecha) =>
-{
-    fecha.setDate
-    const contratosvencidos = await contratos.findAll({where:{fechaTermino:fecha}});
-    contratosvencidos.map(async (item)=>{
-        try{
-            await contratos.update({estatus:0},{where:{idContrato:item.idContrato}})
-            await departamentos.update({estatus:1},{where:{numDepartamento :item.numDepartamento}});
-        }catch(error)
-        {
+    // Nueva deuda = suma de cobros - suma de pagos
+    const nuevaDeuda = totalCobros - totalPagos;
 
-        }
-    })
-
+    await contratos.update({ deuda: nuevaDeuda }, { where: { idContrato } });
+    return true;
+  } catch (error) {
+    console.error('Error en restardeuda:', error);
+    return false;
+  }
 }

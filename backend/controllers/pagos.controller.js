@@ -10,6 +10,7 @@ const { nota } = require("./documentos.controller");
 const { getSock } = require('../utils/baileys');
 const fs = require('fs');
 const sequelize = require("../config/database");
+const cobrosR = require("../models/cobrosR");
 
 
 exports.listar = async (req, res) => {
@@ -19,63 +20,46 @@ exports.listar = async (req, res) => {
 
 exports.crear = async (req, res) => {
   try {
-    const { monto, fechaPago, idContrato, deuda } = req.body;
-
-    // Parsear la fecha en la zona 'America/Mexico_City'
-    const [datePart, timePart] = fechaPago.split(' ');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const [hour, minute, second] = timePart.split(':').map(Number);
-    const fecha = new Date(`${year}-${month}-$${day}`)
-    const response = await restardeuda(idContrato, fecha, monto, deuda);
-    if (response) {
-      const nuevafecha = moment.tz({
-        year,
-        month: month,
-        day,
-        hour,
-        minute,
-        second
-      }, 'America/Mexico_City').format('YYYY-MM-DD HH:mm:ss');
-      const resultado = await pagos.findOne({
-        attributes: ["numPago"],
-        where: { idContrato },
-        include: {
-          model: contratos,
-          attributes: ["estatus"],
-          required: true
-        },
-        order: [["numPago", "DESC"]],
-      });
-
-      const siguienteNumPago = resultado ? resultado.numPago + 1 : 1;
-      const estatusContrato = await contratos.findByPk(idContrato);
-      const statusIdContrato = estatusContrato?.estatus ?? null;
-
-      if (!statusIdContrato)
-        return res.status(404).json({ status: false, msg: "contrato no activo" });
-
-      const datospago = {
-        numPago: siguienteNumPago,
-        monto,
-        fechaPago: nuevafecha,
-        idContrato,
-      };
-      const pag = await pagos.create(datospago);
-      const foliopago = pag.folio;
-      const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
-      const mesC = await mesContrato(idContrato);
-      await nota(foliopago,mesC);
-      const telefono = await obtenerTelefono(idContrato);
-      await esperarArchivoListo(rutaArchivo)
-      await enviarNota(telefono, rutaArchivo,mesC)
-      const telefonoadmin = await configuracion.findOne().then(res => { return res.telefono });
-      await enviarNota(telefonoadmin, rutaArchivo,mesC)
-      
-      res.status(200).json({ status: true, msg: "Pago agregado correctamente" });
+    const { monto, fechaPago, idContrato, deuda } = req.body
+    const fecha = formatearFecha(new Date(fechaPago));
+    let datoscobro = await cobrosR.findOne({
+      where: { idContrato: idContrato, estado: 0 },
+      order: [['idCobro', 'ASC']],
+      raw: true
+    });
+    if (!datoscobro) {
+      await crearCobro(idContrato);
+      datoscobro = await cobrosR.findOne({
+      where: { idContrato: idContrato, estado: 0 },
+      order: [['idCobro', 'ASC']],
+      raw: true
+    });
     }
-    else {
-      res.status(500).json({ status: false, msg: "Pago no agregado correctamente" });
-    }
+    const precioDepa = await findCostoDepa(idContrato);
+    const idCobro = datoscobro.idCobro;
+    
+    await cobrosR.update({ estado: 1 }, { where: { idCobro: idCobro } });
+    const dataspago = {
+      monto: monto,
+      fechaPago: fecha,
+      idCobro: idCobro,
+    };
+    const pago = await pagos.create(dataspago);
+    const foliopago = pago.folio;
+    const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
+    const inicio = new Date(datoscobro.periodo).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+    const fin = new Date(datoscobro.fechaVencimiento).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+    const mesC = `${inicio} al ${fin}`;
+    console.log(mesC);
+    await nota(foliopago, mesC);
+    const telefono = await obtenerTelefono(idContrato);
+    await esperarArchivoListo(rutaArchivo)
+    await enviarNota(telefono, rutaArchivo, mesC)
+    const telefonoadmin = await configuracion.findOne().then(res => { return res.telefono });
+    await enviarNota(telefonoadmin, rutaArchivo, mesC)
+    await restardeuda(idContrato, fechaPago, monto, deuda);
+    //await cobrosR.create({ idContrato: idContrato, periodo: formatearFecha(nuevaFechaInicio), monto: precioDepa, fechaVencimiento: formatearFecha(nuevaFechaVencimiento), estado: 0 })
+    res.status(200).json({ status: true, msg: "Pago agregado" });
   } catch (e) {
     console.error(e);
     res.status(500).json({ status: false, msg: "Pago no agregado" });
@@ -291,16 +275,39 @@ exports.obtenerUltimos5IngresosDelDia = async (req, res) => {
   }
 };
 
-const restardeuda = async (idContrato, fecha, monto, deuda) => {
+const restardeuda = async (idContrato, _fecha, _monto, _deuda) => {
   try {
-    const nuevafecha = new Date(fecha);
-    nuevafecha.setMonth(fecha.getMonth(+1));
-    const nuevadeuda = deuda - monto;
-    await contratos.update({ deuda: nuevadeuda }, { where: { idContrato: idContrato } })
-    return true
+    // Sumar todos los 'monto' de cobrosR para este contrato
+    const totalCobrosRes = await cobrosR.findOne({
+      attributes: [[sequelize.fn('SUM', sequelize.col('monto')), 'totalCobros']],
+      where: { idContrato },
+      raw: true
+    });
+    const totalCobros = parseFloat(totalCobrosRes?.totalCobros) || 0;
+
+    // Obtener todos los idCobro relacionados al contrato
+    const cobrosList = await cobrosR.findAll({ attributes: ['idCobro'], where: { idContrato }, raw: true });
+    const cobrosIds = cobrosList.map(c => c.idCobro).filter(Boolean);
+
+    // Sumar todos los pagos (campo 'monto') asociados a esos idCobro
+    let totalPagos = 0;
+    if (cobrosIds.length > 0) {
+      const pagosRes = await pagos.findOne({
+        attributes: [[sequelize.fn('SUM', sequelize.col('monto')), 'totalPagos']],
+        where: { idCobro: { [Op.in]: cobrosIds } },
+        raw: true
+      });
+      totalPagos = parseFloat(pagosRes?.totalPagos) || 0;
+    }
+
+    // Nueva deuda = suma de cobros - suma de pagos
+    const nuevaDeuda = totalCobros - totalPagos;
+
+    await contratos.update({ deuda: nuevaDeuda }, { where: { idContrato } });
+    return true;
   } catch (error) {
-    console.log(error)
-    return false
+    console.error('Error en restardeuda:', error);
+    return false;
   }
 }
 
@@ -318,7 +325,7 @@ const obtenerTelefono = async (idContrato) => {
   return res['persona.telefono'];
 }
 
-const enviarNota = async (telefono, rutaArchivo,mes) => {
+const enviarNota = async (telefono, rutaArchivo, mes) => {
   const sock = getSock();
   const res = await configuracion.findOne();
   const msj = res.envioNotas;
@@ -415,9 +422,49 @@ const mesContrato = async (idContrato) => {
   console.log(totalnumpagos[0]['numPagos'])
   const date = new Date(fechaContrato['fechaInicio']);
   const nuevafecha = new Date(new Date(fechaContrato['fechaInicio']).setMonth(date.getMonth() + totalnumpagos[0]['numPagos']));
-  const newDate = nuevafecha.toLocaleDateString('es-Mx',{
-    timeZone:'America/Mexico_City',
-    month:'long',
+  const newDate = nuevafecha.toLocaleDateString('es-Mx', {
+    timeZone: 'America/Mexico_City',
+    month: 'long',
   })
   return newDate
-} 
+}
+
+const formatearFecha = (fecha) => {
+  const d = new Date(fecha);
+  let month = '' + (d.getMonth() + 1);
+  let day = '' + d.getDate();
+  const year = d.getFullYear();
+  const formattedMonth = month.length < 2 ? '0' + month : month;
+  const formattedDay = day.length < 2 ? '0' + day : day;
+  return [year, formattedMonth, formattedDay].join('-');
+}
+const findCostoDepa = async (idContrato) => {
+    const contrato = await contratos.findByPk(idContrato);
+    const departamento = await departamentos.findByPk(contrato.numDepartamento);
+    return departamento.costo;
+}
+
+const crearCobro = async (idContrato) => 
+  {
+    const precioDepa = await findCostoDepa(idContrato);
+    const datoscobro = await cobrosR.findOne({
+      where: { idContrato: idContrato, estado: 1 },
+      order: [['idCobro', 'DESC']],
+      raw: true
+    });
+    const periodo = datoscobro ? new Date(datoscobro.fechaVencimiento) : new Date();
+    periodo.setDate(periodo.getDate() + 2);
+    const nuevoPeriodo = formatearFecha(periodo);
+    periodo.setMonth(periodo.getMonth() + 1);
+    periodo.setDate(periodo.getDate() -1);
+    const nuevoaFechaVencimiento = formatearFecha(periodo);
+    const data =
+    {
+      idContrato: idContrato,
+      periodo:nuevoPeriodo,
+      monto: precioDepa,
+      fechaVencimiento: nuevoaFechaVencimiento, 
+      estado: 0,
+    }
+    await cobrosR.create(data);
+  }

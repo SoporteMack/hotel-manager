@@ -17,6 +17,7 @@ const { NumerosALetras } = require('numero-a-letras');
 const { Departamentos, Detalles } = require('../models');
 const { Pensiones, PersonasP, Tarifas, Cobro, Pago, PensionesTarifa } = require('../models/assosiation');
 const sequelize = require('../config/database');
+const cobrosR = require('../models/cobrosR');
 
 exports.tarjeta = async (req, res) => {
   try {
@@ -121,11 +122,11 @@ exports.nota = async (folio,mesC) => {
       folio: dato.folio,
       fecha: new Date().toLocaleDateString(),
       cliente: {
-        nombre: `${dato['contrato.persona.nombrePersona']} ${dato['contrato.persona.apellidoPaterno']} ${dato['contrato.persona.apellidoMaterno']}`,
+        nombre: `${dato['cobrosR.contrato.persona.nombrePersona']} ${dato['cobrosR.contrato.persona.apellidoPaterno']} ${dato['cobrosR.contrato.persona.apellidoMaterno']}`,
         direccion: '4 Poniente 1414, Puebla',
       },
       productos: [
-        { descripcion: `ABONO RENTA ${dato['contrato.departamento.descripcion']} del mes ${mesC}`.toUpperCase(), cantidad: 1, precio: dato.monto },
+        { descripcion: `ABONO RENTA ${dato['cobrosR.contrato.departamento.descripcion']} del mes \n${mesC}`.toUpperCase(), cantidad: 1, precio: dato.monto },
       ],
     };
 
@@ -199,7 +200,8 @@ exports.nota = async (folio,mesC) => {
 
     doc.end();
   } catch (error) {
-    return res.status(500).json(error);
+    console.log(error)
+    return error
   }
 
 }
@@ -675,28 +677,39 @@ const generarContrato = async (idContrato) => {
 };
 
 const contrato = async (folio) => {
+  // Trae el pago por folio, incluyendo el cobro relacionado y
+  // el contrato asociado (con persona y departamento).
   const data = await pagos.findOne({
-    attributes: ["folio", "monto", "fechaPago", "numPago"],
+    attributes: ["folio", "monto", "fechaPago"],
     where: { folio: folio },
-    include: [{
-      model: contratos,
-      as: "contrato",
-      attributes: ["idContrato"],
-      include: [
-        {
-          model: personas,
-          as: "persona",
-          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
-        },
-        {
-          model: departamentos,
-          as: "departamento",
-          attributes: ["descripcion"]
-        }
-      ]
-    }],
-    raw: true
-  })
+    include: [
+      {
+        model: cobrosR,
+        as: "cobrosR",
+        attributes: ['idCobro'],
+        include: [
+          {
+            model: contratos,
+            as: "contrato",
+            attributes: ["idContrato"],
+            include: [
+              {
+                model: personas,
+                as: "persona",
+                attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
+              },
+              {
+                model: departamentos,
+                as: "departamento",
+                attributes: ["descripcion"]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    raw: true,
+  }); 
   return data;
 }
 
@@ -719,16 +732,20 @@ const pagosbd = async (fecha) => {
             {
               model: personas,
               as: "persona",
-              attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
+              attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
+              raw: true
             },
             {
               model: departamentos,
               as: "departamento",
-              attributes: ["descripcion"]
+              attributes: ["descripcion"],
+              raw: true
             }
           ]
-        }
+        },
+        
       ],
+      raw: true,
       where: {
         fechaPago: {
           [Op.between]: [start, end],

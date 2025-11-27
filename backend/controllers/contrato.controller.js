@@ -115,6 +115,8 @@ exports.crear = async (req, res) => {
     const files = req.files;
     const fecha = new Date(data.fechaInicio);
     const fechaVencimiento = new Date(fecha);
+    fecha.setDate(fecha.getDate()+1);
+    fechaVencimiento.setDate(fechaVencimiento.getDate())
     const numdep = data.numDepartamento;
     fechaVencimiento.setMonth(fechaVencimiento.getMonth() + 1);
     const preciodep = await departamentos.findByPk(numdep,{attributes:["costo"]});
