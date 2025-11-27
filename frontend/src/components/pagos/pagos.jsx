@@ -128,9 +128,8 @@ function Pagos() {
 
 
   const formatFechaHoraLocal = (fecha) => {
-    const f = new Date(fecha);
-    const pad = n => n.toString().padStart(2, '0');
-    return `${f.getFullYear()}-${pad(f.getMonth() + 1)}-${pad(f.getDate())} ${pad(f.getHours())}:${pad(f.getMinutes())}:${pad(f.getSeconds())}`;
+    const [fechas,hora] = fecha.split(',');   
+    return fechas;
   };
 
   const items = useMemo(() => {
@@ -195,7 +194,6 @@ function Pagos() {
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="px-4 py-2 font-medium whitespace-nowrap">Folio</th>
-              <th className="px-4 py-2 font-medium whitespace-nowrap"># Pago</th>
               <th className="px-4 py-2 font-medium whitespace-nowrap">Nombre</th>
               <th className="px-4 py-2 font-medium whitespace-nowrap">Monto</th>
               <th className="px-4 py-2 font-medium whitespace-nowrap">Fecha de Pago</th>
@@ -206,13 +204,13 @@ function Pagos() {
             {items.map((pago, index) => (
               <tr key={index} className="hover:bg-gray-50">
                 <td className="px-4 py-2 whitespace-nowrap">{pago.folio}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{pago.numPago}</td>
                 <td className="px-4 py-2 whitespace-nowrap">
-                  {`${pago.contrato?.persona?.nombrePersona ?? ''} ${pago.contrato?.persona?.apellidoPaterno ?? ''} ${pago.contrato?.persona?.apellidoMaterno ?? ''}`}
+                  {`${pago.cobrosR.contrato?.persona?.nombrePersona ?? ''} ${pago.cobrosR.contrato?.persona?.apellidoPaterno ?? ''} ${pago.cobrosR.contrato?.persona?.apellidoMaterno ?? ''}`}
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   ${pago.monto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                 </td>
+                
                 <td className="px-4 py-2 whitespace-nowrap">
                   {formatFechaHoraLocal(pago.fechaPago)}
                 </td>

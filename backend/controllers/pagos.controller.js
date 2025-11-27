@@ -21,7 +21,8 @@ exports.listar = async (req, res) => {
 exports.crear = async (req, res) => {
   try {
     const { monto, fechaPago, idContrato, deuda } = req.body
-    const fecha = formatearFecha(new Date(fechaPago));
+    // Use a Date object to avoid Moment deprecation warnings when Sequelize handles DATE/DATEONLY
+    const fecha = fechaPago ? new Date(fechaPago) : new Date();
     let datoscobro = await cobrosR.findOne({
       where: { idContrato: idContrato, estado: 0 },
       order: [['idCobro', 'ASC']],
@@ -30,18 +31,19 @@ exports.crear = async (req, res) => {
     if (!datoscobro) {
       await crearCobro(idContrato);
       datoscobro = await cobrosR.findOne({
-      where: { idContrato: idContrato, estado: 0 },
-      order: [['idCobro', 'ASC']],
-      raw: true
-    });
+        where: { idContrato: idContrato, estado: 0 },
+        order: [['idCobro', 'ASC']],
+        raw: true
+      });
     }
     const precioDepa = await findCostoDepa(idContrato);
     const idCobro = datoscobro.idCobro;
-    
+
     await cobrosR.update({ estado: 1 }, { where: { idCobro: idCobro } });
+    fecha.setMonth(fecha.getMonth() + 1);
     const dataspago = {
       monto: monto,
-      fechaPago: fecha,
+      fechaPago: fecha, // Date object
       idCobro: idCobro,
     };
     const pago = await pagos.create(dataspago);
@@ -74,8 +76,8 @@ exports.editar = async (req, res) => {
     if (!pago) {
       return res.status(404).json({ estatus: false, msj: "Pago no encontrado" });
     }
-
-    const idContrato = pago.idContrato;
+    const datoscobro = await cobrosR.findByPk(pago.idCobro);
+    const idContrato = datoscobro.idContrato;
     const montoActual = pago.monto;
     const diferencia = montoActual - monto; // si aumentas el monto, aumenta la deuda
     const contrato = await contratos.findOne({
@@ -158,40 +160,73 @@ exports.ingresosdeldia = async (req, res) => {
 
 exports.listarpagosporfecha = async (req, res) => {
   try {
-    const inicio = moment.tz(req.query.inicio, 'America/Mexico_City').startOf('day').format('YYYY-MM-DD HH:mm:ss');
-    const fin = moment.tz(req.query.fin, 'America/Mexico_City').endOf('day').format('YYYY-MM-DD HH:mm:ss');
-    const lista = await pagos.findAll({
-      attributes: ["folio", "numPago", "monto", "fechaPago"],
-      where: {
-        fechaPago: {
-          [Op.gte]: inicio,
-          [Op.lt]: fin
-        }
-      },
+    console.log('req.query', req.query);
+    const { inicio: inicioStr, fin: finStr } = req.query;
+
+    if (!inicioStr || !finStr) {
+      return res.status(400).json({ error: 'Parámetros inicio y fin requeridos' });
+    }
+
+    const inicio = moment.tz(inicioStr, "YYYY-MM-DD", 'America/Mexico_City')
+      .startOf('day')
+      .toDate();
+
+    const fin = moment.tz(finStr, "YYYY-MM-DD", 'America/Mexico_City')
+      .endOf('day')
+      .toDate();
+
+
+    
+const lista = await pagos.findAll({
+  attributes: ["folio", "monto", "fechaPago"],
+  where: {
+    fechaPago: {
+      [Op.gte]: inicio,
+      [Op.lte]: fin  // <-- mejor que lt
+    }
+  },
+  include: [
+    {
+      model: cobrosR,
+      attributes: ["idCobro", "periodo"],
+      as: "cobrosR",
       include: [{
         model: contratos,
         attributes: ["idcontrato", "deuda"],
         as: "contrato",
-        include: [{
-          model: personas,
-          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
-          as: "persona"
-        },
-        {
-          model: departamentos,
-          as: "departamento",
-          attributes: ["descripcion"]
-        }
+        include: [
+          {
+            model: personas,
+            attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
+            as: "persona"
+          },
+          {
+            model: departamentos,
+            attributes: ["descripcion"],
+            as: "departamento"
+          }
         ]
       }]
+    }
+  ]
+});
+
+    // Formatear fechas de resultado para respuesta legible
+    const listaFormateada = lista.map(item => {
+      const plain = item.toJSON ? item.toJSON() : item;
+      if (plain.fechaPago) {
+        try {
+          plain.fechaPago = new Date(plain.fechaPago).toLocaleString('es-MX', { timeZone: 'America/Mexico_City' });
+        } catch (e) { /* ignore */ }
+      }
+      return plain;
     });
 
-    return res.status(200).json({ inicio, fin, lista });
+    return res.status(200).json({ inicio: inicioStr, fin: finStr, lista: listaFormateada });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Error al obtener datos" });
   }
-
 
 }
 
@@ -439,32 +474,37 @@ const formatearFecha = (fecha) => {
   return [year, formattedMonth, formattedDay].join('-');
 }
 const findCostoDepa = async (idContrato) => {
-    const contrato = await contratos.findByPk(idContrato);
-    const departamento = await departamentos.findByPk(contrato.numDepartamento);
-    return departamento.costo;
+  const contrato = await contratos.findByPk(idContrato);
+  const departamento = await departamentos.findByPk(contrato.numDepartamento);
+  return departamento.costo;
 }
 
-const crearCobro = async (idContrato) => 
-  {
-    const precioDepa = await findCostoDepa(idContrato);
-    const datoscobro = await cobrosR.findOne({
-      where: { idContrato: idContrato, estado: 1 },
-      order: [['idCobro', 'DESC']],
-      raw: true
-    });
-    const periodo = datoscobro ? new Date(datoscobro.fechaVencimiento) : new Date();
-    periodo.setDate(periodo.getDate() + 2);
-    const nuevoPeriodo = formatearFecha(periodo);
-    periodo.setMonth(periodo.getMonth() + 1);
-    periodo.setDate(periodo.getDate() -1);
-    const nuevoaFechaVencimiento = formatearFecha(periodo);
-    const data =
-    {
-      idContrato: idContrato,
-      periodo:nuevoPeriodo,
-      monto: precioDepa,
-      fechaVencimiento: nuevoaFechaVencimiento, 
-      estado: 0,
-    }
-    await cobrosR.create(data);
-  }
+const crearCobro = async (idContrato) => {
+  const precioDepa = await findCostoDepa(idContrato);
+  const datoscobro = await cobrosR.findOne({
+    where: { idContrato: idContrato, estado: 1 },
+    order: [['idCobro', 'DESC']],
+    raw: true
+  });
+  // Calcular periodo y fechaVencimiento como objetos Date (no strings)
+  const baseDate = datoscobro ? new Date(datoscobro.fechaVencimiento) : new Date();
+  // periodo = baseDate + 2 días + 1 mes
+  const periodoDate = new Date(baseDate);
+  periodoDate.setDate(periodoDate.getDate() + 2);
+  periodoDate.setMonth(periodoDate.getMonth() + 1);
+
+  // fechaVencimiento = baseDate + 1 día + 1 mes
+  const fechaVencDate = new Date(baseDate);
+  fechaVencDate.setDate(fechaVencDate.getDate() + 1);
+  fechaVencDate.setMonth(fechaVencDate.getMonth() + 1);
+
+  const data = {
+    idContrato: idContrato,
+    periodo: formatearFecha(periodoDate), // Date object
+    monto: precioDepa,
+    fechaVencimiento: formatearFecha(fechaVencDate), // Date object
+    estado: 0,
+  };
+  console.log(data);
+  await cobrosR.create(data);
+}

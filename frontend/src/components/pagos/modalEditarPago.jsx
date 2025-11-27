@@ -52,7 +52,7 @@ function ModalEditarPago({ onClose, isOpen, data }) {
                                     id="nombrecompleto"
                                     type="text"
                                     className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                    value={`${data.contrato.persona.nombrePersona} ${data.contrato.persona.apellidoMaterno} ${data.contrato.persona.apellidoPaterno}`}
+                                    value={`${data.cobrosR.contrato.persona.nombrePersona} ${data.cobrosR.contrato.persona.apellidoMaterno} ${data.cobrosR.contrato.persona.apellidoPaterno}`}
                                     disabled
                                 />
                             </div>
@@ -69,7 +69,7 @@ function ModalEditarPago({ onClose, isOpen, data }) {
                                     type="text"
                                     className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
                                     disabled
-                                    value={data.contrato.deuda}
+                                    value={data.cobrosR.contrato.deuda}
                                 />
                             </div>
 
@@ -85,7 +85,7 @@ function ModalEditarPago({ onClose, isOpen, data }) {
                                     type="text"
                                     className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
                                     disabled
-                                    value={data.contrato.departamento.descripcion}
+                                    value={data.cobrosR.contrato.departamento.descripcion}
                                 />
                             </div>
 
