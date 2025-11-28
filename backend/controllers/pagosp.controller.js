@@ -24,15 +24,16 @@ exports.crear = async (req, res) => {
     try {
         const { idPension, monto, fechaPago } = req.body;
         const ultimoCobro = await Cobro.findOne({
-            where: { idPension },
-            order: [['idCobro', 'DESC']]
+            where: { idPension:idPension, estado: 0 },
+            order: [['idCobro', 'ASC']]
         });
         if (ultimoCobro.estado)
             return res.status(404).json({ mdg: "no hay cobros" });
         const data = { idCobro: ultimoCobro.idCobro, montoPagado: monto }
         const pago = await Pago.create(data);
         ultimoCobro.update({ estado: true });
-        const fecha = await nuevoCobro(idPension, ultimoCobro.monto, ultimoCobro.fechaVencimiento)
+        //const fecha = await nuevoCobro(idPension, ultimoCobro.monto, ultimoCobro.fechaVencimiento)
+        const fecha = formatearFecha(ultimoCobro.periodo);
         const rutaArchivo = path.join(__dirname, '../uploads', 'notaP.pdf');
         await nota(pago.idPago, fecha);
         const telefono = await obtenerTelefono(idPension);
@@ -40,6 +41,13 @@ exports.crear = async (req, res) => {
         await enviarNota(telefono, rutaArchivo, fecha)
         const telefonoadmin = await configuracion.findOne().then(res => { return res.telefono });
         await enviarNota(telefonoadmin, rutaArchivo, fecha);
+        const ultimoCobroD = await Cobro.findOne({
+            where: { idPension:idPension, estado: 0 },
+            order: [['idCobro', 'ASC']]
+        });
+        if (!ultimoCobroD) {
+            await nuevoCobro(idPension, ultimoCobro.monto, ultimoCobro.fechaVencimiento)
+        }
         res.status(200).json({ msg: "cobro exitoso" });
     } catch (error) {
         console.log(error)
@@ -252,7 +260,7 @@ const nuevoCobro = async (idPension, monto, fechaVencimiento) => {
     const res = await pensiones.findByPk(idPension);
     const tipoPension = res.tipoPension;
     const date = new Date(fechaVencimiento);
-    const fecha = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    const fecha = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()+2).padStart(2, '0');
     let vencimiento = new Date(date);
 
     if (tipoPension === "MENSUAL") {
@@ -322,11 +330,13 @@ exports.listarxfecha = async (req, res) => {
 exports.diferencia = async (req, res) => {
     const { idPension } = req.body
     try {
+
+        
         const result = await sequelize.query(`
-            SELECT SUM(monto) - SUM(montopagado) as diferencia
+            SELECT SUM(monto) - SUM(CASE WHEN montopagado IS NULL THEN 0 ELSE montopagado END) as diferencia
             FROM pagosP as pp
             RIGHT JOIN cobros as c ON c.idCobro = pp.idCobro
-            WHERE c.idPension = :idPension
+            WHERE c.idPension = idPension
         `, {
             replacements: { idPension: idPension },
             type: sequelize.QueryTypes.SELECT,
@@ -340,3 +350,80 @@ exports.diferencia = async (req, res) => {
         console.log(error)
     }
 }
+
+
+const formatearFecha = (fecha) => {
+  const d = new Date(fecha);
+  let month = '' + (d.getMonth() + 1);
+  let day = '' + d.getDate();
+  const year = d.getFullYear();
+  const formattedMonth = month.length < 2 ? '0' + month : month;
+  const formattedDay = day.length < 2 ? '0' + day : day;
+  return [year, formattedMonth, formattedDay].join('-');
+}
+
+exports.reporteEstadoPagos = async (req, res) => {
+  try {
+    // Usar raw query para mayor control y mejor performance
+    const resultado = await sequelize.query(`
+      SELECT
+        pen.idPension,
+        CONCAT(per.nombre, ' ', per.apellido) AS nombre,
+        -- MES ACTUAL
+        MAX(
+          CASE 
+            WHEN MONTH(c.periodo) = MONTH(CURDATE())
+             AND YEAR(c.periodo) = YEAR(CURDATE())
+            THEN 
+              CASE WHEN p.idPago IS NOT NULL THEN 'Pagado' ELSE 'Pendiente' END
+          END
+        ) AS mes_actual,
+
+        -- MES ANTERIOR
+        MAX(
+          CASE 
+            WHEN MONTH(c.periodo) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+             AND YEAR(c.periodo) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+            THEN 
+              CASE WHEN p.idPago IS NOT NULL THEN 'Pagado' ELSE 'Pendiente' END
+          END
+        ) AS mes_anterior,
+
+        -- HACE 2 MESES
+        MAX(
+          CASE 
+            WHEN MONTH(c.periodo) = MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH))
+             AND YEAR(c.periodo) = YEAR(DATE_SUB(CURDATE(), INTERVAL 2 MONTH))
+            THEN 
+              CASE WHEN p.idPago IS NOT NULL THEN 'Pagado' ELSE 'Pendiente' END
+          END
+        ) AS mes_2,
+
+        -- DEUDA (ULTIMOS 3 MESES)
+        COALESCE(
+          SUM(
+            CASE
+              WHEN p.idPago IS NULL
+               AND MONTH(c.periodo) BETWEEN MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) AND MONTH(CURDATE())
+              THEN c.monto
+              ELSE 0
+            END
+          ), 0
+        ) AS deuda
+      FROM cobros c
+      INNER JOIN pensiones pen ON pen.idPension = c.idPension
+      INNER JOIN personasp per ON per.idPersona = pen.idPersona
+      LEFT JOIN pagosp p ON p.idCobro = c.idCobro
+      GROUP BY pen.idPension, per.nombre, per.apellido;
+
+    `, { type: sequelize.QueryTypes.SELECT });
+
+    res.status(200).json({
+      status: true,
+      data: resultado,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ status: false, msg: 'Error al generar reporte' });
+  }
+};

@@ -9,6 +9,8 @@ import Contratos from "./components/contratos/contratos";
 import CrearContrato from "./components/contratos/crearContrato";
 import Pagos from "./components/pagos/pagos";
 import AgregarPagos from "./components/pagos/agregarPago";
+import ReporteEstadoPagos from "./components/pagos/reporteEstadoPagos";
+import ReporteEstadoPagosPension from "./components/pagosp/reporteEstadoPagosPension";
 import EditarContratos from "./components/contratos/editarContratos";
 import Configuracion from "./components/config/config";
 import RoleRoute from "./RoleRoute";
@@ -67,10 +69,12 @@ function App() {
           {/* Admin e inquilino */}
           <Route path="pagos" element={<RoleRoute allowedRoles={["admin"]}><Pagos /></RoleRoute>} />
           <Route path="agregarpago" element={<RoleRoute allowedRoles={["admin", "ayudante"]}><AgregarPagos /></RoleRoute>} />
+          <Route path="reporteestadopagos" element={<RoleRoute allowedRoles={["admin"]}><ReporteEstadoPagos /></RoleRoute>} />
           <Route path="pension/personas" element={<RoleRoute allowedRoles={["admin","ayudante"]}><AgregarPersona></AgregarPersona></RoleRoute>}></Route>
           <Route path="pension/tarifas" element={<RoleRoute allowedRoles={["admin","ayudante"]}><Tarifas></Tarifas></RoleRoute>}></Route>
           <Route path="pension/pensiones" element={<RoleRoute allowedRoles={["admin","ayudante"]}><Pensiones></Pensiones></RoleRoute>}></Route>
           <Route path="pension/pagos" element={<RoleRoute allowedRoles={["admin"]}><TablaPagos/></RoleRoute>}></Route>
+          <Route path="pension/reporteestadopagos" element={<RoleRoute allowedRoles={["admin"]}><ReporteEstadoPagosPension /></RoleRoute>} />
         </Route>
 
         {/* 404 */}

@@ -9,4 +9,5 @@ router.get('/montosdeldia',verificarToken,pagoscontroller.ingresosdeldia);
 router.get('/pagosxfecha/',verificarToken,pagoscontroller.listarpagosporfecha);
 router.get('/pagosxnombre',verificarToken,pagoscontroller.listarpagoporpersona);
 router.get('/ultimospagos',verificarToken,pagoscontroller.obtenerUltimos5IngresosDelDia);
+router.get('/reporteestadopagos',verificarToken,pagoscontroller.reporteEstadoPagos);
 module.exports = router;

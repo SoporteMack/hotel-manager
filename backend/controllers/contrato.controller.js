@@ -115,12 +115,12 @@ exports.crear = async (req, res) => {
     const files = req.files;
     const fecha = new Date(data.fechaInicio);
     const fechaVencimiento = new Date(fecha);
-    fecha.setDate(fecha.getDate()+1);
+    fecha.setDate(fecha.getDate() + 1);
     fechaVencimiento.setDate(fechaVencimiento.getDate())
     const numdep = data.numDepartamento;
     fechaVencimiento.setMonth(fechaVencimiento.getMonth() + 1);
-    const preciodep = await departamentos.findByPk(numdep,{attributes:["costo"]});
-  
+    const preciodep = await departamentos.findByPk(numdep, { attributes: ["costo"] });
+
 
     // Validaciones
     if (!data || !files) return res.status(400).json({ msg: "Datos incompletos" });
@@ -168,17 +168,44 @@ exports.crear = async (req, res) => {
     const condb = await contratos.create(data);
     const datacobro = {
       idContrato: condb.idContrato,
-      periodo:formatearFecha(fecha),
-      monto:preciodep.costo,
-      fechaVencimiento:formatearFecha(fechaVencimiento),
-      estatus:true
+      periodo: formatearFecha(fecha),
+      monto: preciodep.costo,
+      fechaVencimiento: formatearFecha(fechaVencimiento),
+      estatus: true
     }
-    await cobrosR.create(datacobro);
+    
     await departamentos.update(
       { estatus: false },
       { where: { numDepartamento: data.numDepartamento } }
     );
+    const hoy = new Date();
 
+    // Mientras la fecha del periodo sea menor o igual que hoy
+    if (fecha <= hoy) {
+
+      let periodoActual = new Date(fecha);
+      let vencimientoActual = new Date(fechaVencimiento);
+
+      while (periodoActual <= hoy) {
+        const datacobro = {
+          idContrato: condb.idContrato,
+          periodo: formatearFecha(periodoActual),
+          monto: preciodep.costo,
+          fechaVencimiento: formatearFecha(vencimientoActual),
+          estado: false  // 0 = pendiente
+        };
+
+        await cobrosR.create(datacobro);
+
+        // Avanzar un mes
+        periodoActual.setMonth(periodoActual.getMonth() + 1);
+        vencimientoActual.setMonth(vencimientoActual.getMonth() + 1);
+      }
+    }
+    else{
+      await cobrosR.create(datacobro);
+    }
+    await restardeuda(condb.idContrato, null, null, null);
     res.status(201).json({ msg: "Contrato creado correctamente", idContrato: condb.idContrato });
   } catch (e) {
     // Limpia archivos si hay error
@@ -249,7 +276,7 @@ exports.contratoxnombre = async (req, res) => {
     const apellidoP = req.query.apellidoP;
     const apellidoM = req.query.apellidoM;
     const contratosdb = await contratos.findAll({
-      attributes: ["idContrato", "idPersona", "numDepartamento", "deuda","fechaPago", "fechaInicio"],
+      attributes: ["idContrato", "idPersona", "numDepartamento", "deuda", "fechaPago", "fechaInicio"],
       where: {
         [Op.or]: [
           { deuda: { [Op.ne]: 0 } },
@@ -271,7 +298,7 @@ exports.contratoxnombre = async (req, res) => {
       {
         model: departamentos,
         as: "departamento",
-        attributes: ["costo","descripcion"]
+        attributes: ["costo", "descripcion"]
       }
       ]
     })
@@ -295,9 +322,13 @@ exports.venceundia = async (req, res) => {
 exports.vencetredias = async (fecha) => {
 
   try {
-    const res = contratos.findAll({
+    const res = cobrosR.findAll({
       attributes: ["idcontrato"],
-      include: [
+      include:[{
+        model: contratos,
+        as: "contrato",
+        attributes: ["idContrato", "numDepartamento", "idPersona"],
+        include: [
         {
           model: personas,
           as: "persona",
@@ -308,8 +339,9 @@ exports.vencetredias = async (fecha) => {
           as: "departamento",
           attributes: ["descripcion"]
         }
-      ],
-      where: { fechaPago: fecha,deuda: { [Op.gte]: 0 }  },
+      ]
+      }],
+      where: { fechaVencimiento: fecha},
       raw: true
     })
     return res
@@ -341,21 +373,23 @@ exports.buscarRentasVencidas = async () => {
       attributes: ["idContrato", "deuda"],
       where: {
         fechaTermino: {
-          [Op.between]: [hoy, unaSemana]}},
+          [Op.between]: [hoy, unaSemana]
+        }
+      },
       include: [
-            {
-              model: personas,
-              as: "persona",
-              attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
-            },
-            {
-              model: departamentos,
-              as: "departamento",
-              attributes: ["descripcion"]
-            }
-          ],
-          raw: true
-        });
+        {
+          model: personas,
+          as: "persona",
+          attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"]
+        },
+        {
+          model: departamentos,
+          as: "departamento",
+          attributes: ["descripcion"]
+        }
+      ],
+      raw: true
+    });
 
     // Usar Promise.all para manejar las operaciones asíncronas dentro del map
     const rentasConPagos = await Promise.all(rentasv.map(async (rentav) => {
@@ -409,10 +443,10 @@ exports.actualizarContratogeneral = async (req, res) => {
   }
 }
 
-exports.cancelarContrato = async (req,res)  =>{
-  const {numDep} = req.body;
+exports.cancelarContrato = async (req, res) => {
+  const { numDep } = req.body;
   try {
-    await contratos.update({estatus:0},{where:{numDepartamento:numDep}});
+    await contratos.update({ estatus: 0 }, { where: { numDepartamento: numDep } });
     res.status(200).json("actulización correcta");
   } catch (error) {
     res.status(500).json(error)
@@ -616,18 +650,18 @@ exports.editarObservaciones = async (req, res) => {
   }
 }
 
-exports.ultimospagos = async (req,res)=>{
-  const {idContrato} = req.body;
+exports.ultimospagos = async (req, res) => {
+  const { idContrato } = req.body;
   try {
     const numpagos = await pagos.findAll({
-      attributes:[[sequelize.fn('COUNT',sequelize.col('numPago')),'numPago']],
-      where:{idContrato:idContrato},
-      raw:true
+      attributes: [[sequelize.fn('COUNT', sequelize.col('numPago')), 'numPago']],
+      where: { idContrato: idContrato },
+      raw: true
     })
-    const pagosd = await pagos.findAll({where:{idContrato:idContrato}});
+    const pagosd = await pagos.findAll({ where: { idContrato: idContrato } });
     const data = {
-      numpagos:numpagos[0].numPago,
-      pagos:pagosd
+      numpagos: numpagos[0].numPago,
+      pagos: pagosd
     }
     res.status(200).json(data);
   } catch (error) {
@@ -645,3 +679,40 @@ const formatearFecha = (fecha) => {
   const formattedDay = day.length < 2 ? '0' + day : day;
   return [year, formattedMonth, formattedDay].join('-');
 }
+
+const restardeuda = async (idContrato, _fecha, _monto, _deuda) => {
+  try {
+    // Sumar todos los 'monto' de cobrosR para este contrato
+    const totalCobrosRes = await cobrosR.findOne({
+      attributes: [[sequelize.fn('SUM', sequelize.col('monto')), 'totalCobros']],
+      where: { idContrato },
+      raw: true
+    });
+    const totalCobros = parseFloat(totalCobrosRes?.totalCobros) || 0;
+
+    // Obtener todos los idCobro relacionados al contrato
+    const cobrosList = await cobrosR.findAll({ attributes: ['idCobro'], where: { idContrato }, raw: true });
+    const cobrosIds = cobrosList.map(c => c.idCobro).filter(Boolean);
+
+    // Sumar todos los pagos (campo 'monto') asociados a esos idCobro
+    let totalPagos = 0;
+    if (cobrosIds.length > 0) {
+      const pagosRes = await pagos.findOne({
+        attributes: [[sequelize.fn('SUM', sequelize.col('monto')), 'totalPagos']],
+        where: { idCobro: { [Op.in]: cobrosIds } },
+        raw: true
+      });
+      totalPagos = parseFloat(pagosRes?.totalPagos) || 0;
+    }
+
+    // Nueva deuda = suma de cobros - suma de pagos
+    const nuevaDeuda = totalCobros - totalPagos;
+
+    await contratos.update({ deuda: nuevaDeuda }, { where: { idContrato } });
+    return true;
+  } catch (error) {
+    console.error('Error en restardeuda:', error);
+    return false;
+  }
+}
+

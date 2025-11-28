@@ -33,3 +33,4 @@ export const  actualizargeneral = (data) =>API.post('api/contratos/actualizargen
 export const actualizarobservaciones = (data) => API.post('api/contratos/actualizarobservaciones',data);
 export const terminarcontrato = (data) => API.post('api/contratos/terminar',data);
 export const ultimosPago = (data) => API.post('api/contratos/ultimospagos',data);
+export const  pagoxcobro = (data) => API.post('api/cobrosr/pagosxcobro',data);

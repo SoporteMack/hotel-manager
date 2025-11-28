@@ -57,6 +57,15 @@ function Sidebar({ isOpen, onClose }) {
         </svg>
       )
     },
+    {
+      to: "/reporteestadopagos", label: "Reporte de Pagos", icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" viewBox="0 0 24 24">
+          <path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z" />
+          <path d="M8 7h8M8 11h8M8 15h5" />
+        </svg>
+      )
+    }
+
   ];
 
   const pensionLinks = [
@@ -100,6 +109,14 @@ function Sidebar({ isOpen, onClose }) {
           <path d="M4 6h16M4 12h16M4 18h16" /> {/* icono tipo lista */}
         </svg>
       ),
+    },
+    {
+      to: "/pension/reporteestadopagos", label: "Reporte de Pagos", icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20" viewBox="0 0 24 24">
+          <path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z" />
+          <path d="M8 7h8M8 11h8M8 15h5" />
+        </svg>
+      )
     }
 
   ];

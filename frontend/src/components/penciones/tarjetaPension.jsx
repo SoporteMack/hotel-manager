@@ -25,10 +25,12 @@ export default function TarjetaPension({ pension, abrirModalEditar, setMPago, se
     try {
       // Obtener diferencia
       const difResponse = await getdif({ idPension: pension.idPension });
+      console.log(difResponse.data)
       setDiferencia(difResponse.data);
 
       // Obtener fecha de vencimiento
       const vigResponse = await getvig({ idPension: pension.idPension });
+      console.log(vigResponse.data)
       if (vigResponse.data && vigResponse.data.fechaVencimiento) {
         const vigDate = new Date(vigResponse.data.fechaVencimiento);
         const hoy = new Date();
@@ -45,7 +47,7 @@ export default function TarjetaPension({ pension, abrirModalEditar, setMPago, se
         console.log(`Días de diferencia: ${diferenciaDias}`);
 
         // Verificar si está próximo a vencer (3 días o menos)
-        if (diferenciaDias <= 3 && diferenciaDias >= 0) {
+        if (diferenciaDias <= 7 && diferenciaDias >= 0) {
           setVencimientoProximo(true);
           console.log("Vencimiento próximo activado");
         } else {
@@ -187,12 +189,6 @@ const abrirModalPagos = async ()=>{
               </p>
             )}
 
-            {diferencia?.diferencia !== undefined && (
-              <p className="flex items-center gap-2 text-amber-700">
-                <i className="fa-solid fa-circle-exclamation"></i>
-                Diferencia pendiente: ${diferencia.diferencia}
-              </p>
-            )}
 
             <p className="flex items-center gap-2 font-semibold">
               Estado:

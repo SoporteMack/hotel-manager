@@ -40,7 +40,28 @@ exports.crearPension = async (req, res) => {
       }));
       await PensionesTarifa.bulkCreate(registros, { transaction: t });
     }
-    this.crearCobro(nuevaPension.idPension,fechaInicio,precioAcordado,tipoPension  );
+    // Crear cobros para meses anteriores si fechaInicio es menor a hoy
+    const hoy = new Date();
+    const fechaInicioP = new Date(req.body.fechaInicio);
+    
+    if (fechaInicioP < hoy) {
+      let fechaActual = new Date(fechaInicioP);
+      
+      while (fechaActual < hoy) {
+        console.log('--------------------------------------1----------------------------');
+      await this.crearCobro(nuevaPension.idPension, fechaActual.toISOString().split('T')[0], precioAcordado, tipoPension, t);
+      
+      if (tipoPension === "MENSUAL") {
+        fechaActual.setMonth(fechaActual.getMonth() + 1);
+      } else if (tipoPension === "QUINCENAL") {
+        fechaActual.setDate(fechaActual.getDate() + 15);
+      } else if (tipoPension === "SEMANAL") {
+        fechaActual.setDate(fechaActual.getDate() + 7);
+      }
+      }
+    } else {
+      await this.crearCobro(nuevaPension.idPension, fechaInicio, precioAcordado, tipoPension, t);
+    }
     await t.commit();
 
     // Devolver pensión con tarifas asociadas
@@ -55,7 +76,7 @@ exports.crearPension = async (req, res) => {
     res.status(500).json({ error: 'Error al crear pensión' });
   }
 };
-exports.crearCobro  =async (idPension,fecha,monto,tipoPension) =>{
+exports.crearCobro = async (idPension, fecha, monto, tipoPension, transaction) => {
   const date = new Date(fecha); // fecha inicial
   let vencimiento = new Date(date); // clonar para no modificar la original
   
@@ -74,20 +95,20 @@ exports.crearCobro  =async (idPension,fecha,monto,tipoPension) =>{
   
   const vencimientoFormatted = `${year}-${month}-${day}`;
   const data = {
-    idPension:idPension,
-    periodo:fecha,
-    monto:monto,
-    fechaVencimiento:vencimientoFormatted,
-    estado:0
-
+    idPension: idPension,
+    periodo: fecha,
+    monto: monto,
+    fechaVencimiento: vencimientoFormatted,
+    estado: 0
+  };
+  try {
+    console.log(data);
+    await Cobro.create(data, { transaction });
+  } catch (error) {
+    console.log(error);
+    throw error;
   }
-try {
-  console.log(data)
-  await Cobro.create(data);
-} catch (error) {
-  console.log(error)
-}
-}
+};
 // Actualizar pensión y tarifas
 exports.actualizarPension = async (req, res) => {
   const t = await sequelize.transaction();

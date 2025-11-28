@@ -49,9 +49,13 @@ exports.crear = async (req, res) => {
     const pago = await pagos.create(dataspago);
     const foliopago = pago.folio;
     const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
-    const inicio = new Date(datoscobro.periodo).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-    const fin = new Date(datoscobro.fechaVencimiento).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-    const mesC = `${inicio} al ${fin}`;
+    const inicio = new Date(datoscobro.periodo);
+    inicio.setDate(inicio.getDate() + 1);
+    const fin = new Date(datoscobro.fechaVencimiento);
+    fin.setDate(fin.getDate() + 1);
+    const inicioFormato = inicio.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+    const finFormato = fin.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+    const mesC = `${inicioFormato} al ${finFormato}`;
     console.log(mesC);
     await nota(foliopago, mesC);
     const telefono = await obtenerTelefono(idContrato);
@@ -61,6 +65,14 @@ exports.crear = async (req, res) => {
     await enviarNota(telefonoadmin, rutaArchivo, mesC)
     await restardeuda(idContrato, fechaPago, monto, deuda);
     //await cobrosR.create({ idContrato: idContrato, periodo: formatearFecha(nuevaFechaInicio), monto: precioDepa, fechaVencimiento: formatearFecha(nuevaFechaVencimiento), estado: 0 })
+    datoscobro = await cobrosR.findOne({
+      where: { idContrato: idContrato, estado: 0 },
+      order: [['idCobro', 'ASC']],
+      raw: true
+    });
+    if (!datoscobro) {
+      await crearCobro(idContrato);
+    }
     res.status(200).json({ status: true, msg: "Pago agregado" });
   } catch (e) {
     console.error(e);
@@ -176,40 +188,40 @@ exports.listarpagosporfecha = async (req, res) => {
       .toDate();
 
 
-    
-const lista = await pagos.findAll({
-  attributes: ["folio", "monto", "fechaPago"],
-  where: {
-    fechaPago: {
-      [Op.gte]: inicio,
-      [Op.lte]: fin  // <-- mejor que lt
-    }
-  },
-  include: [
-    {
-      model: cobrosR,
-      attributes: ["idCobro", "periodo"],
-      as: "cobrosR",
-      include: [{
-        model: contratos,
-        attributes: ["idcontrato", "deuda"],
-        as: "contrato",
-        include: [
-          {
-            model: personas,
-            attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
-            as: "persona"
-          },
-          {
-            model: departamentos,
-            attributes: ["descripcion"],
-            as: "departamento"
-          }
-        ]
-      }]
-    }
-  ]
-});
+
+    const lista = await pagos.findAll({
+      attributes: ["folio", "monto", "fechaPago"],
+      where: {
+        fechaPago: {
+          [Op.gte]: inicio,
+          [Op.lte]: fin  // <-- mejor que lt
+        }
+      },
+      include: [
+        {
+          model: cobrosR,
+          attributes: ["idCobro", "periodo"],
+          as: "cobrosR",
+          include: [{
+            model: contratos,
+            attributes: ["idcontrato", "deuda"],
+            as: "contrato",
+            include: [
+              {
+                model: personas,
+                attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
+                as: "persona"
+              },
+              {
+                model: departamentos,
+                attributes: ["descripcion"],
+                as: "departamento"
+              }
+            ]
+          }]
+        }
+      ]
+    });
 
     // Formatear fechas de resultado para respuesta legible
     const listaFormateada = lista.map(item => {
@@ -491,7 +503,7 @@ const crearCobro = async (idContrato) => {
   // periodo = baseDate + 2 días + 1 mes
   const periodoDate = new Date(baseDate);
   periodoDate.setDate(periodoDate.getDate() + 2);
-  periodoDate.setMonth(periodoDate.getMonth() + 1);
+  periodoDate.setMonth(periodoDate.getMonth());
 
   // fechaVencimiento = baseDate + 1 día + 1 mes
   const fechaVencDate = new Date(baseDate);
@@ -508,3 +520,61 @@ const crearCobro = async (idContrato) => {
   console.log(data);
   await cobrosR.create(data);
 }
+
+exports.reporteEstadoPagos = async (req, res) => {
+  try {
+    // Usar raw query para mayor control y mejor performance
+    const resultado = await sequelize.query(`
+      SELECT
+    d.descripcion AS departamento,
+    CONCAT(p.nombrePersona, ' ', p.apellidoPaterno, ' ', p.apellidoMaterno) AS nombre,
+
+    -- Estado de pagos de los últimos 3 meses
+    MAX(CASE 
+        WHEN MONTH(c.periodo) = MONTH(CURDATE()) 
+         AND YEAR(c.periodo) = YEAR(CURDATE())
+        THEN CASE WHEN c.estado = 1 THEN 'Pagado' ELSE 'Pendiente' END
+    END) AS mes3,
+
+    MAX(CASE 
+        WHEN MONTH(c.periodo) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) 
+         AND YEAR(c.periodo) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        THEN CASE WHEN c.estado = 1 THEN 'Pagado' ELSE 'Pendiente' END
+    END) AS mes2,
+
+    MAX(CASE 
+        WHEN MONTH(c.periodo) = MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) 
+         AND YEAR(c.periodo) = YEAR(DATE_SUB(CURDATE(), INTERVAL 2 MONTH))
+        THEN CASE WHEN c.estado = 1 THEN 'Pagado' ELSE 'Pendiente' END
+    END) AS mes1,
+
+    -- Suma solo de los montos pendientes de los últimos 3 meses, si no hay deuda = 0
+    COALESCE(SUM(
+        CASE 
+            WHEN c.estado = 0 
+             AND MONTH(c.periodo) BETWEEN MONTH(DATE_SUB(CURDATE(), INTERVAL 2 MONTH)) AND MONTH(CURDATE())
+             AND YEAR(c.periodo) = YEAR(CURDATE())
+            THEN c.monto 
+            ELSE 0 
+        END
+    ), 0) AS deuda
+
+FROM cobrosR c
+INNER JOIN contratos con ON con.idContrato = c.idContrato
+INNER JOIN personas p ON p.idPersona = con.idPersona
+INNER JOIN departamentos d ON d.numDepartamento = con.numDepartamento
+
+GROUP BY con.idContrato, d.descripcion, p.nombrePersona, p.apellidoPaterno, p.apellidoMaterno
+ORDER BY departamento;
+
+    `, { type: sequelize.QueryTypes.SELECT });
+
+    res.status(200).json({
+      status: true,
+      data: resultado,
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ status: false, msg: 'Error al generar reporte' });
+  }
+};

@@ -4,11 +4,11 @@ const { vencetredias } = require('../controllers/contrato.controller');
 const configuracion = require("../models/configuracion");
 
 
-schedule.scheduleJob('00 58 11 * * *', async () => {
+schedule.scheduleJob('0 0 5 * * *', async () => {
   const fecha = new Date();
   fecha.setDate(fecha.getDate() + 2);
   const fechaformateada = fromatearfecha(fecha);
-  const sock = getSock(); // ✅ obtener sock actual
+  const sock = getSock(); 
   if (!sock) {
     console.log('⏳ Sock aún no está listo');
     return;
@@ -16,21 +16,22 @@ schedule.scheduleJob('00 58 11 * * *', async () => {
   const resconfig = await configuracion.findOne();
   const msj = resconfig.vencimiento3Dias;
   const res = await vencetredias(fechaformateada);
+  console.log(res);
   // Helper para pausar
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  for (const contrato of res) {
-    const numero = '521' + contrato['persona.telefono'];
+  for (const cobro of res) {
+    const numero = '521' + cobro['contrato.persona.telefono'];
     try {
       await sock.sendMessage(`${numero}@s.whatsapp.net`, {
         text: msj
       });
-      console.log(`✅ Mensaje enviado a ${numero}`);
+      console.log(`Mensaje enviado a ${numero}`);
 
       // Espera 2 segundos entre cada envío
       await sleep(2000);
     } catch (err) {
-      console.error('❌ Error al enviar mensaje:', err);
+      console.error(' Error al enviar mensaje:', err);
     }
   }
 //vencimiento1dia(fecha);

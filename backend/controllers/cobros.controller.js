@@ -49,8 +49,8 @@ exports.vigencia = async (req,res) =>
     const {idPension} = req.body;
     const response = await Cobro.findOne({
       attributes:['fechaVencimiento'],
-      order: [['idCobro', 'DESC']],
-      where: {idPension:idPension}
+      order: [['idCobro', 'ASC']],
+      where: {idPension:idPension, estado:0}
   });
   return res.status(200).json(response);
   } catch (error) {

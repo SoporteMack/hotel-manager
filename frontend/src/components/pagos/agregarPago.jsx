@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import ModalPago from "./modalPagos";
 import { listacontratosxpersona } from "../../api/contratos";
 import { Notyf } from "notyf"; Notyf
-import { pago as realizarPago } from "../../api/pagos";
+import { pago as realizarPago,ulitmoCobro } from "../../api/pagos";
 import { useAuth } from "../../context/authContext";
 
 function AgregarPagos() {
@@ -22,11 +22,14 @@ function AgregarPagos() {
     const [data, setData] = useState(null);
     const [pago, setPago] = useState(0);
     const [isAdmin, setIsAdmin] = useState(false);
+
+    // <<<<< NUEVO ESTADO PARA MOSTRAR EL BOTÓN >>>>>
+    const [mostrarBoton, setMostrarBoton] = useState(false);
+
     const { user } = useAuth();
     const handlebuscar = async (e) => {
         e.preventDefault();
         setData(null);
-        // Validación básica de campos
         if (!nombre.trim() && !paterno.trim() && !materno.trim()) {
             setData(null)
             setError("Debe ingresar al menos un campo de búsqueda");
@@ -36,7 +39,6 @@ function AgregarPagos() {
         try {
             setIsLoading(true);
             setError(null);
-
 
             const inquilinosdb = await listacontratosxpersona(nombre, paterno, materno).then(response => { return response.data });
             setInquilinos(inquilinosdb);
@@ -49,13 +51,16 @@ function AgregarPagos() {
             setIsLoading(false);
         }
     }
+
     useEffect(() => {
         if (user?.rol === "admin")
             setIsAdmin(true)
     }, [])
+
     const onClose = () => {
         setIsOpen(false);
     }
+
     const handlePagar = async () => {
         if (data && pago > 0) {
             const fecha = new Date();
@@ -86,11 +91,44 @@ function AgregarPagos() {
                 notyf.current.error("Debe de Selecionar un Inquilino")
         }
     }
+
     const formatFechaHoraLocal = (fecha) => {
         const f = new Date(fecha);
         const pad = n => n.toString().padStart(2, '0');
         return `${f.getFullYear()}-${pad(f.getMonth())}-${pad(f.getDate())} ${pad(f.getHours())}:${pad(f.getMinutes())}:${pad(f.getSeconds())}`;
     };
+
+    // <<<<< AQUI SE AGREGA LA LÓGICA CORRECTA >>>>>
+    // <<<<< AQUI SE AGREGA LA LÓGICA CORRECTA >>>>>
+useEffect(() => {
+    const verificar = async () => {
+        if (!data) {
+            setMostrarBoton(false);
+            return;
+        }
+
+        // 🟢 Si es admin → SIEMPRE mostrar botón
+        if (isAdmin) {
+            setMostrarBoton(true);
+            return;
+        }
+
+        // 🔵 Si NO es admin → verificar días restantes
+        const idContrato = data.idContrato;
+        const ultimoCobro = await ulitmoCobro(idContrato).then(r => r.data);
+        const fechaVenc = new Date(ultimoCobro.fechaVencimiento);
+        const hoy = new Date();
+
+        const dias = Math.ceil((fechaVenc - hoy) / (1000 * 60 * 60 * 24));
+
+        // Mostrar solo si faltan 7 días o menos
+        setMostrarBoton((dias <= 7 && data.deuda <= parseFloat(ultimoCobro.monto))  ||  (data.deuda > parseFloat(ultimoCobro.monto))
+);
+    };
+
+    verificar();
+}, [data, isAdmin]);
+
 
     return (
         <section className="flex-1 flex flex-col h-full p-4 md:p-6">
@@ -118,7 +156,6 @@ function AgregarPagos() {
 
                 <form onSubmit={handlebuscar} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Campo Nombre */}
                         <div>
                             <label htmlFor="nombre" className="block text-sm font-medium text-gray-700 mb-1">
                                 Nombre(s):
@@ -133,7 +170,6 @@ function AgregarPagos() {
                             />
                         </div>
 
-                        {/* Campo Apellido Paterno */}
                         <div>
                             <label htmlFor="paterno" className="block text-sm font-medium text-gray-700 mb-1">
                                 Apellido Paterno:
@@ -148,7 +184,6 @@ function AgregarPagos() {
                             />
                         </div>
 
-                        {/* Campo Apellido Materno */}
                         <div>
                             <label htmlFor="materno" className="block text-sm font-medium text-gray-700 mb-1">
                                 Apellido Materno:
@@ -177,108 +212,85 @@ function AgregarPagos() {
                 </form>
             </div>
 
-            {/* Loading overlay */}
             {isLoading && (
                 <div className="z-50 fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
                 </div>
             )}
 
-            {/* Modal de resultados */}
             <ModalPago onClose={onClose} isOpen={isOpen} setIsOpen={setIsOpen} inquilinos={inquilinos} setData={setData} setPago={setPago} />
+
             <section className='flex-1 flex flex-col  bg-gray-200 w-full mt-3 rounded-xl'>
-                {
-                    data ? (
-                        <>
-                            <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
-                                <label
-                                    htmlFor="nombrecompleto"
-                                    className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40"
+                {data ? (
+                    <>
+                        <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
+                            <label htmlFor="nombrecompleto" className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40">
+                                Nombre(s):
+                            </label>
+                            <input
+                                id="nombrecompleto"
+                                type="text"
+                                className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
+                                disabled
+                                value={`${data.persona.nombrePersona} ${data.persona.apellidoMaterno} ${data.persona.apellidoPaterno}`}
+                            />
+                        </div>
+
+                        <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
+                            <label htmlFor="deuda" className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40">
+                                Deuda:
+                            </label>
+                            <input
+                                id="deuda"
+                                type="text"
+                                className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
+                                disabled
+                                value={data.deuda}
+                            />
+                        </div>
+
+                        <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
+                            <label htmlFor="departamento" className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40">
+                                Departamento:
+                            </label>
+                            <input
+                                id="departamento"
+                                type="text"
+                                className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
+                                disabled
+                                value={data.departamento.descripcion}
+                            />
+                        </div>
+
+                        <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
+                            <label htmlFor="pago" className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40">
+                                Pago:
+                            </label>
+                            <input
+                                id="pago"
+                                type="number"
+                                className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
+                                value={pago}
+                                onChange={(e) => { setPago(e.target.value) }}
+                                disabled={!isAdmin}
+                            />
+                        </div>
+
+                        {/* <<<<< AQUI SE AGREGO EL BOTON CORRECTO >>>>> */}
+                        {mostrarBoton && (
+                            <div className="w-full p-2 flex justify-end">
+                                <button
+                                    type="button"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition"
+                                    onClick={handlePagar}
                                 >
-                                    Nombre(s):
-                                </label>
-                                <input
-                                    id="nombrecompleto"
-                                    type="text"
-                                    className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                                    disabled
-                                    value={`${data.persona.nombrePersona} ${data.persona.apellidoMaterno} ${data.persona.apellidoPaterno}`}
-                                />
+                                    Pagar
+                                </button>
                             </div>
+                        )}
 
-                            <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
-                                <label
-                                    htmlFor="deuda"
-                                    className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40"
-                                >
-                                    Deuda:
-                                </label>
-                                <input
-                                    id="deuda"
-                                    type="text"
-                                    className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
-                                    disabled
-                                    value={data.deuda}
-                                />
-                            </div>
-
-                            <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
-                                <label
-                                    htmlFor="departamento"
-                                    className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40"
-                                >
-                                    Departamento:
-                                </label>
-                                <input
-                                    id="departamento"
-                                    type="text"
-                                    className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
-                                    disabled
-                                    value={data.departamento.descripcion}
-                                />
-                            </div>
-
-                            <div className="w-full p-2 flex flex-col md:flex-row md:items-center">
-                                <label
-                                    htmlFor="pago"
-                                    className="text-sm font-medium text-gray-700 mb-1 md:mb-0 md:w-40"
-                                >
-                                    Pago:
-                                </label>
-                                <input
-                                    id="pago"
-                                    type="number"
-                                    className="w-full md:flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm"
-                                    value={pago}
-                                    onChange={(e) => { setPago(e.target.value) }}
-                                    disabled={!isAdmin}
-                                />
-                            </div>
-                            {(() => {
-                                console.log(data)
-                                const hoy = new Date();
-                                const fechaPago = data?.fechaPago ? new Date(data.fechaPago) : null;
-                                const diasFaltantes = fechaPago ? Math.ceil((fechaPago - hoy) / (1000 * 60 * 60 * 24)) : null;
-                                const faltanTresDiasOMenos = diasFaltantes !== null && diasFaltantes <= 3 && diasFaltantes >= 0;
-                                console.log(faltanTresDiasOMenos)
-                                console.log()
-                                return (parseFloat(data?.deuda) === 0 && faltanTresDiasOMenos) || data?.deuda > 0  || isAdmin;
-                            })() && (
-                                    <div className="w-full p-2 flex justify-end">
-                                        <button
-                                            type="button"
-                                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-md transition"
-                                            onClick={handlePagar}
-                                        >
-                                            Pagar
-                                        </button>
-                                    </div>
-                                )}
-
-                        </>
-                    ) : null
-                }
-
+                    </>
+                ) : null}
             </section>
         </section>
     )

@@ -1,107 +1,107 @@
 import { Dialog, DialogPanel, DialogTitle, DialogBackdrop } from "@headlessui/react";
 import { useEffect, useState } from "react";
-import { ultimosPago } from "../../api/contratos";
-export default function UltimosPagos({ isOpen, setIsOpen, contrato }) {
-    const [pagos, setPagos] = useState([]);
-    const [numPagosBD, setNumPagosBD] = useState(0);
-    const [mesesTranscurridos, setMesesTranscurridos] = useState(0);
+import { pagoxcobro } from "../../api/contratos";
 
-    // 1. Cargar pagos cuando cambie el contrato
+export default function ModalMostrarPagos({ isOpen, setIsOpen, contrato }) {
+    const [cobros, setCobros] = useState([]);
+
     useEffect(() => {
-        getUltimosPagos(contrato.idContrato);
-    }, [contrato.idContrato]);
+        if (contrato?.idContrato) getCobros(contrato.idContrato);
+    }, [contrato]);
 
-    // 2. Calcular meses transcurridos
-    useEffect(() => {
-        const fechaInicio = new Date(contrato.fechaInicio);
-        const fechaActual = new Date();
-
-        const meses =
-            (fechaActual.getFullYear() - fechaInicio.getFullYear()) * 12 +
-            (fechaActual.getMonth() - fechaInicio.getMonth());
-            if(meses>1)
-                setMesesTranscurridos(meses);
-            else
-                setMesesTranscurridos(1);
-    }, [contrato.fechaInicio]);
-
-    // 3. Función para obtener pagos
-    const getUltimosPagos = async (idContrato) => {
-        const data = await ultimosPago({ idContrato }).then(res => res.data);
-
-        setPagos(data.pagos);
-        setNumPagosBD(data.numpagos);
+    const getCobros = async (idContrato) => {
+        try {
+            console.log(idContrato)
+            const res = await pagoxcobro({ idContrato });
+            setCobros(res.data); // res.data contiene periodo, estado, pagoPs
+        } catch (e) {
+            console.log(e);
+        }
     };
-    const mesesLista = Array.from({ length: mesesTranscurridos }, (_, i) => {
-        const fecha = new Date(contrato.fechaInicio);
-        fecha.setMonth(fecha.getMonth() + i + 1);
-        const fechaPago = pagos[i] ? pagos[i].fechaPago : null;
-        const monto = pagos[i] ? pagos[i].monto : 0;
-
-        return {
-            mes: fecha.toLocaleDateString("es-MX", {
-                month: "long",
-                year: "numeric"
-            }),
-            pagado: i < numPagosBD,
-            fechaPago: fechaPago,
-            monto: monto
-        };
-    });
-
     return (
+        <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-50">
+            <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
 
-        <>
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+                <DialogPanel className="w-full max-w-3xl rounded-lg bg-white p-6 shadow-lg">
 
-            <Dialog open={isOpen} onClose={() => { setIsOpen(false) }} className="relative z-50 w-full h-full" >
-                <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
-                <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-6">
-                    <DialogPanel className="w-full max-w-sm sm:max-w-2xl rounded-lg bg-white p-6 shadow-md">
-                        <DialogTitle className="text-lg sm:text-xl font-semibold text-gray-800 mb-6">
-                            Ultimos Pagos
-                        </DialogTitle>
-                        <DialogPanel>
-                            <div className="max-h-80 overflow-y-auto border rounded-md">
-                                <table className="w-full table-auto border-collapse">
-                                    <thead className="bg-gray-100 sticky top-0">
-                                        <tr className="border-b">
-                                            <th className="py-2 text-left">Mes</th>
-                                            <th className="py-2 text-left">Pagado</th>
-                                            <th className="py-2 text-left">Fecha de Pago</th>
-                                            <th className="py-2 text-left">Monto</th>
-                                        </tr>
-                                    </thead>
+                    <DialogTitle className="text-xl font-semibold mb-4">
+                        Pagos de Pensiones
+                    </DialogTitle>
 
-                                    <tbody>
-                                        {mesesLista.map((m, index) => (
-                                            <tr key={index} className="border-b">
-                                                <td className="py-2 capitalize">{m.mes}</td>
-                                                <td className="py-2">
-                                                    {m.pagado ? (
-                                                        <span className="text-green-600 font-semibold">Sí</span>
-                                                    ) : (
-                                                        <span className="text-red-600 font-semibold">No</span>
-                                                    )}
-                                                </td>
-                                                <td className="py-2">
-                                                    {m.fechaPago
-                                                        ? new Date(m.fechaPago).toLocaleDateString("es-MX")
-                                                        : "---"}
-                                                </td>
-                                                <td className="py-2">
-                                                    ${m.monto.toLocaleString("es-MX")}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </DialogPanel>
+                    {/* Contenedor con scroll */}
+                    <div className="overflow-y-auto max-h-80 border rounded-xl shadow-sm">
+
+                        <table className="min-w-full text-sm">
+
+                            {/* ENCABEZADO FIJO */}
+                            <thead className="bg-gray-100 text-gray-600 uppercase text-xs tracking-wider border-b sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th className="py-3 px-4 text-left">Periodo</th>
+                                    <th className="py-3 px-4 text-left">Estado</th>
+                                    <th className="py-3 px-4 text-left">Folio</th>
+                                    <th className="py-3 px-4 text-left">Fecha Pago</th>
+                                    <th className="py-3 px-4 text-right">Monto</th>
+                                </tr>
+                            </thead>
+
+                            {/* CUERPO */}
+                            <tbody className="text-gray-800">
+                                {console.log(cobros)}
+                                {cobros?.map((p, idx) => (
+                                    <tr
+                                        key={p.folio || idx}
+                                        className={`${idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                            } hover:bg-gray-100 transition`}
+                                    >
+                                        <td className="py-3 px-4">
+                                            {new Date(p.periodo).toLocaleDateString("es-MX", {
+                                                //day: "2-digit",
+                                                month: "long",
+                                                //year: "numeric",
+                                            }) /*+ " - " +
+                                                new Date(p.fechaVencimiento).toLocaleDateString("es-MX", {
+                                                    day: "2-digit",
+                                                    month: "short",
+                                                    year: "numeric",
+                                                })*/}
+                                        </td>
+
+                                        <td className="py-3 px-4">
+                                            <span className={`px-2 py-1 text-xs rounded-full font-semibold
+                                    ${p.estado
+                                                    ? "bg-green-100 text-green-700"
+                                                    : "bg-yellow-100 text-yellow-700"
+                                                }`}
+                                            >
+                                                {p.estado ? "Pagado" : "Pendiente"}
+                                            </span>
+                                        </td>
+
+                                        <td className="py-3 px-4">
+                                            {p["pagos.folio"] ? p["pagos.folio"] : "---"}
+                                        </td>
+
+                                        <td className="py-3 px-4">
+                                            {p["pagos.fechaPago"]
+                                                ? new Date(p["pagos.fechaPago"]).toLocaleDateString("es-MX")
+                                                : "---"}
+                                        </td>
+
+                                        <td className="py-3 px-4 text-right font-medium">
+                                            ${p["pagos.monto"] ? p["pagos.monto"] : "0"}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+
+                        </table>
+                    </div>
+
+                </DialogPanel>
+            </div>
 
 
-                    </DialogPanel>
-                </div>
-            </Dialog>
-        </>
-    )
+        </Dialog>
+    );
 }
