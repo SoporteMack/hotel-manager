@@ -563,6 +563,7 @@ FROM cobrosR c
 INNER JOIN contratos con ON con.idContrato = c.idContrato
 INNER JOIN personas p ON p.idPersona = con.idPersona
 INNER JOIN departamentos d ON d.numDepartamento = con.numDepartamento
+WHERE con.estatus = 1
 
 GROUP BY con.idContrato, d.descripcion, p.nombrePersona, p.apellidoPaterno, p.apellidoMaterno
 ORDER BY departamento;
