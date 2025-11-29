@@ -38,9 +38,9 @@ function ReporteEstadoPagosPension() {
 
       const datosProcesados = rawData.map((item) => ({
         ...item,
-        mes_actual: item.mes_actual ?? '',
-        mes_anterior: item.mes_anterior ?? '',
-        mes_2: item.mes_2 ?? '',
+        mes_actual: item.mes_actual ?? 'Pendiente',
+        mes_anterior: item.mes_anterior ?? 'Pendiente',
+        mes_2: item.mes_2 ?? 'Pendiente',
       }));
 
       setDatos(datosProcesados);
@@ -113,10 +113,9 @@ function ReporteEstadoPagosPension() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">#</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Número de Pensión</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesActual}</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesAnterior}</th>
                   <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{hace2Meses}</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Deuda 3 Meses</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesAnterior}</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesActual}</th>
                 </tr>
               </thead>
               <tbody>
@@ -127,9 +126,9 @@ function ReporteEstadoPagosPension() {
                       <td className="px-4 py-3 text-sm text-gray-700">{item.idPension}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{item.nombre}</td>
                       <td className="px-4 py-3 text-center text-sm">
-                        {item.mes_actual && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes_actual)}`}>
-                            {item.mes_actual}
+                        {item.mes_2 && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes_2)}`}>
+                            {item.mes_2}
                           </span>
                         )}
                       </td>
@@ -141,15 +140,13 @@ function ReporteEstadoPagosPension() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-center text-sm">
-                        {item.mes_2 && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes_2)}`}>
-                            {item.mes_2}
+                        {item.mes_actual && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes_actual)}`}>
+                            {item.mes_actual}
                           </span>
                         )}
                       </td>
-                      <td className={`px-4 py-3 text-right text-sm ${getDeudaColor(item.deuda)}`}>
-                        ${parseFloat(item.deuda).toFixed(2)}
-                      </td>
+                     
                     </tr>
                   ))
                 ) : (

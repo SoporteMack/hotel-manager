@@ -111,9 +111,9 @@ function ReporteEstadoPagos() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">#</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Departamento</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesActual}</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesAnterior}</th>
                   <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{hace2Meses}</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesAnterior}</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">{mesActual}</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">Deuda 3 Meses</th>
                 </tr>
               </thead>
@@ -125,9 +125,9 @@ function ReporteEstadoPagos() {
                       <td className="px-4 py-3 text-sm text-gray-700">{item.departamento}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{item.nombre}</td>
                       <td className="px-4 py-3 text-center text-sm">
-                        {item.mes3 && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes3)}`}>
-                            {item.mes3}
+                        {item.mes1 && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes1)}`}>
+                            {item.mes1}
                           </span>
                         )}
                       </td>
@@ -139,9 +139,9 @@ function ReporteEstadoPagos() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-center text-sm">
-                        {item.mes1 && (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes1)}`}>
-                            {item.mes1}
+                        {item.mes3 && (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEstadoColor(item.mes3)}`}>
+                            {item.mes3}
                           </span>
                         )}
                       </td>
