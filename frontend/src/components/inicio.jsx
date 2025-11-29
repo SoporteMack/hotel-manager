@@ -73,7 +73,7 @@ function Dashboard() {
       <TabGroup>
 
         <TabList className="flex space-x-3 bg-white rounded-xl p-2 shadow mb-6">
-          {["Ingresos Diarios", "Vencimientos a 1 Día", "Vencidos"].map((tabName) => (
+          {["Ingresos Diarios"].map((tabName) => (
             <Tab
               key={tabName}
               className={({ selected }) =>
@@ -98,6 +98,7 @@ function Dashboard() {
             <IngresosDiarios />
           </TabPanel>
 
+          {/* // "Vencimientos a 1 Día", "Vencidos"
           <TabPanel className="bg-white p-6 rounded-xl shadow-md">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Vencimientos a 1 Día</h2>
             <p className="text-gray-600">Aquí se mostrarán los vencimientos próximos.</p>
@@ -108,7 +109,7 @@ function Dashboard() {
             <h2 className="text-xl font-bold mb-4 text-gray-800">Departamentos Vencidos</h2>
             <p className="text-gray-600">Aquí aparecerán los pagos atrasados.</p>
             <RentasVencidas />
-          </TabPanel>
+          </TabPanel>*/}
         </TabPanels>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Inicio</h1>

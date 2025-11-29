@@ -412,8 +412,8 @@ exports.reporteEstadoPagos = async (req, res) => {
         ) AS deuda
       FROM cobros c
       INNER JOIN pensiones pen ON pen.idPension = c.idPension
-      INNER JOIN personasp per ON per.idPersona = pen.idPersona
-      LEFT JOIN pagosp p ON p.idCobro = c.idCobro
+      INNER JOIN personasP per ON per.idPersona = pen.idPersona
+      LEFT JOIN pagosP p ON p.idCobro = c.idCobro
       GROUP BY pen.idPension, per.nombre, per.apellido;
 
     `, { type: sequelize.QueryTypes.SELECT });
