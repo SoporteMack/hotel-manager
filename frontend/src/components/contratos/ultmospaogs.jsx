@@ -55,16 +55,10 @@ export default function ModalMostrarPagos({ isOpen, setIsOpen, contrato }) {
                                             } hover:bg-gray-100 transition`}
                                     >
                                         <td className="py-3 px-4">
-                                            {new Date(p.periodo).toLocaleDateString("es-MX", {
-                                                //day: "2-digit",
+                                            {console.log(new Date(p.periodo))}
+                                            {new Date(`${p.periodo}T00:00:00`).toLocaleDateString("es-MX", {
                                                 month: "long",
-                                                //year: "numeric",
-                                            }) /*+ " - " +
-                                                new Date(p.fechaVencimiento).toLocaleDateString("es-MX", {
-                                                    day: "2-digit",
-                                                    month: "short",
-                                                    year: "numeric",
-                                                })*/}
+                                            })}
                                         </td>
 
                                         <td className="py-3 px-4">
