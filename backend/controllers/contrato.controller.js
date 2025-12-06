@@ -277,12 +277,7 @@ exports.contratoxnombre = async (req, res) => {
     const apellidoM = req.query.apellidoM;
     const contratosdb = await contratos.findAll({
       attributes: ["idContrato", "idPersona", "numDepartamento", "deuda", "fechaPago", "fechaInicio"],
-      where: {
-        [Op.or]: [
-          { deuda: { [Op.ne]: 0 } },
-          { estatus: 1 }
-        ]
-      },
+      where: {estatus: 1},
       include: [{
         model: personas,
         as: "persona",
