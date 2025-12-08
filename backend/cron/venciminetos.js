@@ -6,7 +6,7 @@ const { Op} = require('sequelize');
 const sequelize = require('sequelize')
 const cobrosR = require('../models/cobrosR');
 
-schedule.scheduleJob('0 19 12 * * *', async () => {
+schedule.scheduleJob('0 25 11 * * *', async () => {
     const hoy = formatearFecha(new Date());
     const fechaAnterior = new Date(hoy);
     const diaAnterior = formatearFecha(fechaAnterior);
@@ -15,11 +15,14 @@ schedule.scheduleJob('0 19 12 * * *', async () => {
         try {
             const costoDepa = await findCostoDepa(item.idContrato);
             const fecha = new Date(item.fechaVencimiento);
-            fecha.setDate(fecha.getDate() + 2);
-            const nuevoPeriodo = formatearFecha(fecha)
+            const fechaPeriodo = new Date(item.periodo);
+            fechaPeriodo.setMonth(fechaPeriodo.getMonth() + 1);
+            fechaPeriodo.setDate(fechaPeriodo.getDate()+1);
+            const nuevoPeriodo = formatearFecha(fechaPeriodo)
             fecha.setMonth(fecha.getMonth() + 1);
-            fecha.setDate(fecha.getDate() - 1);
+            fecha.setDate(fecha.getDate()+1);
             const nuevaFechaVencimiento = formatearFecha(fecha);
+            console.log(nuevaFechaVencimiento);
             const data = {
                 idContrato: item.idContrato,
                 periodo: nuevoPeriodo,

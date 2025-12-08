@@ -112,7 +112,7 @@ exports.comprobante = async (req, res) => {
 
 
 
-exports.nota = async (folio,mesC) => {
+exports.nota = async (folio, mesC) => {
   try {
     const dato = await contrato(folio);
     const filePath = path.join(__dirname, '../uploads/nota.pdf');
@@ -300,6 +300,7 @@ exports.reportediario = async () => {
     doc.moveDown(0.5);
     doc.font('Helvetica').fontSize(10).fillColor('#000');
     console.log("tres")
+    console.log(pagosAgrupados)
     if (pagos.length === 0) {
       doc.text('No se registraron pagos el día de hoy.');
     } else {
@@ -310,6 +311,7 @@ exports.reportediario = async () => {
           .text(nombre);
 
         pagosAgrupados[nombre].forEach(p => {
+          console.log(p);
           doc
             .font('Helvetica')
             .fillColor('#666')
@@ -589,10 +591,10 @@ const generarContrato = async (idContrato) => {
       nombre: String(nom).toUpperCase(),
       direccion: "C. 1 Nte 222, Centro de la Ciudad, 75700 Tehuacán, Pue.",
       diai: String(fechai.getDate()).padStart(2, '0'),
-      mesi: String(fechai.getMonth()+1).padStart(2, '0'),
+      mesi: String(fechai.getMonth() + 1).padStart(2, '0'),
       anioi: fechai.getFullYear(),
       diaf: String(fechaf.getDate()).padStart(2, '0'),
-      mesf: String(fechaf.getMonth()+1).padStart(2, '0'),
+      mesf: String(fechaf.getMonth() + 1).padStart(2, '0'),
       aniof: fechaf.getFullYear(),
       monto: contratodb.departamento.costo,
       montoalfa: montoalfa,
@@ -709,7 +711,7 @@ const contrato = async (folio) => {
       }
     ],
     raw: true,
-  }); 
+  });
   return data;
 }
 
@@ -723,28 +725,33 @@ const pagosbd = async (fecha) => {
   const response = await pagos.findAll(
     {
       attributes: ["folio", "monto", "fechaPago"],
-      include: [
-        {
-          model: contratos,
-          as: "contrato",
-          attributes: ["idcontrato"],
-          include: [
-            {
-              model: personas,
-              as: "persona",
-              attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
-              raw: true
-            },
-            {
-              model: departamentos,
-              as: "departamento",
-              attributes: ["descripcion"],
-              raw: true
-            }
-          ]
-        },
-        
-      ],
+      include: [{
+        model: cobrosR,
+        as: "cobrosR",
+        include: [
+          {
+            model: contratos,
+            as: "contrato",
+            attributes: ["idcontrato"],
+            include: [
+              {
+                model: personas,
+                as: "persona",
+                attributes: ["nombrePersona", "apellidoPaterno", "apellidoMaterno"],
+                raw: true
+              },
+              {
+                model: departamentos,
+                as: "departamento",
+                attributes: ["descripcion"],
+                raw: true
+              }
+            ]
+          },
+
+        ],
+      }],
+
       raw: true,
       where: {
         fechaPago: {
@@ -757,8 +764,8 @@ const pagosbd = async (fecha) => {
   const data = response.map(item => {
     return {
       folio: item.folio,
-      nombre: `${item['contrato.persona.nombrePersona']} ${item['contrato.persona.apellidoPaterno']} ${item['contrato.persona.apellidoMaterno']}`,
-      departamento: item['contrato.departamento.descripcion'],
+      nombre: `${item['cobrosR.contrato.persona.nombrePersona']} ${item['cobrosR.contrato.persona.apellidoPaterno']} ${item['cobrosR.contrato.persona.apellidoMaterno']}`,
+      departamento: item['cobrosR.contrato.departamento.descripcion'],
       monto: item.monto,
       fecha: new Date(item.fechaPago).toLocaleDateString()
     }
