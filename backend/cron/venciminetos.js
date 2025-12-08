@@ -6,7 +6,7 @@ const { Op} = require('sequelize');
 const sequelize = require('sequelize')
 const cobrosR = require('../models/cobrosR');
 
-schedule.scheduleJob('0 25 11 * * *', async () => {
+schedule.scheduleJob('0 30 11 * * *', async () => {
     const hoy = formatearFecha(new Date());
     const fechaAnterior = new Date(hoy);
     const diaAnterior = formatearFecha(fechaAnterior);
