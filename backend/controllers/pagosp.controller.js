@@ -31,7 +31,7 @@ exports.crear = async (req, res) => {
             return res.status(404).json({ mdg: "no hay cobros" });
         const data = { idCobro: ultimoCobro.idCobro, montoPagado: monto }
         const pago = await Pago.create(data);
-        ultimoCobro.update({ estado: true });
+        await ultimoCobro.update({ estado: 1});
         //const fecha = await nuevoCobro(idPension, ultimoCobro.monto, ultimoCobro.fechaVencimiento)
         const fecha = formatearFecha(ultimoCobro.periodo);
         const rutaArchivo = path.join(__dirname, '../uploads', 'notaP.pdf');
@@ -45,8 +45,9 @@ exports.crear = async (req, res) => {
             where: { idPension:idPension, estado: 0 },
             order: [['idCobro', 'ASC']]
         });
+        //console.log(ultimoCobroD,'----------------------------------------------');
         if (!ultimoCobroD) {
-            await nuevoCobro(idPension, ultimoCobro.monto, ultimoCobro.fechaVencimiento)
+            await nuevoCobro(idPension, ultimoCobro.monto,ultimoCobro.periodo,ultimoCobro.fechaVencimiento)
         }
         res.status(200).json({ msg: "cobro exitoso" });
     } catch (error) {
@@ -256,11 +257,17 @@ const obtenerTelefono = async (idPension) => {
     const telfono = res[0].PersonaP.telefono;
     return telfono;
 }
-const nuevoCobro = async (idPension, monto, fechaVencimiento) => {
+const nuevoCobro = async (idPension, monto, periodo,fechaVencimiento) => {
     const res = await pensiones.findByPk(idPension);
     const tipoPension = res.tipoPension;
     const date = new Date(fechaVencimiento);
     const fecha = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()+2).padStart(2, '0');
+    const nuevoPeriodo = new Date(periodo);
+    nuevoPeriodo.setMonth(nuevoPeriodo.getMonth() + 1);
+    const periodoFormatted = `${nuevoPeriodo.getFullYear()}-${String(nuevoPeriodo.getMonth() + 1).padStart(2, '0')}-${String(nuevoPeriodo.getDate()+1).padStart(2, '0')}`;
+    const fechaVencimientoFormatted = `${nuevoPeriodo.getFullYear()}-${String(nuevoPeriodo.getMonth() + 1).padStart(2, '0')}-${String(nuevoPeriodo.getDate()+1).padStart(2, '0')}`;
+    console.log(periodo);
+    console.log(fecha);
     let vencimiento = new Date(date);
 
     if (tipoPension === "MENSUAL") {
@@ -278,9 +285,9 @@ const nuevoCobro = async (idPension, monto, fechaVencimiento) => {
 
     await Cobro.create({
         idPension,
-        periodo: fecha,
+        periodo: periodoFormatted,
         monto: monto,
-        fechaVencimiento: vencimientoFormatted,
+        fechaVencimiento: fechaVencimientoFormatted,
         estado: 0
     });
     return fecha

@@ -4,8 +4,9 @@ const PersonaP = require('../models/personasP');
 const configuracion = require("../models/configuracion");
 const { getSock } = require('../utils/baileys');
 
-schedule.scheduleJob('0 31 11 * * *', async () => {
+schedule.scheduleJob('0 30 * * * *', async () => {
   const fecha = new Date();
+  vencimientosPension();
   fecha.setDate(fecha.getDate() + 3);
 
   const fechaF = fecha.getFullYear() + '-' +
@@ -13,12 +14,13 @@ schedule.scheduleJob('0 31 11 * * *', async () => {
     String(fecha.getDate()).padStart(2, '0');
 
   const cob = await Cobro.findAll({
-    where: { estado: false, fechaVencimiento: fechaF }
+    where: { estado: 0, fechaVencimiento: fechaF }
   });
 
   if (!cob || cob.length === 0) return false;
 
   for (const c of cob) {
+    console.log('Pension por vencer:', c.periodo, c.idContrato);
     const tel = await Pension.findAll({
       attributes: ["idPension"],
       where: { idPension: c.idPension },
@@ -67,3 +69,39 @@ const vencimiento3dia = async (msg, tel) => {
     console.error('❌ Error al enviar mensaje:', err);
   }
 };
+
+const vencimientosPension = async () => {
+  const fecha = new Date();
+  const fechaF = fecha.getFullYear() + '-' +
+    String(fecha.getMonth() + 1).padStart(2, '0') + '-' +
+    String(fecha.getDate()-1).padStart(2, '0');
+  const vencimientos = await Cobro.findAll({
+    where: {  fechaVencimiento: fechaF }
+  });
+  if (!vencimientos || vencimientos.length === 0) return false;
+  for (const v of vencimientos) {
+    const periodo = new Date(v.periodo);
+    const nuevoPeriodo = new Date(periodo.getFullYear(), periodo.getMonth() + 1, periodo.getDate()+1);
+    const fechaVencimiento = new Date(v.fechaVencimiento);
+    const nuevaFechaVencimiento = new Date(fechaVencimiento.getFullYear(), fechaVencimiento.getMonth() + 1, fechaVencimiento.getDate()+1);
+    const monto = await Pension.findByPk(v.idPension).then(p => p.precioAcordado);
+    await Cobro.create({
+      idPension: v.idPension,
+      periodo: formatearFecha(nuevoPeriodo),
+      monto: monto,
+      fechaVencimiento: formatearFecha(nuevaFechaVencimiento),
+      estado: 0
+    });
+    console.log(`✅ Creado nuevo cobro para pension ${v.idPension} con periodo ${formatearFecha(nuevoPeriodo)}`);
+  }
+}
+
+const formatearFecha = (fecha) => {
+    const d = new Date(fecha);
+    let month = '' + (d.getMonth() + 1);
+    let day = '' + d.getDate();
+    const year = d.getFullYear();
+    const formattedMonth = month.length < 2 ? '0' + month : month;
+    const formattedDay = day.length < 2 ? '0' + day : day;
+    return [year, formattedMonth, formattedDay].join('-');
+}
