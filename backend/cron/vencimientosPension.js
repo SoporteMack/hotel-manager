@@ -4,7 +4,7 @@ const PersonaP = require('../models/personasP');
 const configuracion = require("../models/configuracion");
 const { getSock } = require('../utils/baileys');
 
-schedule.scheduleJob('0 30 * * * *', async () => {
+schedule.scheduleJob('0 0 6 * * *', async () => {
   const fecha = new Date();
   vencimientosPension();
   fecha.setDate(fecha.getDate() + 3);
