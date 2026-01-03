@@ -263,12 +263,18 @@ const nuevoCobro = async (idPension, monto, periodo,fechaVencimiento) => {
     const date = new Date(fechaVencimiento);
     const fecha = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()+2).padStart(2, '0');
     const nuevoPeriodo = new Date(periodo);
+    const diaNP = nuevoPeriodo.getDate();
     nuevoPeriodo.setMonth(nuevoPeriodo.getMonth() + 1);
+    if(nuevoPeriodo.getDate() !== diaNP)
+        nuevoPeriodo.setDate(0);
     const periodoFormatted = `${nuevoPeriodo.getFullYear()}-${String(nuevoPeriodo.getMonth() + 1).padStart(2, '0')}-${String(nuevoPeriodo.getDate()+1).padStart(2, '0')}`;
     const fechaVencimientoFormatted = `${nuevoPeriodo.getFullYear()}-${String(nuevoPeriodo.getMonth() + 1).padStart(2, '0')}-${String(nuevoPeriodo.getDate()+1).padStart(2, '0')}`;
     console.log(periodo);
     console.log(fecha);
     let vencimiento = new Date(date);
+    if(vencimiento.getDate() + 1 !== diaNP)
+        vencimiento.setDate(0);
+
 
     if (tipoPension === "MENSUAL") {
         vencimiento.setMonth(vencimiento.getMonth() + 1);

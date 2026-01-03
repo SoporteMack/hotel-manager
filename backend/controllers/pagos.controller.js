@@ -23,7 +23,7 @@ exports.crear = async (req, res) => {
     const { monto, fechaPago, idContrato, deuda } = req.body
     // Use a Date object to avoid Moment deprecation warnings when Sequelize handles DATE/DATEONLY
     console.log(fechaPago);
-    const fecha =  new Date();
+    const fecha = new Date();
     console.log(fecha)
     let datoscobro = await cobrosR.findOne({
       where: { idContrato: idContrato, estado: 0 },
@@ -42,7 +42,13 @@ exports.crear = async (req, res) => {
     const idCobro = datoscobro.idCobro;
 
     await cobrosR.update({ estado: 1 }, { where: { idCobro: idCobro } });
+    const diaF = fecha.getDate();
     fecha.setMonth(fecha.getMonth() + 1);
+    
+    if(fecha.getDate() !== diaF)
+    {
+      fecha.setDate(0);
+    }
     console.log(fecha);
     const dataspago = {
       monto: monto,
@@ -511,8 +517,17 @@ const crearCobro = async (idContrato) => {
 
   // fechaVencimiento = baseDate + 1 día + 1 mes
   const fechaVencDate = new Date(baseDate);
-  fechaVencDate.setDate(fechaVencDate.getDate() + 1);
+
+  const diaOriginal = fechaVencDate.getDate();
+
+  // avanzamos al siguiente mes
   fechaVencDate.setMonth(fechaVencDate.getMonth() + 1);
+
+  // si el mes se “saltó”, significa que el día no existía
+  if (fechaVencDate.getDate() !== diaOriginal) {
+    // último día del mes correcto
+    fechaVencDate.setDate(0);
+  }
 
   const data = {
     idContrato: idContrato,
