@@ -41,11 +41,13 @@ exports.crear = async (req, res) => {
 
     await cobrosR.update({ estado: 1 }, { where: { idCobro: idCobro } });
     fecha.setMonth(fecha.getMonth() + 1);
+    console.log(fecha);
     const dataspago = {
       monto: monto,
       fechaPago: fecha, // Date object
       idCobro: idCobro,
     };
+    console.log(dataspago);
     const pago = await pagos.create(dataspago);
     const foliopago = pago.folio;
     const rutaArchivo = path.join(__dirname, '../uploads', 'nota.pdf');
