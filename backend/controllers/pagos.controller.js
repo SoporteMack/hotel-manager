@@ -22,7 +22,9 @@ exports.crear = async (req, res) => {
   try {
     const { monto, fechaPago, idContrato, deuda } = req.body
     // Use a Date object to avoid Moment deprecation warnings when Sequelize handles DATE/DATEONLY
-    const fecha = fechaPago ? new Date(fechaPago) : new Date();
+    console.log(fechaPago);
+    const fecha =  new Date();
+    console.log(fecha)
     let datoscobro = await cobrosR.findOne({
       where: { idContrato: idContrato, estado: 0 },
       order: [['idCobro', 'ASC']],
