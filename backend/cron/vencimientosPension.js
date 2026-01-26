@@ -81,9 +81,9 @@ const vencimientosPension = async () => {
   if (!vencimientos || vencimientos.length === 0) return false;
   for (const v of vencimientos) {
     const periodo = new Date(v.periodo);
-    const nuevoPeriodo = new Date(periodo.getFullYear(), periodo.getMonth() + 1, periodo.getDate()+1);
+    const nuevoPeriodo = new Date(periodo.getFullYear(), periodo.getMonth() + 2, periodo.getDate()+1);
     const fechaVencimiento = new Date(v.fechaVencimiento);
-    const nuevaFechaVencimiento = new Date(fechaVencimiento.getFullYear(), fechaVencimiento.getMonth() + 1, fechaVencimiento.getDate()+1);
+    const nuevaFechaVencimiento = new Date(fechaVencimiento.getFullYear(), fechaVencimiento.getMonth() + 2, fechaVencimiento.getDate()+1);
     const monto = await Pension.findByPk(v.idPension).then(p => p.precioAcordado);
     await Cobro.create({
       idPension: v.idPension,
